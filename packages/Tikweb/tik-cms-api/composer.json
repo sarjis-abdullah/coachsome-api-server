@@ -1,0 +1,26 @@
+{
+    "name": "tikweb/tik-cms-api",
+    "description": "TikCmsApi for TikCms",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Hafijur Rahman",
+            "email": "hafij.to@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Tikweb\\TikCmsApi\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+              "BaseReviewServiceProvider"
+            ],
+            "aliases": { }
+        }
+    },
+    "minimum-stability": "dev"
+}
