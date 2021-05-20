@@ -6,7 +6,7 @@ use App\Console\Commands\CreateWeek;
 use App\Console\Commands\GenerateBalanceEarning;
 use App\Console\Commands\InsertBookingSetting;
 use App\Console\Commands\SetRole;
-use App\Console\Commands\UpdatePackageOrder;
+use App\Console\Commands\UpdateDB;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
         SetRole ::class,
         GenerateBalanceEarning::class,
         InsertBookingSetting::class,
-        UpdatePackageOrder::class
+        UpdateDB::class
     ];
 
     /**

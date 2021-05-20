@@ -88,7 +88,7 @@ class ProfileController extends Controller
         $transformedLanguages = $transformerService->getTransformedData(new Collection($languages, new LanguagesTransformer($languageCode)));
         $transformedSelectedLanguages = $transformerService->getTransformedData(new Collection($user->languages, new LanguagesTransformer($languageCode)));
         $response['languages'] = collect($transformedLanguages)->sortBy('name')->values();
-        $response['selectedLanguages'] = collect($transformedSelectedLanguages)->sortBy('name')->values();
+        $response['selectedLanguages'] = collect($transformedSelectedLanguages)->values();
 
         // Tag
         $response['selectedSportTags'] = new SportTagCollection($user->sportTags);
@@ -97,7 +97,7 @@ class ProfileController extends Controller
         $categories = SportCategory::get();
         $transformedCategories = $transformerService->getTransformedData(new Collection($categories, new CategoriesTransformer($languageCode)));
         $transformedSelectedCategories = $transformerService->getTransformedData(new Collection($user->sportCategories, new CategoriesTransformer($languageCode)));
-        $response['selectedCategories'] = collect($transformedSelectedCategories)->sortBy('name')->values();
+        $response['selectedCategories'] = collect($transformedSelectedCategories)->values();
         $response['sport_category'] = collect($transformedCategories)->sortBy('name')->values();
 
         return $response;
@@ -159,10 +159,16 @@ class ProfileController extends Controller
             }
 
             // Category
-            $user->sportCategories()->sync($categoryIdList);
+            $user->sportCategories()->detach();
+            foreach ($categoryIdList as $id) {
+                $user->sportCategories()->attach($id);
+            }
 
             // Language
-            $user->languages()->sync($languageIdList);
+            $user->languages()->detach();
+            foreach ($languageIdList as $id) {
+                $user->languages()->attach($id);
+            }
 
             $profile = $user->profile;
             $profile->user_id = $user->id;
@@ -314,6 +320,8 @@ class ProfileController extends Controller
                 $userInfo = new stdClass;
                 $userInfo->id = $user->id;
                 $userInfo->userName = $user->user_name;
+                $userInfo->firstName = $user->first_name;
+                $userInfo->lastName = $user->last_name;
                 $userInfo->email = $user->email;
 
                 $socialAccount = SocialAccount::where('user_id', $user->id)->first();
@@ -352,7 +360,7 @@ class ProfileController extends Controller
                     $newItem->name = $item->name;
                     return $newItem;
                 });
-                $profileInfo->categories = $user->sportCategories()->orderBy('name')->get();
+                $profileInfo->categories = $user->sportCategories()->get();
                 $profileInfo->languages = $user->languages;
             }
 

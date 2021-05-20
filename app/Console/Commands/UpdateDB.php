@@ -2,26 +2,26 @@
 
 namespace App\Console\Commands;
 
-use App\Entities\Setting;
-use App\Entities\User;
-use App\Entities\UserSetting;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Schema;
+use App\Data\TranslationType;
+use Illuminate\Database\Schema\Blueprint;
 
-class UpdatePackageOrder extends Command
+class UpdateDB extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'update:package-order';
+    protected $signature = 'update:db';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Update all user setting ....';
+    protected $description = 'Updateing database ...';
 
     /**
      * Create a new command instance.
@@ -40,12 +40,11 @@ class UpdatePackageOrder extends Command
      */
     public function handle()
     {
-        $users = User::get();
-        foreach ($users as $user) {
-            $packages = $user->packages;
-            foreach ($packages as $i => $package) {
-                $package->order = ++$i;
-                $package->save();
+        if (Schema::hasTable('translations')) {
+            if (!Schema::hasColumn('translations', 'type')) {
+                Schema::table('translations', function (Blueprint $table) {
+                    $table->string('type')->default(TranslationType::GENERAL)->after('page_name');
+                });
             }
         }
     }
