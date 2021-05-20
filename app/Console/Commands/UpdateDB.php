@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Data\TranslationData;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
-use App\Data\TranslationType;
 use Illuminate\Database\Schema\Blueprint;
 
 class UpdateDB extends Command
@@ -21,7 +21,7 @@ class UpdateDB extends Command
      *
      * @var string
      */
-    protected $description = 'Updateing database ...';
+    protected $description = 'Updating database ...';
 
     /**
      * Create a new command instance.
@@ -43,7 +43,7 @@ class UpdateDB extends Command
         if (Schema::hasTable('translations')) {
             if (!Schema::hasColumn('translations', 'type')) {
                 Schema::table('translations', function (Blueprint $table) {
-                    $table->string('type')->default(TranslationType::GENERAL)->after('page_name');
+                    $table->string('type')->default(TranslationData::TYPE_GENERAL)->after('page_name');
                 });
             }
         }
