@@ -35,7 +35,7 @@ class UserService
 
         if (($countUser + 1) > 1) {
             $suffix = $countUser + 1;
-            $userName .= '-' . $suffix;
+            $userName .= '.' . $suffix;
         }
 
         return $userName;

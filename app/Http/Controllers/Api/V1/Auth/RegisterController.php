@@ -67,6 +67,8 @@ class RegisterController extends Controller
     {
 
         try {
+            $data = [];
+
             $validator = Validator::make($request->all(), [
                 'first_name' => 'required',
                 'last_name' => 'required',
@@ -79,7 +81,6 @@ class RegisterController extends Controller
                 throw new \Exception("This email already exist.");
             }
 
-            $data = [];
 
             $userService = new UserService();
 
@@ -93,18 +94,16 @@ class RegisterController extends Controller
 
             if ($user) {
                 UserRegisteredEvent::dispatch($user, $request->user_type);
-                $data['status'] = 'success';
                 $data['message'] = 'Successfully registered.';
-                return response()->json($data, StatusCode::HTTP_OK);
             } else {
                 throw new \Exception('Something went wrong, try again.');
             }
 
+            return response($data, StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
                 'message' => $e->getMessage()
-            ], StatusCode::HTTP_CONFLICT);
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 
     }

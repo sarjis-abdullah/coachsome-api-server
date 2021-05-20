@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Data\StatusCode;
 use App\Entities\VerifyUser;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\VerifiesEmails;
@@ -44,24 +45,25 @@ class VerificationController extends Controller
 
     public function emailVerify(Request $request)
     {
-        $data = [];
-        $code = 200;
-        $veryUser = VerifyUser::where('token', $request->token)->first();
-        if ($veryUser) {
+
+        try {
+            $data = [];
+
+            $veryUser = VerifyUser::where('token', $request->token)->first();
+            if (!$veryUser) {
+                throw new \Exception('Token not found. You have to register again.');
+            }
+
             $user = $veryUser->user;
             $user->verified = 1;
             if ($user->save()) {
                 $veryUser->delete();
             }
-            $data['status'] = 'success';
             $data['message'] = 'Successfully verify your account';
-        } else {
-            $data['status'] = 'error';
-            $data['message'] = 'Token not found';
-            $code = 401;
+            return response($data, StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
-
-        return response()->json($data, $code);
     }
 
 }
