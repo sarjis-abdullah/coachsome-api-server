@@ -305,15 +305,20 @@ class ProfileController extends Controller
             $mediaService = new MediaService();
             $reviewService = new ReviewService($baseReviewRepository);
 
+            // User name formatting
+            if($userName){
+                $userName = str_replace("-",".",$userName);
+            }
+
             $user = User::where('user_name', $userName)->with(['sportTags'])->first();
+            if (!$user) {
+                throw new Exception('Sorry, user not found');
+            }
+
             $profile = $user->profile ?? null;
 
             $fromCurrencyCode = $currencyService->getUserCurrency($user)->code;
             $toCurrencyCode = $requestedCurrencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
-
-            if (!$user) {
-                throw new Exception('Sorry, user not found');
-            }
 
             // User
             if ($user) {

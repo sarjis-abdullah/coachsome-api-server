@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Data\TranslationData;
+use App\Entities\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
@@ -46,6 +47,13 @@ class UpdateDB extends Command
                     $table->string('type')->default(TranslationData::TYPE_GENERAL)->after('page_name');
                 });
             }
+        }
+
+
+        $users = User::all();
+        foreach ($users as $user) {
+            $user->user_name = str_replace("-",".",$user->user_name);
+            $user->save();
         }
     }
 }
