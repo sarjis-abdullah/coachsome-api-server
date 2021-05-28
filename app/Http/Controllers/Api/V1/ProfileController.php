@@ -391,7 +391,18 @@ class ProfileController extends Controller
             });
 
 
-            $links = Gallery::where('user_id', $user->id)->get(['id', 'type', 'url', 'file_name'])->toArray();
+            $links = Gallery::where('user_id', $user->id)->get()->map(function ($item) use ($mediaService) {
+                $url = $item->url;
+                if ($item->type == 'image') {
+                    $url = $mediaService->getGalleryImageUrl($item->file_name);
+                }
+                return [
+                    'id' => $item->id,
+                    'type' => $item->type,
+                    'src' => $url,
+                ];
+            });
+
             $locations = Location::where('user_id', $user->id)->get(['id', 'lat', 'long', 'city', 'address', 'zip']);
             $distance = Distance::where('user_id', $user->id)->get(['far_away', 'unit', "is_offer_only_online"])->first();
 

@@ -99,6 +99,11 @@ class MediaService
         return env('APP_SERVER_DOMAIN_STORAGE_PATH') . '/images/facebook/' . $name;
     }
 
+    public function getGalleryImageUrl($name)
+    {
+        return env('APP_SERVER_DOMAIN_STORAGE_PATH') . '/images/' . $name;
+    }
+
     private function destroyImages($imageName)
     {
         if ($imageName) {

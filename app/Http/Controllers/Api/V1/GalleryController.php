@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Data\Constants;
+use App\Data\GalleryData;
+use App\Data\StatusCode;
 use App\Entities\Gallery;
 use App\Entities\Image;
 use App\Entities\Video;
 use App\Http\Controllers\Controller;
+use App\Services\Media\MediaService;
 use App\Services\ProgressService;
 use App\Services\StepService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -23,8 +27,31 @@ class GalleryController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
-        return Gallery::where('user_id', $user->id)->get(['id', 'type', 'url', 'file_name'])->toArray();
+        try {
+            $data = [];
+            $user = Auth::user();
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+            $mediaService = new MediaService();
+
+            $data['items'] = Gallery::where('user_id', $user->id)->get()->map(function ($item) use ($mediaService) {
+                $url = $item->url ?? '';
+                if ($item->type == 'image') {
+                    $url = $mediaService->getGalleryImageUrl($item->file_name);
+                }
+                return [
+                    'id' => $item->id,
+                    'type' => $item->type,
+                    'url' => $url,
+                ];
+            });
+
+            return response($data, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
     /**
@@ -35,40 +62,51 @@ class GalleryController extends Controller
      */
     public function store(Request $request)
     {
-        $rules = ['type' => 'required'];
-        $validator = Validator::make($request->all(), $rules);
-        if ($validator->fails()) {
-            return $validator->errors();
-        }
 
-        $type = $request['type'];
-        $image = $request['image'];
+        try {
+            $data = [];
 
-        $response = [];
+            $type = $request['type'];
+            $url = $request['url'];
+            $image = $request['image'];
 
-        $user = Auth::user();
-        $gallery = new Gallery();
-        $gallery->user_id = $user->id;
-        $gallery->url = $request['url'];
-        $gallery->type = $request['type'];
+            $validator = Validator::make($request->all(), ['type' => 'required']);
+            if ($validator->fails()) {
+                throw new \Exception("Validation errors");
+            }
 
-        if ($type == Constants::GALLERY_ASSET_TYPE_IMAGE && $image) {
-            $gallery->file_name = $this->uploadImage($image);
-        }
+            $user = Auth::user();
+            $mediaService = new MediaService();
 
-        if ($gallery->save()) {
-            $progressService= new ProgressService();
+            $gallery = new Gallery();
+            $gallery->user_id = $user->id;
+            $gallery->type = $type;
+            if ($type == GalleryData::ASSET_TYPE_IMAGE && $image) {
+                $gallery->file_name = $this->uploadImage($image);
+                $gallery->url = null;
+                $url = $mediaService->getGalleryImageUrl($gallery->file_name);
+            }
+            if ($type == GalleryData::ASSET_TYPE_VIDEO) {
+                $gallery->url = $url;
+            }
+            $gallery->save();
+
+            $data['item'] = [
+                'id'=> $gallery->id,
+                'type'=> $gallery->type,
+                'url'=> $url,
+            ];
+
+            $progressService = new ProgressService();
             $progress = $progressService->getUserImageAndVideoPageProgress($user);
+            $data['progress'] = $progress;
 
-            $response['progress'] = $progress;
-            $response['status'] = 'success';
-            $response['message'] = 'Successfully saved your url';
-            $response['gallery'] = $gallery;
-            return $response;
-        } else {
-            $response['status'] = 'error';
-            $response['message'] = 'Something went wrong, try again';
-            return $response;
+            $data['message'] = 'Successfully saved your url';
+
+            return response($data, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
