@@ -24,6 +24,7 @@ use App\ValueObjects\Message\BigText;
 use App\ValueObjects\Message\BuyPackage;
 use App\ValueObjects\Message\PackageBooking;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -199,7 +200,7 @@ class ChatController extends Controller
                     $firstName = $item->first_name ?? '';
                     $lastName = $item->last_name ?? '';
                     $profile = $item->profile;
-                    $avatarName = strtoupper(substr($firstName, 0, 1)) . strtoupper(substr($lastName, 0, 1));
+                    $avatarName = strtoupper(mb_substr($firstName, 0, 1)) . strtoupper(mb_substr($lastName, 0, 1));
                     $email = $item->email;
                     $profileName = $item->profileName();
                 }
