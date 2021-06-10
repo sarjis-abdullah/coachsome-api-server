@@ -33,7 +33,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     Route::post('bookings', 'BookingController@index');
 
     // Translation
-    Route::get('locale/translations', 'TranslationController@getTranslation');
+    Route::get('locale/translations', 'Admin\Translation\TranslationController@getTranslation');
 
     // Marketplace
     Route::resource('pages/marketplace', 'MarketplaceController');

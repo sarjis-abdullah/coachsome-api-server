@@ -355,7 +355,7 @@ class ProfileController extends Controller
                 }
 
                 $profileInfo->image = $image;
-                $profileInfo->landscapeImage = $images['landscape'] ?? '';
+                $profileInfo->metaImage = $images['landscape'] ?? '';
                 $profileInfo->fb_link = $profile->social_acc_fb_link;
                 $profileInfo->twitter_link = $profile->social_acc_twitter_link;
                 $profileInfo->instagram_link = $profile->social_acc_instagram_link;

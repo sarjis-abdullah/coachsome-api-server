@@ -195,9 +195,7 @@ return [
         /*
          * Custom packages
          */
-        Tikweb\TikCmsApi\Providers\TikCmsApiServiceProvider::class,
-        Coachsome\BaseReview\Providers\BaseReviewServiceProvider::class
-
+        Coachsome\BaseReview\Providers\BaseReviewServiceProvider::class,
 
     ],
 
