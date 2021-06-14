@@ -1,4 +1,5 @@
 <?php
+
 // Social Auth
 Route::get('auth/login/{provider}', 'SocialAuthController@redirectToProvider');
 Route::get('auth/login/{provider}/callback', 'SocialAuthController@handleProviderCallback');
@@ -19,4 +20,5 @@ Route::get('images/{size}/{filename}', function ($size, $filename) {
 Route::get('images/{filename}', function ($filename) {
     return response()->file(storage_path('app/public/images/' . $filename));
 })->name("images.gallery");
+
 

@@ -83,8 +83,10 @@ class ChatController extends Controller
             if ($bookings->count() > 0) {
                 $initialBookingMessages = $bookingService->checkPaymentStatusOfInitialBookings($bookings);
                 $newMessages = $initialBookingMessages["newMessages"];
-                $contactService->resetContactNewMessageCount($authUser, $selectedUser);
             }
+
+            // Reset new message number
+            $contactService->resetContactNewMessageCount($authUser, $selectedUser);
 
 
             return response()->json([
