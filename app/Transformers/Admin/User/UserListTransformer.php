@@ -58,6 +58,7 @@ class UserListTransformer extends Fractal\TransformerAbstract
                 $image =$images['old'];
             }
             if($phoneCode && $phoneNumber){
+                $code= "";
                 if($phoneCode == 'DK'){
                     $code = '+45';
                 } elseif ($phoneCode == 'US'){
