@@ -37,7 +37,7 @@ class SocialAuthController extends Controller
             }
             return redirect(
                 env('APP_CLIENT_DOMAIN')
-                . '/pages/login?status='
+                . '/login?status='
                 . $status
                 . '&'
                 .'message_key='
@@ -57,7 +57,7 @@ class SocialAuthController extends Controller
             $accessToken = $tokenService->createUserAccessToken($user);
             return redirect(
                 env('APP_CLIENT_DOMAIN')
-                . '/pages/redirect?access_token='
+                . '/redirect?access_token='
                 . $accessToken
             );
         } else {
@@ -65,7 +65,7 @@ class SocialAuthController extends Controller
             $messageKey = 'provider_error_message_without_email';
             return redirect(
                 env('APP_CLIENT_DOMAIN')
-                . '/pages/login?status='
+                . '/login?status='
                 . $status
                 . '&'
                 .'message_key='
