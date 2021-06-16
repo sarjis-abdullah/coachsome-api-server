@@ -259,8 +259,10 @@ class MarketplaceController extends Controller
         // Ranking wise sorting
         $userQuery->orderBy("ranking", "DESC");
 
+        // Order by id for removing duplicate model in the collection
         $response['coaches'] = $userQuery
-            ->paginate(200)
+            ->orderBy('id', 'asc')
+            ->paginate(10)
             ->map(function ($item)
             use ($mediaService, $reviewService, $mCurrency, $requestedCurrency, $packageService, $currencyService) {
                 $coach = new \stdClass();
@@ -322,10 +324,8 @@ class MarketplaceController extends Controller
 
         $response['minRange'] = $minRange;
         $response['maxRange'] = $maxRange;
-        Log::info("MAX RANGE=" . $maxRange);
         $response['min'] = $min;
         $response['max'] = $max;
-        Log::info("MAX=" . $max);
 
         // Searched country name
         $response['searchedCountryName'] = $localeService->countryNameByCountryCode($countryCode);
