@@ -84,7 +84,7 @@ class BookingCollection extends ResourceCollection
             }
 
             if ($order) {
-                $amount = $currencyService->format($orderService->totalPrice($order), $order->currency);
+                $amount = $currencyService->format($orderService->grandTotal($order), $order->currency);
             }
 
             $formattedData[] = [
