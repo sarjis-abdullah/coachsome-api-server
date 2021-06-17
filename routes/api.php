@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\MarketplaceController;
 
 /*
  * Public
@@ -35,9 +36,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     // Translation
     Route::get('locale/translations', 'Admin\Translation\TranslationController@getTranslation');
 
-    // Marketplace
-    Route::resource('pages/marketplace', 'MarketplaceController');
-    Route::get('hourlyRatingUsers', 'MarketplaceController@getHourlyRatingUsers');
+    // Marketplaces
+    Route::get('marketplaces', [MarketplaceController::class, 'index']);
 
     // Storage Video
     Route::get('storage/video/{name}', 'VideoController@getVideo');

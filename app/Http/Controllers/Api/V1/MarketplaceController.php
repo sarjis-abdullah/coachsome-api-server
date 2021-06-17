@@ -21,6 +21,7 @@ use App\Services\SearchValueService;
 use App\Services\StorageService;
 use App\Services\TranslationService;
 use Coachsome\BaseReview\Repositories\BaseReviewRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +38,17 @@ class MarketplaceController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, BaseReviewRepository $baseReviewRepository)
+    {
+        if ($request->all()) {
+            return response($this->filtered($request, $baseReviewRepository));
+        } else {
+            return response($this->initial($request));
+        }
+
+    }
+
+    private function initial($request)
     {
         $data = [
             'categories' => [],
@@ -69,10 +80,11 @@ class MarketplaceController extends Controller
             $data['countries'][] = $newCountry;
         }
 
-        return response()->json($data);
+        return $data;
+
     }
 
-    public function getHourlyRatingUsers(Request $request, BaseReviewRepository $baseReviewRepository)
+    private function filtered($request, $baseReviewRepository)
     {
         // Request value
         $cityName = $request->query('cityName');
