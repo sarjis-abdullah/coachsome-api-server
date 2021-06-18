@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\MarketplaceController;
+use App\Http\Controllers\Api\V1\ContactController;
+use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\ChatController;
 
 /*
  * Public
@@ -86,14 +89,15 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1', 'middleware' => ['a
     Route::post('payments/quickpay/notify', 'QuickpayController@notify');
 
     // Chats
-    Route::get('chats', 'ChatController@index');
-    Route::get('chats/messages', 'ChatController@getMessage');
-    Route::post('chats/messages', 'ChatController@storeMessage');
-    Route::get('chats/contacts', 'ChatController@getContact');
-    Route::get('chats/contacts/totalNewMessageCount', 'ChatController@getTotalNewMessageCount');
+    Route::get('chats', [ChatController::class, 'index']);
+
+    // Contacts
+    Route::get('contacts', [ContactController::class, 'index']);
 
     // Messages
-    Route::post('messages/send', 'MessageController@store');
+    Route::get('messages', [MessageController::class, 'index']);
+    Route::post('messages', [MessageController::class, 'store']);
+    Route::get('messages/newCount', [MessageController::class, 'getNewCount']);
 
     // Bookings
     Route::get('bookings/packages', 'BookingController@getBookingPackage');

@@ -4,13 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\Contact\ContactService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-
-class ChatController extends Controller
+class ContactController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $authUser = Auth::user();
         $contactService = new ContactService();
