@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Media\MediaService;
 use App\Services\ProgressService;
 use App\Services\StepService;
+use App\Services\StorageService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,8 +35,15 @@ class GalleryController extends Controller
                 throw new \Exception('User not found');
             }
             $mediaService = new MediaService();
+            $storageService = new StorageService();
 
-            $data['items'] = Gallery::where('user_id', $user->id)->get()->map(function ($item) use ($mediaService) {
+            $data['items'] = Gallery::where('user_id', $user->id)->get()->filter(function($item) use($storageService){
+                if ($item->type == 'image') {
+                   return $storageService->hasImage($item->file_name);
+                } else {
+                    return true;
+                }
+            })->map(function ($item) use ($mediaService) {
                 $url = $item->url ?? '';
                 if ($item->type == 'image') {
                     $url = $mediaService->getGalleryImageUrl($item->file_name);
@@ -45,7 +53,7 @@ class GalleryController extends Controller
                     'type' => $item->type,
                     'url' => $url,
                 ];
-            });
+            })->values();
 
             return response($data, StatusCode::HTTP_OK);
 

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class StorageService
 {
-    private const IMAGE_DISK = Constants::DISK_NAME_PUBLIC_IMAGE;
+    private const IMAGE_DISK = 'publicImage';
 
     public function hasImage($image)
     {
