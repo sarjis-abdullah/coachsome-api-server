@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Coach;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Http\Controllers\Controller;
+use App\Services\Media\MediaService;
 use App\Services\StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +30,7 @@ class BookingController extends Controller
             $status = $request->query('status');
 
             $storageService = new StorageService();
+            $mediaService = new MediaService();
 
 
             $purchasedPackages = Booking::with(['order', 'bookingTimes'])
@@ -54,7 +56,6 @@ class BookingController extends Controller
                         $packageTotalSession = $packageSnapshot['details']['session'];
                     }
 
-                    Log::info("Session Completed: ". $sessionCompletedCount. " of ".$packageTotalSession);
                     if ($status == 'active') {
                         if ($sessionCompletedCount < $packageTotalSession) {
                             return true;
@@ -74,7 +75,7 @@ class BookingController extends Controller
                     }
                 })
                 ->values()
-                ->map(function ($item) use ($storageService, $authUser) {
+                ->map(function ($item) use ($storageService, $authUser,$mediaService) {
 
                     $packageTitle = '';
                     $profileName = '';
@@ -87,6 +88,7 @@ class BookingController extends Controller
                     $date = '';
                     $packageDescription = '';
                     $isFavourite = 0;
+                    $images = [];
 
                     $order = $item->order ? $item->order : null;
                     $packageSnapshot = $order ? json_decode($order->package_snapshot) : null;
@@ -108,14 +110,15 @@ class BookingController extends Controller
 
                     if ($isSold) {
                         $profile = $packageBuyerUser ? $packageBuyerUser->profile : null;
+                        $images = $mediaService->getImages($packageBuyerUser);
+
                     } else {
                         $profile = $packageOwnerUser ? $packageOwnerUser->profile : null;
+                        $images = $mediaService->getImages($packageOwnerUser);
                     }
 
                     if ($profile) {
-                        $profileImage = $profile->image && $storageService->hasImage($profile->image)
-                            ? $profile->image
-                            : "";
+                        $profileImage = $images['square'] ?? $images['old'];
                         $profileAvatarName = $profile->avatarName();
                     }
 

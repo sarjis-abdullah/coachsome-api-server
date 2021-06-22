@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Athlete;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Http\Controllers\Controller;
+use App\Services\Media\MediaService;
 use App\Services\StorageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,7 @@ class BookingController extends Controller
             }
 
             $storageService = new StorageService();
+            $mediaService = new MediaService();
 
 
             $purchasedPackages = Booking::with(['order'])
@@ -35,7 +37,7 @@ class BookingController extends Controller
                 ->where(function ($q) {
                     $q->orWhere('status', 'Pending');
                     $q->orWhere('status', 'Accepted');
-                })->paginate(6)->map(function ($item) use($authUser, $storageService) {
+                })->paginate(6)->map(function ($item) use($authUser, $storageService,$mediaService) {
 
                     $packageTitle = '';
                     $profileName = '';
@@ -48,11 +50,12 @@ class BookingController extends Controller
                     $date = '';
                     $packageDescription = '';
                     $isFavourite = 0;
+                    $images = [];
 
                     $order = $item->order ? $item->order : null;
                     $packageSnapshot = $order ? json_decode($order->package_snapshot) : null;
-                    $packageOwnerUser = $item->packageOwnerUser ? $item->packageOwnerUser : null;
-                    $packageBuyerUser = $item->packageBuyerUser ? $item->packageBuyerUser : null;
+                    $packageOwnerUser = $item->packageOwnerUser;
+                    $packageBuyerUser = $item->packageBuyerUser;
                     $profile = $packageOwnerUser ? $packageOwnerUser->profile : null;
                     $packageDetails = $packageSnapshot ? $packageSnapshot->details : null;
                     $bookingTimeCount = $item->bookingTimes->where('status','Accepted')->count();
@@ -68,11 +71,15 @@ class BookingController extends Controller
                         $isFavourite = $item->is_favourite_to_package_buyer;
                     }
 
+                    $images= $mediaService->getImages($packageOwnerUser);
+                    if($images['square']){
+                        $profileImage = $images['square'];
+                    } else {
+                        $profileImage = $images['old'];
+                    }
+
                     if($profile){
                         $profileName = $profile->profile_name;
-                        $profileImage = $profile->image && $storageService->hasImage($profile->image)
-                            ? $profile->image
-                            : "";
                         $profileAvatarName = $profile->avatarName();
                     }
 
