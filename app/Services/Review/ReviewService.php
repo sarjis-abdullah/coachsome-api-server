@@ -106,8 +106,10 @@ class ReviewService
         // Facebook part review rating count
         $review = Review::where("user_id", $user->id)->first();
         if ($review) {
-            $reviewPart++;
             $overallStarRating += $review->overall_star_rating;
+            if($review->overall_star_rating){
+                $reviewPart++;
+            }
         }
 
         // Base platform part review rating count
