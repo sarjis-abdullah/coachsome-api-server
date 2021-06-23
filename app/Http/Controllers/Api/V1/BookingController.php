@@ -390,7 +390,6 @@ class BookingController extends Controller
             if ($action == 'decline') {
 
                 $cancelRequest = $quickpayClient->request->post(sprintf("/payments/%s/cancel", $paymentId));
-                Log::info(print_r($cancelRequest->asObject(), true));
                 if ($cancelRequest->httpStatus() == 202) {
                     $order->status = OrderStatus::CANCELED;
                     $order->save();

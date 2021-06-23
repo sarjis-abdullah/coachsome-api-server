@@ -51,6 +51,7 @@ class BookingController extends Controller
                     $packageDescription = '';
                     $isFavourite = 0;
                     $images = [];
+                    $readableDate = "";
 
                     $order = $item->order ? $item->order : null;
                     $packageSnapshot = $order ? json_decode($order->package_snapshot) : null;
@@ -62,6 +63,8 @@ class BookingController extends Controller
 
                     $status = $item->status;
                     $date = date('d/m',strtotime($item->booking_date));
+                    $readableDate = date('F jS, Y', strtotime($item->booking_date));
+
 
                     if($item->package_owner_user_id == $authUser->id){
                         $isSold = 1;
@@ -92,6 +95,8 @@ class BookingController extends Controller
 
                     return [
                         'bookingId'=> $item->id,
+                        'orderKey' => $order->key,
+                        'readableDate' => $readableDate,
                         'packageOwnerUserId'=> $packageOwnerUser->id,
                         'packageBuyerUserId'=> $packageBuyerUser->id,
                         'profileAvatarName' => $profileAvatarName,

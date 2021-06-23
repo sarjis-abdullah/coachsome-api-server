@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Coach;
 
 use App\Data\StatusCode;
+use App\Data\StringReplacer;
 use App\Entities\Booking;
 use App\Http\Controllers\Controller;
 use App\Services\Media\MediaService;
@@ -89,6 +90,7 @@ class BookingController extends Controller
                     $packageDescription = '';
                     $isFavourite = 0;
                     $images = [];
+                    $readableDate = "";
 
                     $order = $item->order ? $item->order : null;
                     $packageSnapshot = $order ? json_decode($order->package_snapshot) : null;
@@ -99,6 +101,7 @@ class BookingController extends Controller
 
                     $status = $item->status;
                     $date = date('d/m', strtotime($item->booking_date));
+                    $readableDate = date('F jS, Y', strtotime($item->booking_date));
 
                     if ($item->package_owner_user_id == $authUser->id) {
                         $isSold = 1;
@@ -132,6 +135,7 @@ class BookingController extends Controller
 
                     return [
                         'bookingId' => $item->id,
+                        'orderKey' => $order->key,
                         'packageOwnerUserId' => $packageOwnerUser->id,
                         'packageBuyerUserId' => $packageBuyerUser->id,
                         'profileAvatarName' => $profileAvatarName,
@@ -143,11 +147,11 @@ class BookingController extends Controller
                         'leftSession' => $leftSession,
                         'status' => $status,
                         'date' => $date,
+                        'readableDate' => $readableDate,
                         'isSold' => $isSold,
                         'isFavourite' => $isFavourite
                     ];
                 });
-
             return response()->json(['purchasedPackages' => $purchasedPackages], StatusCode::HTTP_OK);
 
         } catch (\Exception $e) {
