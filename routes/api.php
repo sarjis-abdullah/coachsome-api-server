@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\MarketplaceController;
 use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\ChatController;
+use App\Http\Controllers\Api\V1\General\HomeController;
 
 /*
  * Public
@@ -12,6 +13,9 @@ use App\Http\Controllers\Api\V1\ChatController;
 Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     // Booting
     Route::get('booting', 'BootingController@index')->name("booting");
+
+    // Home page
+    Route::get('pages/frontHome', [HomeController::class, 'index']);
 
     // Sport Categories
     Route::get('sportCategories', 'SportCategoryController@index');
@@ -25,9 +29,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
     // App Bar
     Route::get('appBar/front', 'AppBarController@getInitialData');
-
-    // Front page
-    Route::get('pages/frontHome', 'FrontHomeController@index');
 
     // Pending Booking
     Route::post('pendingBookings', 'PendingBookingController@store');

@@ -112,6 +112,7 @@ class ReviewService
             }
         }
 
+
         // Base platform part review rating count
         $baseReviews = $this->baseReviewRepository->findWhere(['user_id' => $user->id]);
         if ($baseReviews->count()) {
