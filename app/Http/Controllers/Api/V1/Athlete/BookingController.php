@@ -17,11 +17,13 @@ class BookingController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $authUser = Auth::user();
 
         try {
+            $status = $request->query('status');
+
+            $authUser = Auth::user();
             if (!$authUser) {
                 throw new \Exception('User not found');
             }
@@ -31,13 +33,41 @@ class BookingController extends Controller
 
 
             $purchasedPackages = Booking::with(['order'])
-                ->orderBy('is_favourite_to_package_owner','DESC')
-                ->orderBy('is_favourite_to_package_buyer','DESC')
+                ->orderBy('is_favourite_to_package_owner', 'DESC')
+                ->orderBy('is_favourite_to_package_buyer', 'DESC')
                 ->where('package_buyer_user_id', $authUser->id)
                 ->where(function ($q) {
                     $q->orWhere('status', 'Pending');
                     $q->orWhere('status', 'Accepted');
-                })->paginate(6)->map(function ($item) use($authUser, $storageService,$mediaService) {
+                })->paginate(6)->filter(function ($item) use ($status) {
+                    $packageTotalSession = 0;
+                    $sessionCompletedCount = $item->bookingTimes()->where('status', 'Accepted')->count();
+                    $order = $item->order;
+                    if ($order) {
+                        $packageSnapshot = json_decode($order->package_snapshot, true);
+                        $packageTotalSession = $packageSnapshot['details']['session'];
+                    }
+
+                    if ($status == 'active') {
+                        if ($sessionCompletedCount < $packageTotalSession) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } elseif ($status == 'past') {
+                        if ($sessionCompletedCount >= $packageTotalSession) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    } elseif ($status == 'all') {
+                        return true;
+                    } else {
+                        return true;
+                    }
+                })
+                ->values()
+                ->map(function ($item) use ($authUser, $storageService, $mediaService) {
 
                     $packageTitle = '';
                     $profileName = '';
@@ -59,14 +89,14 @@ class BookingController extends Controller
                     $packageBuyerUser = $item->packageBuyerUser;
                     $profile = $packageOwnerUser ? $packageOwnerUser->profile : null;
                     $packageDetails = $packageSnapshot ? $packageSnapshot->details : null;
-                    $bookingTimeCount = $item->bookingTimes->where('status','Accepted')->count();
+                    $bookingTimeCount = $item->bookingTimes->where('status', 'Accepted')->count();
 
                     $status = $item->status;
-                    $date = date('d/m',strtotime($item->booking_date));
+                    $date = date('d/m', strtotime($item->booking_date));
                     $readableDate = date('F jS, Y', strtotime($item->booking_date));
 
 
-                    if($item->package_owner_user_id == $authUser->id){
+                    if ($item->package_owner_user_id == $authUser->id) {
                         $isSold = 1;
                         $isFavourite = $item->is_favourite_to_package_owner;
                     } else {
@@ -74,19 +104,19 @@ class BookingController extends Controller
                         $isFavourite = $item->is_favourite_to_package_buyer;
                     }
 
-                    $images= $mediaService->getImages($packageOwnerUser);
-                    if($images['square']){
+                    $images = $mediaService->getImages($packageOwnerUser);
+                    if ($images['square']) {
                         $profileImage = $images['square'];
                     } else {
                         $profileImage = $images['old'];
                     }
 
-                    if($profile){
+                    if ($profile) {
                         $profileName = $profile->profile_name;
                         $profileAvatarName = $profile->avatarName();
                     }
 
-                    if($packageDetails){
+                    if ($packageDetails) {
                         $packageTitle = $packageDetails->title;
                         $packageDescription = $packageDetails->description;
                         $totalSession = $packageDetails->session;
@@ -94,11 +124,11 @@ class BookingController extends Controller
                     }
 
                     return [
-                        'bookingId'=> $item->id,
+                        'bookingId' => $item->id,
                         'orderKey' => $order->key,
                         'readableDate' => $readableDate,
-                        'packageOwnerUserId'=> $packageOwnerUser->id,
-                        'packageBuyerUserId'=> $packageBuyerUser->id,
+                        'packageOwnerUserId' => $packageOwnerUser->id,
+                        'packageBuyerUserId' => $packageBuyerUser->id,
                         'profileAvatarName' => $profileAvatarName,
                         'packageTitle' => $packageTitle,
                         'packageDescription' => $packageDescription,
@@ -131,11 +161,11 @@ class BookingController extends Controller
             $booking = Booking::find($bookingId);
             $authUser = Auth::user();
 
-            if(!$booking){
+            if (!$booking) {
                 throw new \Exception('Booking not found');
             }
 
-            if($authUser->id != $booking->package_buyer_user_id){
+            if ($authUser->id != $booking->package_buyer_user_id) {
                 throw new \Exception('You are not permitted this action.');
             }
 
@@ -145,13 +175,13 @@ class BookingController extends Controller
             $booking->save();
 
             return response()->json([
-                'message'=>'Successfully change your favour',
-                'isFavourite'=>$isFavourite],
+                'message' => 'Successfully change your favour',
+                'isFavourite' => $isFavourite],
                 StatusCode::HTTP_OK
             );
         } catch (\Exception $e) {
             return response()->json([
-                'message'=> $e->getMessage(),
+                'message' => $e->getMessage(),
             ],
                 StatusCode::HTTP_UNPROCESSABLE_ENTITY
             );
