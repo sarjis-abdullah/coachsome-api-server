@@ -46,7 +46,7 @@
 {{--                        </p>--}}
 {{--                        <p> Dear :senderUserName,</p>--}}
 {{--                        <p>--}}
-{{--                            :senderUserName just send you a booking request. --}}
+{{--                            :receiverUserName just send you a booking request. --}}
 {{--                            <br>--}}
 {{--                            <br>--}}
 {{--                            <span>--}}
