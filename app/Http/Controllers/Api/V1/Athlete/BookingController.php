@@ -135,7 +135,7 @@ class BookingController extends Controller
                         'profileImage' => $profileImage,
                         'profileName' => $profileName,
                         'totalSession' => $totalSession,
-                        'leftSession' => $leftSession,
+                        'leftSession' => $leftSession < 0 ? 0 : $leftSession,
                         'status' => $status,
                         'date' => $date,
                         'isSold' => $isSold,

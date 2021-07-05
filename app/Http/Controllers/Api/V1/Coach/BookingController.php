@@ -69,14 +69,14 @@ class BookingController extends Controller
                         } else {
                             return false;
                         }
-                    } elseif($status == 'all') {
+                    } elseif ($status == 'all') {
                         return true;
                     } else {
                         return true;
                     }
                 })
                 ->values()
-                ->map(function ($item) use ($storageService, $authUser,$mediaService) {
+                ->map(function ($item) use ($storageService, $authUser, $mediaService) {
 
                     $packageTitle = '';
                     $profileName = '';
@@ -144,7 +144,7 @@ class BookingController extends Controller
                         'profileImage' => $profileImage,
                         'profileName' => $profileName,
                         'totalSession' => $totalSession,
-                        'leftSession' => $leftSession,
+                        'leftSession' => $leftSession < 0 ? 0 : $leftSession,
                         'status' => $status,
                         'date' => $date,
                         'readableDate' => $readableDate,
