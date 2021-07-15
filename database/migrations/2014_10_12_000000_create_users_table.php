@@ -27,6 +27,7 @@ class CreateUsersTable extends Migration
             $table->bigInteger('activity_status_id')->default(1);
             $table->string('activity_status_reason')->nullable();
             $table->bigInteger('star_status_id')->nullable();
+            $table->bigInteger('badge_id')->default(1);
 
             $table->softDeletes();
             $table->rememberToken();

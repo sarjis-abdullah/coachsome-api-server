@@ -41,6 +41,7 @@ class UserListTransformer extends Fractal\TransformerAbstract
         $lastName =  $item->last_name;
         $email =  $item->email;
         $ranking =  $item->ranking;
+        $badgeId =  $item->badge_id;
         $date = date('d-m-y', strtotime($item->created_at));
 
         $image = null;
@@ -83,6 +84,7 @@ class UserListTransformer extends Fractal\TransformerAbstract
             'fullName' => $fullName,
             'status'=> $statusText,
             'ranking'=> $ranking,
+            'badgeId'=> $badgeId,
             'booking'=> 0,
             'declined'=> 0,
             'packageCount'=> $packageCount,

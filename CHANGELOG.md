@@ -1,12 +1,10 @@
-## [dev (for new nuxt) ] 
+## [dev] 
 
-### Added
-- php artisan update:db
+### CMD
+- php artisan migrate --path=database/migrations/2021_07_13_130658_create_badges_table.php
+- php artisan db:seed BadgesTableSeeder
+- add coumn badge_id at users table default value 1
 
-### Update
-- Update env
-- Update translation brand logo path 'email_verification_content'
-  https://api.dev.coachsome.com/server/public/assets/images/logo.png
 
 
 

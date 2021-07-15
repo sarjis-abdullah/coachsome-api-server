@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Data\Constants;
 use App\Data\StatusCode;
+use App\Entities\Badge;
 use App\Entities\Distance;
 use App\Entities\Gallery;
 use App\Entities\Language;
@@ -328,6 +329,7 @@ class ProfileController extends Controller
                 $userInfo->firstName = $user->first_name;
                 $userInfo->lastName = $user->last_name;
                 $userInfo->email = $user->email;
+                $userInfo->badgeKey = Badge::find($user->badge_id)->key ?? "";
 
                 $socialAccount = SocialAccount::where('user_id', $user->id)->first();
                 if ($socialAccount) {

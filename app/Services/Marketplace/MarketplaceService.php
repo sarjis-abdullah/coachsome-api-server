@@ -6,10 +6,12 @@ namespace App\Services\Marketplace;
 
 use App\Data\Constants;
 use App\Data\RoleData;
+use App\Entities\Badge;
 use App\Entities\Currency;
 use App\Entities\SportCategory;
 use App\Entities\User;
 use App\Entities\UserSetting;
+use App\Http\Resources\Badge\BadgeResource;
 use App\Services\CurrencyService;
 use App\Services\Locale\LocaleService;
 use App\Services\Media\MediaService;
@@ -291,6 +293,9 @@ class MarketplaceService
                 // Review
                 $coach->rating = $reviewService->overallStarRating($item);
                 $coach->countReview = $reviewService->totalReviewer($item);
+
+                // Badge
+                $coach->badge = new BadgeResource(Badge::find($item->badge_id));
 
                 // User name
                 $coach->userName = $item->user_name ?? '';

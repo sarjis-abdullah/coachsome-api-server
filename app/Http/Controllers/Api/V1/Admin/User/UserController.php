@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Api\V1\Admin\User;
 
 use App\Data\Constants;
 use App\Entities\ActivityStatus;
+use App\Entities\Badge;
 use App\Entities\Profile;
 use App\Entities\StarStatus;
 use App\Entities\User;
 use App\Entities\UserLog;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Badge\BadgeResource;
 use App\Services\TransformerService;
 use App\Transformers\Admin\User\UserListTransformer;
 use App\Transformers\Admin\User\UserTransformer;
@@ -42,30 +44,9 @@ class UserController extends Controller
         $response['users'] = $transformedUserList;
         $response['activityStatusList'] = $activityStatusList;
         $response['starStatusList'] = $starStatusList;
+        $response['badges'] = BadgeResource::collection(Badge::all());
 
         return $response;
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
@@ -96,6 +77,7 @@ class UserController extends Controller
             $email = $request->email;
             $mobileCode = $request->phoneCode;
             $mobileNumber = $request->phoneNumber;
+            $badgeId = $request->badgeId;
             $ranking = $request->ranking;
             $starStatusId = $request->starStatusId;
             $skillLevelValue = $request->skillLevelValue;
@@ -126,6 +108,7 @@ class UserController extends Controller
             $user->activity_status_id = $activityStatusId;
             $user->activity_status_reason = $activityStatusReason;
             $user->ranking = $ranking;
+            $user->badge_id = $badgeId;
             if($email){
                 $user->email = $email;
             }
