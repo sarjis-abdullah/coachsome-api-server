@@ -79,7 +79,7 @@ class BookingTimeController extends Controller
                 throw new \Exception('Sorry! booking information not found.');
             }
 
-            if (!$zip || !$city || !$address || !$long || !$lat) {
+            if (!$city || !$address || !$long || !$lat) {
                 throw new \Exception('Location is not selected correctly');
             }
 
