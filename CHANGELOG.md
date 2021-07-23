@@ -1,4 +1,4 @@
-## [dev,test] 
+## [dev,test,master] 
 
 ### CMD
 - php artisan migrate --path=database/migrations/2021_07_13_130658_create_badges_table.php

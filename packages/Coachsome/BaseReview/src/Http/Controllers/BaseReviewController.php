@@ -53,12 +53,17 @@ class BaseReviewController extends Controller
                     $facebookRatingCount += $review->rating_count;
                     $facebookTotalRating += $review->overall_star_rating;
                     $reviewerItems = json_decode($review->reviewers, true);
+                    $revieweeUser = $review->user;
                     foreach ($reviewerItems as $reviewer) {
                         $fbReviews[] = [
                             'title' => $reviewer['title'],
                             'description' => array_key_exists("description", $reviewer) ? $reviewer['description'] : "",
                             'rating' => $reviewer['rating'],
                             'image' => array_key_exists("image", $reviewer) ? $reviewer['image'] : "",
+                            'reviewee' => [
+                                'userName' => $revieweeUser->user_name ?? '',
+                                'profileName' => $revieweeUser->profile->profile_name ?? '',
+                            ],
                             'date' => "",
                         ];
                     }
@@ -74,6 +79,7 @@ class BaseReviewController extends Controller
                     $name = "";
                     $image = null;
                     $reviewerUser = User::find($item->reviewer_id);
+                    $revieweeUser = User::find($item->user_id);
 
                     if ($reviewerUser) {
                         $name = $reviewerUser->first_name . " " . $reviewerUser->last_name;
@@ -84,6 +90,10 @@ class BaseReviewController extends Controller
                         "description" => $item->text ?? "",
                         "image" => $image,
                         "rating" => $item->rating,
+                        'reviewee' => [
+                            'userName' => $revieweeUser->user_name ?? '',
+                            'profileName' => $revieweeUser->profile->profile_name ?? '',
+                        ],
                         "date" => date('d/m/Y', strtotime($item->created_at)),
                     ];
                 })->values();
@@ -92,7 +102,7 @@ class BaseReviewController extends Controller
                 $baseOverallStarRating = $baseTotalRating / $baseRatingCount;
             }
 
-            $data["overallRating"] = round(($facebookOverallStarRating + $baseOverallStarRating) / $reviewPart,1);
+            $data["overallRating"] = round(($facebookOverallStarRating + $baseOverallStarRating) / $reviewPart, 1);
             $data["totalReviewerCount"] = $facebookRatingCount + $baseRatingCount;
 
             $collection = collect($baseReviews);
@@ -137,7 +147,7 @@ class BaseReviewController extends Controller
 
             $baseReviews = $baseReviewRepository->findWhere(['user_id' => $authUser->id]);
             $baseReviewCollection = collect($baseReviews);
-            $data["overallRating"] =$reviewService->overallStarRating($authUser);
+            $data["overallRating"] = $reviewService->overallStarRating($authUser);
             $data["reviewerCount"] = $reviewService->totalReviewer($authUser);
 
             $data["reviewerAnalysis"]["maxReviewer"] = $data["reviewerCount"];
