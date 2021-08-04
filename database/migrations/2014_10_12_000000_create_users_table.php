@@ -23,6 +23,7 @@ class CreateUsersTable extends Migration
             $table->string('password')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->boolean('verified')->default(0);
+            $table->boolean('is_online')->default(0);
             $table->boolean('agree_to_terms')->default(1);
             $table->bigInteger('activity_status_id')->default(1);
             $table->string('activity_status_reason')->nullable();

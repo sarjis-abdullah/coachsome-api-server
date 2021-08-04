@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Console\Commands\CreateWeek;
 use App\Console\Commands\GenerateBalanceEarning;
 use App\Console\Commands\InsertBookingSetting;
+use App\Console\Commands\RunWorker;
 use App\Console\Commands\SetRole;
 use App\Console\Commands\UpdateDB;
 use Illuminate\Console\Scheduling\Schedule;
@@ -22,7 +23,8 @@ class Kernel extends ConsoleKernel
         SetRole ::class,
         GenerateBalanceEarning::class,
         InsertBookingSetting::class,
-        UpdateDB::class
+        UpdateDB::class,
+        RunWorker::class
     ];
 
     /**
@@ -35,6 +37,12 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('create:week')
             ->weekly();
+
+        if(env('APP_SERVER_DOMAIN') != 'https://api.coachsome.com'){
+            $schedule->command('run:worker')
+                ->everyMinute();
+        }
+
     }
 
     /**

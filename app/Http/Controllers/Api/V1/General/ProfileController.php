@@ -31,13 +31,16 @@ use App\Transformers\Language\LanguagesTransformer;
 use App\Transformers\Tag\TagsTransformer;
 use Coachsome\BaseReview\Repositories\BaseReviewRepository;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\ResourceAbstract;
 use PeterColes\Countries\CountriesFacade;
 use stdClass;
 
@@ -51,57 +54,62 @@ class ProfileController extends Controller
      */
     public function index(Request $request)
     {
-        $response = [];
+        try {
+            $response = [];
 
-        $languageCode = $request->header('Language-Code');
+            $languageCode = $request->header('Language-Code');
 
-        $mediaService = new MediaService();
+            $mediaService = new MediaService();
 
-        $transformerService = new TransformerService();
+            $transformerService = new TransformerService();
 
-        $user = Auth::user()->load(['profile', 'sportCategories']);
-        $profile = $user->profile;
-        if (!$profile) {
-            $profile = new Profile();
-            $profile->user_id = $user->id;
-            $profile->profile_name = $user->first_name . " " . $user->last_name;
-            $profile->save();
+            $user = Auth::user()->load(['profile', 'sportCategories']);
+            $profile = $user->profile;
+            if (!$profile) {
+                $profile = new Profile();
+                $profile->user_id = $user->id;
+                $profile->profile_name = $user->first_name . " " . $user->last_name;
+                $profile->save();
+            }
+
+            $response['countryList'] = [];
+
+            $response['image'] = $mediaService->getImages($user);
+            $response['profile_name'] = $profile->profile_name ?? '';
+            $response['about_me'] = $profile->about_me ?? '';
+            $response['mobile_no'] = $profile->mobile_no ?? '';
+            $response['mobile_code'] = $profile->mobile_code ?? '';
+            $response['birth_day'] = $profile->birth_day ?? '';
+            $response['social_acc_fb_link'] = $profile->social_acc_fb_link ?? '';
+            $response['social_acc_twitter_link'] = $profile->social_acc_twitter_link ?? '';
+            $response['social_acc_instagram_link'] = $profile->social_acc_instagram_link ?? '';
+            $response['initial_image_content'] = strtoupper(mb_substr($user->first_name, 0, 1)) . strtoupper(mb_substr($user->last_name, 0, 1));
+
+            // User Info
+            $response['user'] = $user->info();
+
+            // Language
+            $languages = Language::get();
+            $transformedLanguages = $transformerService->getTransformedData(new Collection($languages, new LanguagesTransformer($languageCode)));
+            $transformedSelectedLanguages = $transformerService->getTransformedData(new Collection($user->languages, new LanguagesTransformer($languageCode)));
+            $response['languages'] = collect($transformedLanguages)->sortBy('name')->values();
+            $response['selectedLanguages'] = collect($transformedSelectedLanguages)->values();
+
+            // Tag
+            $response['selectedSportTags'] = new SportTagCollection($user->sportTags);
+
+            // Category
+            $categories = SportCategory::get();
+            $transformedCategories = $transformerService->getTransformedData(new Collection($categories, new CategoriesTransformer($languageCode)));
+            $transformedSelectedCategories = $transformerService->getTransformedData(new Collection($user->sportCategories, new CategoriesTransformer($languageCode)));
+            $response['selectedCategories'] = collect($transformedSelectedCategories)->values();
+            $response['sport_category'] = collect($transformedCategories)->sortBy('name')->values();
+
+            return $response;
+        } catch (Exception $e) {
+            return response(['message'=>$e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $response['countryList'] = [];
-
-        $response['image'] = $mediaService->getImages($user);
-        $response['profile_name'] = $profile->profile_name ?? '';
-        $response['about_me'] = $profile->about_me ?? '';
-        $response['mobile_no'] = $profile->mobile_no ?? '';
-        $response['mobile_code'] = $profile->mobile_code ?? '';
-        $response['birth_day'] = $profile->birth_day ?? '';
-        $response['social_acc_fb_link'] = $profile->social_acc_fb_link ?? '';
-        $response['social_acc_twitter_link'] = $profile->social_acc_twitter_link ?? '';
-        $response['social_acc_instagram_link'] = $profile->social_acc_instagram_link ?? '';
-        $response['initial_image_content'] = strtoupper(substr($user->first_name, 0, 1)) . strtoupper(substr($user->last_name, 0, 1));
-
-        // User Info
-        $response['user'] = $user->info();
-
-        // Language
-        $languages = Language::get();
-        $transformedLanguages = $transformerService->getTransformedData(new Collection($languages, new LanguagesTransformer($languageCode)));
-        $transformedSelectedLanguages = $transformerService->getTransformedData(new Collection($user->languages, new LanguagesTransformer($languageCode)));
-        $response['languages'] = collect($transformedLanguages)->sortBy('name')->values();
-        $response['selectedLanguages'] = collect($transformedSelectedLanguages)->values();
-
-        // Tag
-        $response['selectedSportTags'] = new SportTagCollection($user->sportTags);
-
-        // Category
-        $categories = SportCategory::get();
-        $transformedCategories = $transformerService->getTransformedData(new Collection($categories, new CategoriesTransformer($languageCode)));
-        $transformedSelectedCategories = $transformerService->getTransformedData(new Collection($user->sportCategories, new CategoriesTransformer($languageCode)));
-        $response['selectedCategories'] = collect($transformedSelectedCategories)->values();
-        $response['sport_category'] = collect($transformedCategories)->sortBy('name')->values();
-
-        return $response;
     }
 
     /**

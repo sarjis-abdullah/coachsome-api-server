@@ -5,8 +5,8 @@ Route::get('auth/login/{provider}', 'SocialAuthController@redirectToProvider');
 Route::get('auth/login/{provider}/callback', 'SocialAuthController@handleProviderCallback');
 
 // Email Template
-Route::get('emails/pendingBookingRequest', function () {
-    return view("emails.pendingBookingRequest");
+Route::get('emails/newTextMessage', function () {
+    return view("emails.newTextMessage");
 });
 
 Route::get('emails/baseReviewRequest', function () {

@@ -6,17 +6,19 @@ use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\Contact;
 use App\Entities\Message;
+use App\Entities\PendingNotification;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
+use App\Jobs\NewMessageInformer;
+use App\Notifications\NewTextMessage;
 use App\Services\BookingService;
 use App\Services\ContactService;
 use App\Services\MessageFormatterService;
 use Carbon\Carbon;
-use Exception;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MessageController extends Controller
@@ -119,8 +121,20 @@ class MessageController extends Controller
             $message->structure_content = $type == 'structure' ? json_encode($messageContent) : null;
             $message->date_time = Carbon::now();
             $message->date_time_iso = $createdAt;
-
             $message->save();
+
+            // Disconnected user pending for a mail notification
+            if (!$receiverUser->is_online) {
+                $job = (new NewMessageInformer($receiverUser,$message))->delay(now()->addMinutes(1));
+                $jobId = $this->dispatch(
+                    $job
+                );
+                $pendingNotification = new PendingNotification();
+                $pendingNotification->user_id = $receiverUser->id;
+                $pendingNotification->job_id = $jobId;
+                $pendingNotification->save();
+            }
+
 
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
 
