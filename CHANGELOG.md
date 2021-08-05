@@ -6,6 +6,7 @@
 - add QUEUE_CONNECTION=database to env
 - add jobs table
 - add pending_notifications table
+- add translation email_new_txt_message
 
 ## [dev,test,master] 
 
