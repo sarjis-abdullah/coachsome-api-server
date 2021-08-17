@@ -7,6 +7,8 @@
 - add jobs table
 - add pending_notifications table
 - add translation email_new_txt_message
+### CMD
+- composer dump-autoload
 
 ## [dev,test,master] 
 

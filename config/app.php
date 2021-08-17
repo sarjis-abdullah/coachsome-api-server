@@ -8,7 +8,7 @@ return [
             'country_code' => 'GB'
         ],
         'da' => [
-            'lang_code' => 'en',
+            'lang_code' => 'da',
             'country_code' => 'DK'
         ],
         'sv' => [

@@ -31,7 +31,7 @@ class UserService
             $userName .= '.' . strtolower(explode(" ", $lastName)[0]);
         }
 
-        $countUser = User::whereRaw("user_name REGEXP '^{$userName}(-[0-9]*)?$'")->count();
+        $countUser = User::whereRaw("user_name REGEXP '^{$userName}(\.[0-9]*)?$'")->count();
 
         if (($countUser + 1) > 1) {
             $suffix = $countUser + 1;
