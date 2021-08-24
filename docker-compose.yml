@@ -13,7 +13,7 @@ services:
     volumes:
       - ./:/var/www
     networks:
-      - coachsome-networks
+      - coachsome-network
 
   db:
     image: mysql:5.7
@@ -27,9 +27,10 @@ services:
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     volumes:
+      - dbdata:/var/lib/mysql
       - ./docker/mysql/my.cnf:/etc/mysql/my.cnf
     networks:
-      - coachsome-networks
+      - coachsome-network
 
   nginx:
     image: nginx:alpine
@@ -41,10 +42,10 @@ services:
       - ./:/var/www
       - ./docker/nginx:/etc/nginx/conf.d/
     networks:
-      - coachsome-networks
+      - coachsome-network
 
   phpmyadmin:
-    container_name: phpmyadmin
+    container_name: coachsome-phpmyadmin
     image: phpmyadmin/phpmyadmin
     ports:
       - "7000:80"
@@ -53,9 +54,15 @@ services:
     environment:
       UPLOAD_LIMIT: 3000000000
     networks:
-      - coachsome-networks
+      - coachsome-network
 
 
+#Docker Networks
 networks:
-  coachsome-networks:
+  coachsome-network:
     driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local

@@ -51,8 +51,8 @@ class QuickpayController extends Controller
             $totalPerPerson = $request->totalPerPerson;
             $salePrice = $request->salePrice;
             $paymentMethod = $request->paymentMethod;
-            $continueUrl = $request->continueUrl;
-            $cancelUrl = $request->cancelUrl;
+            $continueUrl = $request->packageUrl . "?payment_status=paid";
+            $cancelUrl = $request->packageUrl . "?payment_status=cancel";
 
             $package = Package::with(['category', 'details', 'user'])
                 ->where('id', $packageId)
@@ -153,9 +153,10 @@ class QuickpayController extends Controller
 
 
                 // Issue a put request to create payment link
+                $modifiedContinueUrl= $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
                 $linkRequest = $client->request->put($endpoint, [
                     'amount' => $totalAmount * 100,
-                    'continue_url' => $continueUrl,
+                    'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
                     'cancel_url' => $cancelUrl,
                     'auto_capture' => $isQuickBooking ? true : false
                 ]);
@@ -178,7 +179,7 @@ class QuickpayController extends Controller
 
                     return response()->json(
                         [
-                            'bookingId'=> $booking->id,
+                            'bookingId' => $booking->id,
                             'link' => $linkRequest->asObject()->url
                         ]
                     );
@@ -198,7 +199,8 @@ class QuickpayController extends Controller
             }
 
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'line' => $e->getLine()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
@@ -208,7 +210,7 @@ class QuickpayController extends Controller
         $bookingId = $request->bookingId;
         try {
             $booking = Booking::find($bookingId);
-            if(!$booking){
+            if (!$booking) {
                 throw new Exception('Sorry, we can not notify to the coach');
             }
 
@@ -229,7 +231,7 @@ class QuickpayController extends Controller
                 $contactService->resetContactNewMessageCount($packageBuyerUser, $packageOwnerUser);
             }
 
-            if($booking->is_quick_booking ){
+            if ($booking->is_quick_booking) {
                 Mail::to($packageOwnerUser)->send(new CoachPackageConfirmation($booking));
                 Mail::to($packageBuyerUser)->send(new AthletePackageConfirmation($booking));
             } else {
@@ -237,7 +239,7 @@ class QuickpayController extends Controller
                 Mail::to($packageOwnerUser)->send(new CoachPendingPackageRequest($packageOwnerUser, $packageBuyerUser, $order));
             }
 
-        } catch (Exception $e){
+        } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
