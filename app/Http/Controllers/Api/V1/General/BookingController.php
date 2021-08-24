@@ -307,6 +307,13 @@ class BookingController extends Controller
             $bookingId = $request->bookingId;
             $action = $request->action;
 
+            // Tracking pixel track the package that accepted
+            $trackingPixel = [
+                'status' => false,
+                'orderKey'=> '',
+                'salePrice'=> 0.00
+            ];
+
             $booking = Booking::find($bookingId);
             if (!$booking) {
                 throw new \Exception('Booking information not found', 101);
@@ -352,6 +359,11 @@ class BookingController extends Controller
 
             // Accept
             if ($action == 'accept') {
+
+                // Tracking pixel only assign when accept a package request
+                $trackingPixel['status'] = true;
+                $trackingPixel['orderKey'] = $order->key;
+                $trackingPixel['salePrice'] = $order->package_sale_price;
 
                 $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
                     'amount' => $order->total_amount * 100
@@ -431,6 +443,7 @@ class BookingController extends Controller
             });
 
             return response()->json([
+                'trackingPixel'=> $trackingPixel,
                 'message' => $responseMessage,
                 'messages' => $messages,
                 'newMessage' => $messageFormatterService->doFormat($newMessage)
