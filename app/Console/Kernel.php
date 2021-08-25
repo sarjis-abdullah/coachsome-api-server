@@ -37,9 +37,6 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('create:week')
             ->weekly();
-
-        $schedule->command('run:worker')
-            ->everyMinute();
     }
 
     /**

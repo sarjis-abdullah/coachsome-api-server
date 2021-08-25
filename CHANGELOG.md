@@ -1,5 +1,5 @@
 
-## [dev,test]
+## [dev,test,master]
 
 ### Add
 - add field is_online at users table default value 0
