@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\AthletePackageConfirmation;
 use App\Mail\CoachPackageConfirmation;
 use App\Mail\CoachPendingPackageRequest;
+use App\Mail\NewOrderCapture;
 use App\Mail\PackageAccepted;
 use App\Mail\AthletePendingPackageRequest;
 use App\Services\BookingService;
@@ -176,6 +177,11 @@ class QuickpayController extends Controller
                     $contactService->create($packageOwnerUser, $packageBuyerUser);
 
                     DB::commit();
+
+                    // Mail to administrator
+                    if($isQuickBooking){
+                        Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
+                    }
 
                     return response()->json(
                         [

@@ -17,6 +17,7 @@ use App\Http\Resources\Profile\ProfileCardResource;
 use App\Mail\AthleteDeclinedPackage;
 use App\Mail\AthletePackageConfirmation;
 use App\Mail\CoachPackageConfirmation;
+use App\Mail\NewOrderCapture;
 use App\Mail\PackageAccepted;
 use App\Services\BookingService;
 use App\Services\ContactService;
@@ -374,8 +375,11 @@ class BookingController extends Controller
                     $booking->status = BookingStatus::ACCEPTED;
                     $booking->date_of_acceptance = date('Y-m-d H:i:s');
                     $booking->save();
-                    Mail::to($packageOwnerUser)->send(new CoachPackageConfirmation($booking));
-                    Mail::to($packageBuyerUser)->send(new AthletePackageConfirmation($booking));
+                    // Mail to users
+                    Mail::to($packageOwnerUser)->queue(new CoachPackageConfirmation($booking));
+                    Mail::to($packageBuyerUser)->queue(new AthletePackageConfirmation($booking));
+                    // Mail to administrator
+                    Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
                 } else {
                     throw new \Exception('Payment is not captured properly, try again', 106);
                 }

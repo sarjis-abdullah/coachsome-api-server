@@ -91,14 +91,17 @@ class CurrencyService
 
     public function format($amount, $code)
     {
-        if ($code == 'EUR') {
+        if ($code == 'SEK') {
+            $formatter = new \NumberFormatter('sv_SE', \NumberFormatter::CURRENCY);
+            $formatter->setSymbol(NumberFormatter::GROUPING_SEPARATOR_SYMBOL, '.');
+            $formatter->setPattern('#,##0.## kr');
+        } elseif ($code == 'EUR') {
             $formatter = new \NumberFormatter('en_GB', \NumberFormatter::CURRENCY);
-            return $formatter->formatCurrency($amount, 'EUR') . PHP_EOL;
         } else {
             $formatter = new \NumberFormatter('da_DK', \NumberFormatter::CURRENCY);
-            return $formatter->formatCurrency($amount, 'DKK') . PHP_EOL;
-
         }
+
+        return $formatter->formatCurrency($amount, 'DKK');
     }
 
     /**
