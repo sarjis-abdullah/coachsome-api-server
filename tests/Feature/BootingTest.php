@@ -16,6 +16,6 @@ class BootingTest extends TestCase
     public function testBootingApi()
     {
         $response = $this->get("/api/booting");
-        $response->assertStatus(200);
+        $response->assertJsonStructure(['translation']);
     }
 }
