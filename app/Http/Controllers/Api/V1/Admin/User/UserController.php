@@ -140,6 +140,7 @@ class UserController extends Controller
             $mobileCode = $request->phoneCode;
             $mobileNumber = $request->phoneNumber;
             $badgeId = $request->badgeId;
+            $roleId = $request->roleId;
             $ranking = $request->ranking;
             $starStatusId = $request->starStatusId;
             $skillLevelValue = $request->skillLevelValue;
@@ -177,6 +178,14 @@ class UserController extends Controller
                 $user->email = $email;
             }
             $user->save();
+
+            // Update role
+            if($roleId){
+                $role = Role::find($roleId);
+                if($role) {
+                    $user->syncRoles([$role->id]);
+                }
+            }
 
             // User log
             UserLog::createByUser($user);
