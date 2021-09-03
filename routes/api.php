@@ -198,6 +198,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['auth:api', 'isAdmin']], function () {
         Route::apiResource('users', 'User\UserController');
         Route::apiResource('userLogs', 'User\UserLogController');
+        Route::apiResource('promoCodes', 'PromoCode\PromoCodeController');
 
         Route::get('payout/requests', 'Payout\PayoutRequestController@index');
         Route::post('payout/requests/paid', 'Payout\PayoutRequestController@paid');
