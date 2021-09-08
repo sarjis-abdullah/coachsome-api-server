@@ -41,7 +41,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::post('pendingBookings/confirm', 'PendingBookingController@confirm');
 
         // Bookings
-        Route::post('bookings', 'BookingController@index');
+        Route::get('bookings', 'BookingController@index');
 
         // Translation
         Route::get('translations', "TranslationController@index");

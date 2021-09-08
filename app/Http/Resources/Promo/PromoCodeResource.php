@@ -19,7 +19,9 @@ class PromoCodeResource extends JsonResource
             'name'=> $this->name,
             'code'=> $this->code,
             'discount'=> $this->discount_amount,
-            'duration'=> $this->duration_type_id,
+            'duration'=> $this->promo_duration_id,
+            'percentageOff'=> $this->percentage_off,
+            'currency'=> $this->currency_id,
             'totalUsed'=> null,
             'type'=> $this->promo_type_id,
         ];

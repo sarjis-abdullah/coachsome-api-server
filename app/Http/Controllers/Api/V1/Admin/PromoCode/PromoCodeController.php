@@ -9,6 +9,7 @@ use App\Entities\PromoDuration;
 use App\Entities\PromoType;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Currency\CurrencyCollection;
+use App\Http\Resources\Promo\PromoCodeCollection;
 use App\Http\Resources\Promo\PromoCodeResource;
 use App\Http\Resources\Promo\PromoDurationCollection;
 use App\Http\Resources\Promo\PromoTypeCollection;
@@ -35,6 +36,7 @@ class PromoCodeController extends Controller
             $data['currencies'] = new CurrencyCollection(Currency::all());
             $data['durations'] = new PromoDurationCollection(PromoDuration::all());
             $data['types'] = new PromoTypeCollection(PromoType::all());
+            $data['promoCodes'] = new PromoCodeCollection(PromoCode::orderBy('created_at', 'DESC')->get());
             return response($data, StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
@@ -52,7 +54,10 @@ class PromoCodeController extends Controller
         try {
             $request->validate([
                 'name' => 'required',
-                'code' => 'required',
+                'code' => [
+                    'required',
+                    Rule::unique('promo_codes'),
+                ],
                 'currency' => 'nullable|numeric',
                 'discount' => 'nullable|numeric',
                 'percentageOff' => 'nullable|numeric',
@@ -70,7 +75,7 @@ class PromoCodeController extends Controller
             $promoCode->save();
 
             return response([
-                'promoCode'=> new PromoCodeResource($promoCode)
+                'promoCode' => new PromoCodeResource($promoCode)
             ], StatusCode::HTTP_OK);
 
 
@@ -104,7 +109,44 @@ class PromoCodeController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        try {
+            $request->validate([
+                'id' => 'required',
+                'name' => 'required',
+                'code' => 'required',
+                'currency' => 'nullable|numeric',
+                'discount' => 'nullable|numeric',
+                'percentageOff' => 'nullable|numeric',
+                'type' => 'numeric',
+                'duration' => 'numeric',
+            ]);
+
+            $promoCode = PromoCode::find($request['id']);
+            if (!$promoCode) {
+                throw new \Exception('PromoCode not found');
+            }
+            $promoCode->code = $request['code'];
+            $promoCode->name = $request['name'];
+            $promoCode->promo_type_id = $request['type'];
+            $promoCode->promo_duration_id = $request['duration'];
+            $promoCode->currency_id = $request['currency'];
+            $promoCode->discount_amount = $request['discount'];
+            $promoCode->percentage_off = $request['percentageOff'];
+            $promoCode->save();
+
+            return response([
+                'promoCode' => new PromoCodeResource($promoCode)
+            ], StatusCode::HTTP_OK);
+
+
+        } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                return response()->json([
+                    'message' => $e->validator->errors()->first()
+                ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
     /**
@@ -115,6 +157,15 @@ class PromoCodeController extends Controller
      */
     public function destroy($id)
     {
-        //
+        try {
+            $promoCode = PromoCode::find($id);
+            if (!$promoCode) {
+                throw new \Exception('PromoCode not found');
+            }
+            $promoCode->delete();
+            return response([], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 }
