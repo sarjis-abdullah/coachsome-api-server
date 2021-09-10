@@ -5,6 +5,7 @@ namespace App\Services;
 
 
 use App\Data\OrderStatus;
+use App\Entites\PromoUser;
 
 class OrderService
 {
@@ -20,15 +21,26 @@ class OrderService
 
     public function grandTotal($order)
     {
-        return $this->totalPrice($order) + $this->serviceFee($order);
+        return $this->totalPrice($order) + $this->serviceFee($order) - $this->promoDiscount($order);
+    }
+
+    public function promoDiscount($order)
+    {
+        return $order->promo_discount;
+    }
+
+    public function promoCode($order)
+    {
+        $promoUser = PromoUser::where('order_id', $order->id)->first();
+        return $promoUser ? $promoUser->code : "";
     }
 
     public function vat($order)
     {
         $rate = 0.00;
         $booking = $order->booking;
-        if($booking){
-            $rate = $booking->hereof_vat_snapshot ? $booking->hereof_vat_snapshot/100 : 0.00;
+        if ($booking) {
+            $rate = $booking->hereof_vat_snapshot ? $booking->hereof_vat_snapshot / 100 : 0.00;
         }
         return $this->grandTotal($order) * $rate;
     }
@@ -43,7 +55,7 @@ class OrderService
         return $order->number_of_attendees;
     }
 
-    public function updateOrderStatusBasedOnPaymentStatus($order,$paymentObject)
+    public function updateOrderStatusBasedOnPaymentStatus($order, $paymentObject)
     {
         // Rejected condition
         if (!$paymentObject->accepted) {

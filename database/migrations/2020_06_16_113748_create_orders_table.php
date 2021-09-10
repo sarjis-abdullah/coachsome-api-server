@@ -23,6 +23,7 @@ class CreateOrdersTable extends Migration
             $table->integer('number_of_attendees')->nullable();
             $table->decimal('package_sale_price', 20, 2)->nullable();
             $table->decimal('total_per_person', 20, 2)->nullable();
+            $table->decimal('promo_discount', 20, 2)->nullable();
             $table->string('currency' );
             $table->decimal('total_amount', 20, 2);
             $table->decimal('service_fee', 20, 2);

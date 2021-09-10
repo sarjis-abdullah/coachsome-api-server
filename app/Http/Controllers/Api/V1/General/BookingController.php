@@ -61,13 +61,11 @@ class BookingController extends Controller
 
             $packageId = $request->packageId;
             $requestedCurrencyCode = $request->header('Currency-Code');
-
             if (!$requestedCurrencyCode) {
                 throw new \Exception('Currency not found');
             }
 
             $package = Package::find($packageId);
-
             if (!$package) {
                 throw new Exception('Package not found');
             }
@@ -75,7 +73,6 @@ class BookingController extends Controller
             $packageOwnerUser = $package->user;
             $packageCategory = $package->category;
             $userPackageSetting = $packageOwnerUser->ownPackageSetting;
-
             if (!$packageOwnerUser) {
                 throw new \Exception('Package owner user not found');
             }
@@ -84,12 +81,8 @@ class BookingController extends Controller
             $currencyService = new CurrencyService();
             $mediaService = new MediaService();
 
-            $fromCurrencyCode = $currencyService->getUserCurrency($packageOwnerUser)->code;
             $toCurrencyCode = $requestedCurrencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
 
-            $discount = $package->details->discount ?? 0.00;
-            $originalPrice = $packageService->calculateOriginalPrice($packageOwnerUser, $package);
-            $salePrice = $packageService->calculatePackageSalePrice($originalPrice, $discount);
             if ($packageCategory && $packageCategory->id == Constants::PACKAGE_CAMP_ID) {
                 $minPerson = $package->details->attendees_min;
                 $maxPerson = $package->details->attendees_max;
@@ -98,22 +91,15 @@ class BookingController extends Controller
                 $maxPerson = 1;
             }
 
-            $salePriceAfterConvertingCurrency = $currencyService->convert(
-                $salePrice,
-                $fromCurrencyCode,
-                $toCurrencyCode
-            );
-
-            $serviceFee = round((5 / 100) * $salePriceAfterConvertingCurrency, 2);
-            $total = round(($salePriceAfterConvertingCurrency + $serviceFee), 2);
-            $totalPerPerson = round((1 * ($salePriceAfterConvertingCurrency + $serviceFee)), 2);
+            // Package charge info
+            $chargeInfo = $packageService->chargeInformation($package,$toCurrencyCode,['promoCode'=>$request['promoCode']]);
 
             $chargeBox = new \stdClass();
-            $chargeBox->priceForPackage = $salePriceAfterConvertingCurrency;
-            $chargeBox->totalPerPerson = $totalPerPerson;
-            $chargeBox->total = $total;
-            $chargeBox->salePrice = round($salePriceAfterConvertingCurrency, 2);
-            $chargeBox->serviceFee = $serviceFee;
+            $chargeBox->priceForPackage = $chargeInfo['salePrice'];
+            $chargeBox->totalPerPerson = $chargeInfo['totalPerPerson'];
+            $chargeBox->total = $chargeInfo['total'];
+            $chargeBox->salePrice =$chargeInfo['salePrice'];
+            $chargeBox->serviceFee = $chargeInfo['serviceFee'];
             $chargeBox->minPerson = $minPerson;
             $chargeBox->maxPerson = $maxPerson;
 
@@ -128,23 +114,12 @@ class BookingController extends Controller
             if ($promoCode) {
                 $promoCodeInfo['valid'] = true;
                 $promoCodeInfo['value'] = $promoCode->code;
-                if ($promoCode->promo_type_id == Promo::TYPE_ID_FIXED) {
-                    $promoCodeCurrency = Currency::find($promoCode->currency_id);
-                    $promoCodeInfo['amount'] = $currencyService->convert(
-                        $promoCode->discount_amount,
-                        $promoCodeCurrency->code,
-                        $toCurrencyCode
-                    );
-                    $chargeBox->total -= $promoCodeInfo['amount'];
-                } else {
-                    $discount = ($promoCode->percentage_off / 100) * $chargeBox->total;
-                    $promoCodeInfo['amount'] = $discount;
-                    $chargeBox->total -= $discount;
-                }
+                $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
             } else {
                 $promoCodeInfo['message'] = 'This code is not found';
             }
 
+            // Availabilities
             $availabilities = $packageOwnerUser->availabilities;
 
             $packageInfo = new PackageResource($package);
