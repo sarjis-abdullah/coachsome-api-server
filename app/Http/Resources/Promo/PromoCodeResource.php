@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Promo;
 
+use App\Entites\PromoUser;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class PromoCodeResource extends JsonResource
@@ -22,7 +23,7 @@ class PromoCodeResource extends JsonResource
             'duration'=> $this->promo_duration_id,
             'percentageOff'=> $this->percentage_off,
             'currency'=> $this->currency_id,
-            'totalUsed'=> null,
+            'totalUsed'=> PromoUser::where('code', $this->code)->count(),
             'type'=> $this->promo_type_id,
         ];
     }
