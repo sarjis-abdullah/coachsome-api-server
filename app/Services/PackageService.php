@@ -115,12 +115,14 @@ class PackageService
             $totalPerPerson = round((1 * ($salePriceAfterConvertingCurrency + $serviceFee)), 2);
 
             $promoDiscount = 0.00;
-            if (array_key_exists('promoCode', $otherInfo)) {
+            if (array_key_exists('promoCode', $otherInfo) && array_key_exists('packageBuyerUser',$otherInfo)) {
                 $promoCode = PromoCode::where('code', $otherInfo['promoCode'])->first();
                 if ($promoCode) {
-                    $promoDiscount = $promoService->calculateDiscount($promoCode->code, $total, $toCurrencyCode);
-                    $total = $total - $promoDiscount;
-                    $totalPerPerson = $totalPerPerson - $promoDiscount;
+                    if(!$promoService->isExpired($promoCode, $otherInfo['packageBuyerUser'])){
+                        $promoDiscount = $promoService->calculateDiscount($promoCode->code, $total, $toCurrencyCode);
+                        $total = $total - $promoDiscount;
+                        $totalPerPerson = $totalPerPerson - $promoDiscount;
+                    }
                 }
             }
             $data['originalPrice'] = $originalPrice;

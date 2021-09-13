@@ -47,7 +47,8 @@ class QuickpayController extends Controller
                 'currency' => 'required',
                 'serviceFee' => 'required',
                 'totalAmount' => 'required',
-                'salePrice' => 'required'
+                'salePrice' => 'required',
+                'promoCode' => 'nullable'
             ]);
 
             $packageId = $request->packageId;
@@ -127,7 +128,7 @@ class QuickpayController extends Controller
             $booking->save();
 
             // Package charge info
-            $chargeInfo = $packageService->chargeInformation($package,$toCurrencyCode,['promoCode'=>$promoCodeValue]);
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $promoCodeValue, 'packageBuyerUser' => $packageBuyerUser]);
 
             // Creating order
             $order = new Order();
@@ -148,7 +149,7 @@ class QuickpayController extends Controller
             $order->key = $orderKey;
 
             $promoCode = PromoCode::where('code', $promoCodeValue)->first();
-            if($promoCode){
+            if ($promoCode) {
                 $promoUser = new PromoUser();
                 $promoUser->user_id = $packageBuyerUser->id;
                 $promoUser->order_id = $order->id;
@@ -183,7 +184,7 @@ class QuickpayController extends Controller
                 $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
 
                 // Issue a put request to create payment link
-                $modifiedContinueUrl= $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
+                $modifiedContinueUrl = $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
                 $linkRequest = $client->request->put($endpoint, [
                     'amount' => $totalAmount * 100,
                     'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
@@ -208,7 +209,7 @@ class QuickpayController extends Controller
                     DB::commit();
 
                     // Mail to administrator
-                    if($isQuickBooking){
+                    if ($isQuickBooking) {
                         Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
                     }
 

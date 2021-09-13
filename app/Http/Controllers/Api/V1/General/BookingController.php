@@ -29,6 +29,7 @@ use App\Services\Media\MediaService;
 use App\Services\MessageFormatterService;
 use App\Services\OrderService;
 use App\Services\PackageService;
+use App\Services\Promo\PromoService;
 use App\Services\QuickpayClientService;
 use App\ValueObjects\Message\BigText;
 use App\ValueObjects\Message\AcceptedPackageBooking;
@@ -78,6 +79,7 @@ class BookingController extends Controller
             }
 
             $packageService = new PackageService();
+            $promoService = new PromoService();
             $currencyService = new CurrencyService();
             $mediaService = new MediaService();
 
@@ -92,13 +94,13 @@ class BookingController extends Controller
             }
 
             // Package charge info
-            $chargeInfo = $packageService->chargeInformation($package,$toCurrencyCode,['promoCode'=>$request['promoCode']]);
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $request['promoCode'], 'packageBuyerUser' => Auth::user()]);
 
             $chargeBox = new \stdClass();
             $chargeBox->priceForPackage = $chargeInfo['salePrice'];
             $chargeBox->totalPerPerson = $chargeInfo['totalPerPerson'];
             $chargeBox->total = $chargeInfo['total'];
-            $chargeBox->salePrice =$chargeInfo['salePrice'];
+            $chargeBox->salePrice = $chargeInfo['salePrice'];
             $chargeBox->serviceFee = $chargeInfo['serviceFee'];
             $chargeBox->minPerson = $minPerson;
             $chargeBox->maxPerson = $maxPerson;
@@ -112,9 +114,13 @@ class BookingController extends Controller
             ];
             $promoCode = PromoCode::where('code', $request['promoCode'])->first();
             if ($promoCode) {
-                $promoCodeInfo['valid'] = true;
-                $promoCodeInfo['value'] = $promoCode->code;
-                $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
+                if(!$promoService->isExpired($promoCode, Auth::user())){
+                    $promoCodeInfo['valid'] = true;
+                    $promoCodeInfo['value'] = $promoCode->code;
+                    $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
+                } else {
+                    $promoCodeInfo['message'] = "This code is expired";
+                }
             } else {
                 $promoCodeInfo['message'] = 'This code is not found';
             }
