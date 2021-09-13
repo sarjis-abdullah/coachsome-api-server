@@ -1,7 +1,8 @@
-#Promo Code
+# Promo Code
 Here we describe the business logic of promo code. 
 
 ## TOC
+
 1. [Durations](#Durations)
 2. [Issue](#Issue)
 
