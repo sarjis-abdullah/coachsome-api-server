@@ -6,6 +6,7 @@ Coachsome docs contains business logic about this platform. This rules comes fro
 - [Style Guide](https://google.github.io/styleguide/docguide/style.html)
 - [Masterring markdown](https://guides.github.com/features/mastering-markdown/)
 
-## Business Logic
+## TOC
 1. [Package Price](package-price.md)
 2. [Promo Code](promo-code.md)
+3. [Dashboard](dashboard.md)
