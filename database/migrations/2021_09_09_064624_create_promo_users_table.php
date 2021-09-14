@@ -19,7 +19,7 @@ class CreatePromoUsersTable extends Migration
             $table->bigInteger('order_id');
             $table->bigInteger('promo_code_id');
             $table->string('code');
-            $table->string('promo_code_data');
+            $table->text('promo_code_data');
             $table->timestamps();
         });
     }

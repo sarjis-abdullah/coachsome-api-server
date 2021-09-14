@@ -72,6 +72,7 @@ class BookingController extends Controller
             }
 
             $packageOwnerUser = $package->user;
+            $packageBuyerUser = Auth::user();
             $packageCategory = $package->category;
             $userPackageSetting = $packageOwnerUser->ownPackageSetting;
             if (!$packageOwnerUser) {
@@ -94,8 +95,7 @@ class BookingController extends Controller
             }
 
             // Package charge info
-            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $request['promoCode'], 'packageBuyerUser' => Auth::user()]);
-
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $request['promoCode'], 'packageBuyerUser' => $packageBuyerUser]);
             $chargeBox = new \stdClass();
             $chargeBox->priceForPackage = $chargeInfo['salePrice'];
             $chargeBox->totalPerPerson = $chargeInfo['totalPerPerson'];
@@ -114,7 +114,7 @@ class BookingController extends Controller
             ];
             $promoCode = PromoCode::where('code', $request['promoCode'])->first();
             if ($promoCode) {
-                if(!$promoService->isExpired($promoCode, Auth::user())){
+                if(!$promoService->isExpired($promoCode, $packageBuyerUser)){
                     $promoCodeInfo['valid'] = true;
                     $promoCodeInfo['value'] = $promoCode->code;
                     $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
@@ -152,7 +152,9 @@ class BookingController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 

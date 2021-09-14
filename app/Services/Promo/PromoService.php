@@ -7,6 +7,7 @@ use App\Entites\PromoUser;
 use App\Entities\Currency;
 use App\Entities\PromoCode;
 use App\Services\CurrencyService;
+use Illuminate\Support\Facades\Log;
 
 class PromoService
 {
@@ -34,6 +35,7 @@ class PromoService
 
     public function isExpired(PromoCode $promoCode, $user)
     {
+
         $isExpired = false;
         if($promoCode){
             if($promoCode->promo_type_id == Promo::TYPE_ID_FIXED){

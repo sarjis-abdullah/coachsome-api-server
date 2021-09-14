@@ -29,7 +29,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Company Ratings
         Route::get('companyRatings', 'CompanyRatingController@index');
 
-
         // Profile
         Route::get('publicProfile/{userName}', 'ProfileController@getByUserName');
 
@@ -39,9 +38,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Pending Booking
         Route::post('pendingBookings', 'PendingBookingController@store');
         Route::post('pendingBookings/confirm', 'PendingBookingController@confirm');
-
-        // Bookings
-        Route::get('bookings', 'BookingController@index');
 
         // Translation
         Route::get('translations', "TranslationController@index");
@@ -53,6 +49,10 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::get('storage/video/{name}', 'VideoController@getVideo');
 
         Route::group(['middleware' => ['auth:api']], function () {
+
+            // Bookings
+            Route::get('bookings', 'BookingController@index');
+
             // Payments
             Route::post('payments/quickpay/pay', 'QuickpayController@pay');
             Route::post('payments/quickpay/notify', 'QuickpayController@notify');
