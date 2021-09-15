@@ -118,7 +118,11 @@ class DashboardController extends Controller
             foreach ($bookingsForAvgPerPackage as $booking) {
                 $order = $booking->order;
                 if ($order) {
-                    $totalSales += $currencyService->convert($order->total_amount, $order->currency, $toCurrency->code);
+                    $package = json_decode($order->package_snapshot, true);
+                    $packageTotalSession = $package ? $package['details']['session']: 0;
+                    $sessionCompleted = $booking->bookingTimes->where('status','Accepted')->count();
+                    $capturedAmount  = $order->total_amount/ ($packageTotalSession - $sessionCompleted);
+                    $totalSales += $currencyService->convert($capturedAmount, $order->currency, $toCurrency->code);
                     $totalProfit += $currencyService->convert(
                         ($order->total_amount - $order->service_fee) * $booking->package_owner_service_fee_snapshot / 100, $order->currency, $toCurrency->code
                     );
