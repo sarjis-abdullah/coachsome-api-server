@@ -10,3 +10,4 @@ Coachsome docs contains business logic about this platform. This rules comes fro
 1. [Package Price](package-price.md)
 2. [Promo Code](promo-code.md)
 3. [Dashboard](dashboard.md)
+4. [Docker](docker.md)
