@@ -38,7 +38,7 @@ class PromoService
 
         $isExpired = false;
         if($promoCode){
-            if($promoCode->promo_type_id == Promo::TYPE_ID_FIXED){
+            if($promoCode->promo_duration_id == Promo::DURATION_ID_ONCE){
                 $promoUser = PromoUser::where('code', $promoCode->code)->first();
                 if($promoUser){
                     $isExpired = true;
