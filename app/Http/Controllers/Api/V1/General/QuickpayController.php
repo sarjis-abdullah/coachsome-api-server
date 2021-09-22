@@ -128,7 +128,7 @@ class QuickpayController extends Controller
             $order->status = 'Initial';
             $order->save();
 
-            // Order key manage
+            // $order->id only work after $order saved
             $orderKey = 'OID-' . $order->id . '-' . time();
             $order->key = $orderKey;
             $order->save();
