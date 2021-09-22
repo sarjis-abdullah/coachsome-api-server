@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Data\MessageData;
 use App\Data\TranslationData;
+use App\Entities\Message;
 use App\Entities\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Schema;
@@ -41,19 +43,41 @@ class UpdateDB extends Command
      */
     public function handle()
     {
-        if (Schema::hasTable('translations')) {
-            if (!Schema::hasColumn('translations', 'type')) {
-                Schema::table('translations', function (Blueprint $table) {
-                    $table->string('type')->default(TranslationData::TYPE_GENERAL)->after('page_name');
-                });
+        $messages = Message::all();
+        foreach ($messages as $message) {
+            if($message->type == 'text'){
+                $message->message_category_id = MessageData::CATEGORY_ID_TEXT;
+            } else {
+                $key = json_decode($message->structure_content)->key;
+                if($key == 'accepted_booking_time'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_BOOKING_TIME;
+                }
+                if($key == 'accepted_package_booking'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_PACKAGE_BOOKING;
+                }
+                if($key == 'big_text'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_BIG_TEXT;
+                }
+                if($key == 'big_text_time_booking'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_BIG_TEXT_TIME_BOOKING;
+                }
+                if($key == 'buy_package'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_BUY_PACKAGE;
+                }
+                if($key == 'declined_booking_time'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_DECLINED_BOOKING_TIME;
+                }
+                if($key == 'declined_package_booking'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_DECLINED_PACKAGE_BOOKING;
+                }
+                if($key == 'booking_package'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_BOOKING_PACKAGE;
+                }
+                if($key == 'booking_time'){
+                    $message->message_category_id = MessageData::CATEGORY_ID_BOOKING_TIME;
+                }
             }
-        }
-
-
-        $users = User::all();
-        foreach ($users as $user) {
-            $user->user_name = str_replace("-",".",$user->user_name);
-            $user->save();
+            $message->save();
         }
     }
 }
