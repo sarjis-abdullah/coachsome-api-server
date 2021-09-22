@@ -125,7 +125,7 @@ class MessageController extends Controller
 
             // Disconnected user pending for a mail notification
             if (!$receiverUser->is_online) {
-                $job = (new NewMessageInformer($receiverUser,$message))->delay(now()->addMinutes(1));
+                $job = (new NewMessageInformer($receiverUser,$message))->delay(now()->addMinutes(5));
                 $jobId = $this->dispatch(
                     $job
                 );
