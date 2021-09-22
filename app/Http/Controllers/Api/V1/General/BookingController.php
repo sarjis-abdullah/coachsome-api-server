@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api\V1\General;
 use App\Data\BookingStatus;
 use App\Data\Constants;
 use App\Data\OrderStatus;
+use App\Data\Promo;
 use App\Data\StatusCode;
 use App\Entities\Booking;
+use App\Entities\Currency;
 use App\Entities\Message;
 use App\Entities\Package;
+use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Package\PackageResource;
@@ -26,6 +29,7 @@ use App\Services\Media\MediaService;
 use App\Services\MessageFormatterService;
 use App\Services\OrderService;
 use App\Services\PackageService;
+use App\Services\Promo\PromoService;
 use App\Services\QuickpayClientService;
 use App\ValueObjects\Message\BigText;
 use App\ValueObjects\Message\AcceptedPackageBooking;
@@ -52,41 +56,36 @@ class BookingController extends Controller
 
         try {
             $request->validate([
-                'packageId' => 'required'
+                'packageId' => 'required',
+                'promoCode' => 'nullable|string'
             ]);
 
             $packageId = $request->packageId;
             $requestedCurrencyCode = $request->header('Currency-Code');
-
             if (!$requestedCurrencyCode) {
                 throw new \Exception('Currency not found');
             }
 
             $package = Package::find($packageId);
-
             if (!$package) {
                 throw new Exception('Package not found');
             }
 
             $packageOwnerUser = $package->user;
+            $packageBuyerUser = Auth::user();
             $packageCategory = $package->category;
             $userPackageSetting = $packageOwnerUser->ownPackageSetting;
-            $authUser = Auth::user();
-
             if (!$packageOwnerUser) {
                 throw new \Exception('Package owner user not found');
             }
 
             $packageService = new PackageService();
+            $promoService = new PromoService();
             $currencyService = new CurrencyService();
             $mediaService = new MediaService();
 
-            $fromCurrencyCode = $currencyService->getUserCurrency($packageOwnerUser)->code;
             $toCurrencyCode = $requestedCurrencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
 
-            $discount = $package->details->discount ?? 0.00;
-            $originalPrice = $packageService->calculateOriginalPrice($packageOwnerUser, $package);
-            $salePrice = $packageService->calculatePackageSalePrice($originalPrice, $discount);
             if ($packageCategory && $packageCategory->id == Constants::PACKAGE_CAMP_ID) {
                 $minPerson = $package->details->attendees_min;
                 $maxPerson = $package->details->attendees_max;
@@ -95,25 +94,38 @@ class BookingController extends Controller
                 $maxPerson = 1;
             }
 
-            $salePriceAfterConvertingCurrency = $currencyService->convert(
-                $salePrice,
-                $fromCurrencyCode,
-                $toCurrencyCode
-            );
-
-            $serviceFee = round((5 / 100) * $salePriceAfterConvertingCurrency, 2);
-            $total = round(($salePriceAfterConvertingCurrency + $serviceFee), 2);
-            $totalPerPerson = round((1 * ($salePriceAfterConvertingCurrency + $serviceFee)), 2);
-
+            // Package charge info
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $request['promoCode'], 'packageBuyerUser' => $packageBuyerUser]);
             $chargeBox = new \stdClass();
-            $chargeBox->priceForPackage = $salePriceAfterConvertingCurrency;
-            $chargeBox->totalPerPerson = $totalPerPerson;
-            $chargeBox->total = $total;
-            $chargeBox->salePrice = round($salePriceAfterConvertingCurrency, 2);
-            $chargeBox->serviceFee = $serviceFee;
+            $chargeBox->priceForPackage = $chargeInfo['salePrice'];
+            $chargeBox->totalPerPerson = $chargeInfo['totalPerPerson'];
+            $chargeBox->total = $chargeInfo['total'];
+            $chargeBox->salePrice = $chargeInfo['salePrice'];
+            $chargeBox->serviceFee = $chargeInfo['serviceFee'];
             $chargeBox->minPerson = $minPerson;
             $chargeBox->maxPerson = $maxPerson;
 
+            // Promo Code Info
+            $promoCodeInfo = [
+                'valid' => false,
+                'value' => '',
+                'amount' => 0.00,
+                'message' => ''
+            ];
+            $promoCode = PromoCode::where('code', $request['promoCode'])->first();
+            if ($promoCode) {
+                if(!$promoService->isExpired($promoCode, $packageBuyerUser)){
+                    $promoCodeInfo['valid'] = true;
+                    $promoCodeInfo['value'] = $promoCode->code;
+                    $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
+                } else {
+                    $promoCodeInfo['message'] = "This code is expired";
+                }
+            } else {
+                $promoCodeInfo['message'] = 'This code is not found';
+            }
+
+            // Availabilities
             $availabilities = $packageOwnerUser->availabilities;
 
             $packageInfo = new PackageResource($package);
@@ -126,7 +138,8 @@ class BookingController extends Controller
                 'packageSetting' => $packageSetting,
                 'profileCard' => $profileCard,
                 'chargeBox' => $chargeBox,
-                'availabilities' => $availabilities
+                'availabilities' => $availabilities,
+                'promoCode' => $promoCodeInfo
             ], StatusCode::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -139,7 +152,9 @@ class BookingController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -311,8 +326,8 @@ class BookingController extends Controller
             // Tracking pixel track the package that accepted
             $trackingPixel = [
                 'status' => false,
-                'orderKey'=> '',
-                'salePrice'=> 0.00
+                'orderKey' => '',
+                'salePrice' => 0.00
             ];
 
             $booking = Booking::find($bookingId);
@@ -447,7 +462,7 @@ class BookingController extends Controller
             });
 
             return response()->json([
-                'trackingPixel'=> $trackingPixel,
+                'trackingPixel' => $trackingPixel,
                 'message' => $responseMessage,
                 'messages' => $messages,
                 'newMessage' => $messageFormatterService->doFormat($newMessage)

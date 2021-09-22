@@ -1,4 +1,9 @@
+## [dev,test,prod]
+- Add column promo_discount in orders table
+- Create table promo_codes, promo_durations, promo_types, promo_users
 
+
+##[dev,test,maser]
 
 ### Add
 - add translation email_new_order_capture
