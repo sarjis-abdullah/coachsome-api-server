@@ -90,7 +90,8 @@ class ContactService
                     'newMessageCount' => $newMessageCount,
                     'lastMessageTime' => $lastMessageTime,
                     'lastMessage' => $lastMessage,
-                    'isOnline' => $item->is_online
+                    'isOnline' => $item->is_online,
+                    'status' =>  $contact->status
                 ];
 
             });

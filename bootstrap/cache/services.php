@@ -49,6 +49,7 @@
     45 => 'App\\Providers\\EventServiceProvider',
     46 => 'App\\Providers\\RouteServiceProvider',
     47 => 'Coachsome\\BaseReview\\Providers\\BaseReviewServiceProvider',
+    48 => 'Coachsome\\ChatServer\\Providers\\ChatServerServiceProvider',
   ),
   'eager' => 
   array (
@@ -86,6 +87,7 @@
     31 => 'App\\Providers\\EventServiceProvider',
     32 => 'App\\Providers\\RouteServiceProvider',
     33 => 'Coachsome\\BaseReview\\Providers\\BaseReviewServiceProvider',
+    34 => 'Coachsome\\ChatServer\\Providers\\ChatServerServiceProvider',
   ),
   'deferred' => 
   array (

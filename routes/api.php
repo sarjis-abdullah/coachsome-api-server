@@ -4,15 +4,6 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
-
-    /*
-     * Chat Server Api
-     */
-    Route::group(['namespace' => 'ChatServerApi'], function () {
-        Route::get('chatServerApi/users/{id}/online', 'UserController@doOnline');
-        Route::get('chatServerApi/users/{id}/offline', 'UserController@doOffline');
-    });
-
     /*
     * General
     */
