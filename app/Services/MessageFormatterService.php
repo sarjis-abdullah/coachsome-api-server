@@ -28,6 +28,7 @@ class MessageFormatterService
             $structureContent = json_decode($message->structure_content);
             $textContent = $message->text_content;
             $dateTimeIsoString = $message->date_time_iso;
+            $categoryId = $message->message_category_id;
 
             // Formatting
             if ($structureContent) {
@@ -106,6 +107,7 @@ class MessageFormatterService
 
             $formattedMessage = new \stdClass();
             $formattedMessage->id = $messageId;
+            $formattedMessage->categoryId = $categoryId;
             $formattedMessage->type = $messageType;
             $formattedMessage->content = $formattedContent;
             $formattedMessage->me = $isMe;

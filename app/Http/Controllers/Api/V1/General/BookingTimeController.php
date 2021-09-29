@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\General;
 
+use App\Data\MessageData;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\BookingLocation;
@@ -203,6 +204,7 @@ class BookingTimeController extends Controller
             ]);
 
             $message = new Message();
+            $message->message_category_id = MessageData::CATEGORY_ID_BOOKING_TIME;
             $message->sender_user_id = $authUser->id;
             $message->receiver_user_id = $packageOwnerUser->id;
             $message->type = 'structure';
@@ -308,6 +310,7 @@ class BookingTimeController extends Controller
                 ]);
 
                 $newMessage = new Message();
+                $newMessage->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_BOOKING_TIME;
                 $newMessage->sender_user_id = $authUser->id;
                 $newMessage->receiver_user_id = $requestedUser->id;
                 $newMessage->type = 'structure';
@@ -344,6 +347,7 @@ class BookingTimeController extends Controller
 
                 $newMessage = new Message();
                 $newMessage->sender_user_id = $authUser->id;
+                $newMessage->message_category_id = MessageData::CATEGORY_ID_DECLINED_BOOKING_TIME;
                 $newMessage->receiver_user_id = $requestedUser->id;
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $declinedBookingTime->toJson();

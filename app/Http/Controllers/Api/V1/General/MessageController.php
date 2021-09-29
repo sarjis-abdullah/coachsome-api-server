@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1\General;
 
+use App\Data\MessageData;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\Contact;
 use App\Entities\Message;
+use App\Entities\MessageCategory;
 use App\Entities\PendingNotification;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
@@ -94,12 +96,25 @@ class MessageController extends Controller
             $request->validate([
                 'receiverUserId' => 'required',
                 'content' => 'required',
-                'type' => 'required'
+                'type' => 'nullable',
+                'categoryId' => 'nullable'
+
             ]);
             $receiverUserId = $request['receiverUserId'];
             $messageContent = $request['content'];
             $createdAt = $request['created_at'];
             $type = $request['type'];
+            $categoryId = $request['categoryId'];
+
+            if($categoryId){
+                $messageCategory = MessageCategory::find($categoryId);
+                if(!$messageCategory){
+                    throw new \Exception('Message category do not found');
+                }
+            } else {
+                $categoryId = MessageData::CATEGORY_ID_TEXT;
+            }
+
 
             $receiverUser = User::find($receiverUserId);
             if (!$receiverUser) {
@@ -115,6 +130,7 @@ class MessageController extends Controller
 
             $message = new Message();
             $message->sender_user_id = $senderUser->id;
+            $message->message_category_id = $categoryId;
             $message->receiver_user_id = $receiverUser->id;
             $message->text_content = $type == 'text' ? $messageContent : null;
             $message->type = $type;

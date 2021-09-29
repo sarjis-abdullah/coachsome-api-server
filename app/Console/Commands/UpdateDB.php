@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Data\ContactData;
 use App\Data\MessageData;
 use App\Data\TranslationData;
+use App\Entities\Contact;
 use App\Entities\Message;
 use App\Entities\User;
 use Illuminate\Console\Command;
@@ -44,6 +46,28 @@ class UpdateDB extends Command
     public function handle()
     {
         $messages = Message::all();
+        $contacts = Contact::all();
+        $users = User::all();
+        foreach ($users as $user) {
+            $profile = $user->profile;
+            if($profile){
+                $name = explode(" ",$profile->profile_name);
+                if(count($name) > 0){
+                    $user->first_name = $name[0];
+                }
+                if(count($name) > 1){
+                    $user->last_name = $name[1];
+                }
+                $this->full_name = $profile->profile_name;
+            }
+            $user->save();
+        }
+        foreach ($contacts as $contact) {
+            if($contact->status == 'Initial'){
+                $contact->status = ContactData::STATUS_READ;
+            }
+            $contact->save();
+        }
         foreach ($messages as $message) {
             if($message->type == 'text'){
                 $message->message_category_id = MessageData::CATEGORY_ID_TEXT;
