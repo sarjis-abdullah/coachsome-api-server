@@ -30,12 +30,9 @@ class ChatSettingController extends Controller
             }
 
             $chatSetting = ChatSetting::where('user_id', Auth::id())->first();
-            if ($chatSetting) {
-                $chatSetting->save();
-            } else {
+            if (!$chatSetting) {
                 $chatSetting = new ChatSetting();
                 $chatSetting->user_id = Auth::id();
-                $chatSetting->save();
             }
             if ($value == ChatSettingData::ENTER_PRESS_LINE_BREAK) {
                 $chatSetting->enter_press = $value;
@@ -43,6 +40,7 @@ class ChatSettingController extends Controller
             if ($value == ChatSettingData::ENTER_PRESS_SEND_MESSAGE) {
                 $chatSetting->enter_press = $value;
             }
+            $chatSetting->save();
             return response()->json(['data'=> new ChatSettingResource($chatSetting)], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             return response()->json(['errors' => [$e->getMessage()]], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
