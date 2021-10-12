@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\StatusCode;
-use App\Entites\PromoUser;
+use App\Entities\PromoUser;
 use App\Entities\Booking;
 use App\Entities\BookingSetting;
 use App\Entities\Contact;

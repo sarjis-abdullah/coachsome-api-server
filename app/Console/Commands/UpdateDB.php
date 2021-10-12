@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Data\ContactData;
 use App\Data\MessageData;
 use App\Data\TranslationData;
+use App\Entities\ChatSetting;
 use App\Entities\Contact;
 use App\Entities\Message;
 use App\Entities\User;
@@ -49,6 +50,12 @@ class UpdateDB extends Command
         $contacts = Contact::all();
         $users = User::all();
         foreach ($users as $user) {
+            $chatSetting = ChatSetting::where('user_id', $user->id)->first();
+            if(!$chatSetting){
+                $chatSetting = new ChatSetting();
+                $chatSetting->user_id= $user->id;
+                $chatSetting->save();
+            }
             $profile = $user->profile;
             if($profile){
                 $name = explode(" ",$profile->profile_name);

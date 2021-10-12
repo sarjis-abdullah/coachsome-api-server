@@ -3,17 +3,17 @@
 
 namespace App\Services\Contact;
 
-
+use App\Entities\ChatSetting;
 use App\Entities\Contact;
 use App\Entities\Message;
 use App\Entities\User;
 use App\Http\Resources\Category\SportCategoryResource;
+use App\Http\Resources\Chat\ChatSettingResource;
 use App\Http\Resources\Language\LanguageResource;
 use App\Http\Resources\Tag\SportTagResource;
 use App\Services\Media\MediaService;
 use App\Services\StorageService;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 
 class ContactService
 {
@@ -45,6 +45,7 @@ class ContactService
                 $newMessageCount = 0;
                 $lastMessageTime = null;
                 $lastMessage = null;
+                $chatSettings = null;
 
                 $contact = Contact::where('user_id', $user->id)->where('connection_user_id', $item->id)->first();
 
@@ -74,6 +75,7 @@ class ContactService
                     $lastMessageTime = $contact->last_message_time;
                     $lastMessage = $contact->last_message;
                 }
+
                 return [
                     'id' => $userId,
                     'firstName' => $firstName,

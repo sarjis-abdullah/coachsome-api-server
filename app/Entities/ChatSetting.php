@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Entites;
+namespace App\Entities;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PromoUser extends Model
+class ChatSetting extends Model
 {
     use HasFactory;
+
+    protected $table = 'chat_settings';
 }
