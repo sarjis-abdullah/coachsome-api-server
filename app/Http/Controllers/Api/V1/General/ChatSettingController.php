@@ -15,6 +15,11 @@ class ChatSettingController extends Controller
     public function index(Request $request)
     {
         $chatSetting = ChatSetting::where('user_id', Auth::id())->first();
+        if (!$chatSetting) {
+            $chatSetting = new ChatSetting();
+            $chatSetting->user_id = Auth::id();
+            $chatSetting->save();
+        }
         return response()->json(['data' => $chatSetting ? new ChatSettingResource($chatSetting) : []], StatusCode::HTTP_OK);
     }
 
