@@ -23,7 +23,6 @@ class ContactService
         $storageService = new StorageService();
         $mediaService = new MediaService();
 
-
         $contactUserIdList = Contact::where('user_id', $user->id)
             ->pluck('connection_user_id')
             ->toArray();
