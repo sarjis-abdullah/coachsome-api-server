@@ -59,6 +59,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::get('contacts', "ContactController@index");
             Route::post('contacts/resetNewMessageInfo', "ContactController@resetContactNewMessageInformation");
             Route::post('contacts/archive', "ContactController@archive");
+            Route::post('contacts/unarchive', "ContactController@unarchive");
             Route::post('contacts/unread', "ContactController@unread");
 
             // Messages

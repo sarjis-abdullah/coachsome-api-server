@@ -82,6 +82,29 @@ class ContactController extends Controller
 
     }
 
+    public function unarchive(Request $request)
+    {
+        try {
+            $userId = $request['userId'];
+            $user = User::find($userId);
+            if (!$user) {
+                throw new \Exception('User not found');
+            }
+            $contact = Contact::where('user_id', Auth::id())
+                ->where('connection_user_id', $user->id)
+                ->first();
+            if (!$contact) {
+                throw new \Exception('This user is not in your contact list');
+            }
+            $contact->status = ContactData::STATUS_READ;
+            $contact->save();
+            return response()->json(['data' => new ContactResource($contact)], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+    }
+
     public function archive(Request $request)
     {
         try {
