@@ -33,11 +33,13 @@ class MessageController extends Controller
             $newMessages = [];
 
             $authUser = Auth::user();
-            $connectedUser = User::find($request->query('userId'));
+            $contact = Contact::find($request['contactId']);
 
-            if (!$connectedUser) {
-                throw new \Exception('Selected user not found');
+            if (!$contact) {
+                throw new \Exception('Contact information is not found');
             }
+
+            $connectedUser = User::find($contact->connection_user_id);
 
             $contactService = new ContactService();
             $messageFormatterService = new MessageFormatterService();
@@ -54,7 +56,6 @@ class MessageController extends Controller
                 return $messageFormatterService->doFormat($item);
             });
 
-
             // Initial bookings
             $bookings = Booking::where(function ($q) use ($connectedUser, $authUser) {
                 $q->where('package_owner_user_id', $connectedUser->id);
@@ -69,7 +70,6 @@ class MessageController extends Controller
 
             // Reset new message number
             $contactService->resetContactNewMessageCount($authUser, $connectedUser);
-
 
             return response()->json([
                 'messages' => $messages,
@@ -102,7 +102,7 @@ class MessageController extends Controller
             ]);
             $receiverUserId = $request['receiverUserId'];
             $messageContent = $request['content'];
-            $createdAt = $request['created_at'];
+            $createdAt = $request['createdAt'];
             $type = $request['type'];
             $categoryId = $request['categoryId'];
 

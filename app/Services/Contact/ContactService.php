@@ -184,4 +184,12 @@ class ContactService
         }
     }
 
+    public function reset($contact)
+    {
+        if ($contact) {
+            $contact->new_message_count = 0;
+            $contact->save();
+        }
+    }
+
 }

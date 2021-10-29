@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Log;
 
 class Controller extends BaseController
 {
@@ -14,17 +15,10 @@ class Controller extends BaseController
 
     protected function validateClient($request)
     {
-        $request->validate([
-            'clientId' => ['required'],
-            'clientSecret' => ['required'],
-        ]);
-
-        $client = Client::where('id', $request['clientId'])
-            ->where('secret', $request['clientSecret'])
-            ->first();
-
+        $secret = $request->header('Client-Secret');
+        $client = Client::where('secret', $secret)->first();
         if(!$client){
-            throw new \Exception('This client is not exist');
+            throw new \Exception('Client-Secret is not valid.');
         }
     }
 }

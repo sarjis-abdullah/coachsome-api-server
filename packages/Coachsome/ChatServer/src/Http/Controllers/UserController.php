@@ -10,12 +10,6 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-
-    public function __construct()
-    {
-
-    }
-
     public function doOnline(Request $request, $id)
     {
         try {
@@ -31,24 +25,39 @@ class UserController extends Controller
                 Job::whereIn('id', $jobIdList)->delete();
                 PendingNotification::where('user_id', $user->id)->delete();
             }
-            return response(true, StatusCode::HTTP_OK);
+            return response([
+                'data' => [],
+                'message' => 'User id ' . $id . ' is connected'
+            ], StatusCode::HTTP_OK);
 
         } catch (\Exception $e) {
-            return response()->json([$e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            return response([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
     public function doOffline(Request $request, $id)
     {
         try {
+            $this->validateClient($request);
             $user = User::find($id);
             if ($user) {
                 $user->is_online = 0;
                 $user->save();
             }
-            return response(true, StatusCode::HTTP_OK);
+            return response([
+                'data' => [],
+                'message' => 'User id ' . $id . ' is disconnected'
+            ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
-            return response()->json([$e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            return response([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -56,16 +65,21 @@ class UserController extends Controller
     {
         try {
             $this->validateClient($request);
-
             $users = User::all();
             foreach ($users as $user) {
                 $user->is_online = 0;
                 $user->save();
             }
-            return response(true, StatusCode::HTTP_OK);
-
+            return response([
+                'data' => [],
+                'message' => 'Users are disconnected'
+            ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
-            return response()->json([$e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            return response([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 }

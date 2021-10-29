@@ -111,7 +111,7 @@ class MessageFormatterService
             $formattedMessage->type = $messageType;
             $formattedMessage->content = $formattedContent;
             $formattedMessage->me = $isMe;
-            $formattedMessage->created_at = $dateTimeIsoString;
+            $formattedMessage->createdAt = $dateTimeIsoString;
         }
 
         return $formattedMessage;

@@ -55,6 +55,10 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::get('chatSettings', "ChatSettingController@index");
             Route::post('chatSettings/enterPress', "ChatSettingController@enterPress");
 
+            // Groups
+            Route::apiResource('groups', "GroupController");
+            Route::apiResource('group-messages', "GroupMessageController");
+
             // Contacts
             Route::get('contacts', "ContactController@index");
             Route::post('contacts/resetNewMessageInfo', "ContactController@resetContactNewMessageInformation");

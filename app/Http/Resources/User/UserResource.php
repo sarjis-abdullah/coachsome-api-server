@@ -21,6 +21,7 @@ class UserResource extends JsonResource
             'firstName' => $this->first_name,
             'lastName' => $this->last_name,
             'userName' => $this->user_name,
+            'isOnline' => $this->is_online,
             'sportCategories'=> SportCategoryResource::collection($this->sportCategories),
             'profile'=> new ProfileResource($this->profile)
         ];

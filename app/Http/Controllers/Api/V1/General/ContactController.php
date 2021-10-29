@@ -7,11 +7,13 @@ use App\Data\StatusCode;
 use App\Entities\Contact;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Contact\ContactCollection;
 use App\Http\Resources\Contact\ContactResource;
 use App\Http\Resources\Contact\ContactUserCollection;
 use App\Services\Contact\ContactService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 
 class ContactController extends Controller
@@ -19,17 +21,19 @@ class ContactController extends Controller
     public function index(Request $request)
     {
         try {
-            $statusFilter = $request['filter']['status'] ?? null;
-            $searchFilter = $request['filter']['search'] ?? null;
-            $resetUserId = $request->query('resetUserId');
+            $statusFilter = $request->statusFilter;
+            $selectedContactId = $request->selectedContactId;
+            $searchFilter = $request->searchFilter;
 
             $authUser = Auth::user();
             $contactService = new ContactService();
-            $resetUser = User::find($resetUserId);
-            if ($resetUser) {
-                $contactService->resetContactNewMessageCount($authUser, $resetUser);
+
+            if ($selectedContactId) {
+                $contact = Contact::where('user_id', $selectedContactId)->first();
+                $contactService->reset($contact);
             }
-            $contactUserIdList = Contact::where('user_id', $authUser->id)
+
+            $contacts = Contact::where('user_id', $authUser->id)
                 ->where(function ($q) use ($statusFilter) {
                     if ($statusFilter == ContactData::STATUS_ARCHIVED ||
                         $statusFilter == ContactData::STATUS_UNREAD ||
@@ -37,25 +41,12 @@ class ContactController extends Controller
                         $q->where('status', $statusFilter);
                     } else {
                         $q->where('status', '!=', ContactData::STATUS_ARCHIVED);
-
-                    }
-                })
-                ->pluck('connection_user_id')
-                ->toArray();
-
-            $users = User::join('contacts', 'users.id', '=', 'contacts.connection_user_id')
-                ->whereIn('users.id', $contactUserIdList)
-                ->where('contacts.user_id', $authUser->id)
-                ->where(function ($q) use ($searchFilter) {
-                    if ($searchFilter) {
-                        $q->where('first_name', 'like', '%' . $searchFilter . '%');
-                        $q->orWhere('last_name', 'like', '%' . $searchFilter . '%');
                     }
                 })
                 ->orderBy('contacts.last_message_time', 'DESC')
-                ->select('users.*')
                 ->get();
-            return response()->json(['users' => new ContactUserCollection($users, $authUser)], StatusCode::HTTP_OK);
+
+            return response(['data' => new ContactCollection($contacts)], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
 
         }
