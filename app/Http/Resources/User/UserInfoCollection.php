@@ -4,10 +4,8 @@ namespace App\Http\Resources\User;
 
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
-class UserCollection extends ResourceCollection
+class UserInfoCollection extends ResourceCollection
 {
-    public $collects = UserResource::class;
-
     /**
      * Transform the resource collection into an array.
      *
@@ -17,10 +15,9 @@ class UserCollection extends ResourceCollection
     public function toArray($request)
     {
 
-        return [
-            'data' => $this->collection,
-            'currentPage' => $this->currentPage(),
-            'pageLength' => $this->lastPage(),
-        ];
+        return $this->collection->map(function ($item){
+            return new UserResource($item);
+        });
+
     }
 }

@@ -58,6 +58,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             // Groups
             Route::apiResource('groups', "GroupController");
             Route::apiResource('group-messages', "GroupMessageController");
+            Route::post('group-invitations/groups/{id}', "GroupInvitationController@invite");
+            Route::post('group-invitations/verify', "GroupInvitationController@verify");
 
             // Contacts
             Route::get('contacts', "ContactController@index");
@@ -65,6 +67,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('contacts/archive', "ContactController@archive");
             Route::post('contacts/unarchive', "ContactController@unarchive");
             Route::post('contacts/unread', "ContactController@unread");
+            Route::get('contacts/private-users', "ContactController@getPrivateUser");
 
             // Messages
             Route::get('messages', "MessageController@index");

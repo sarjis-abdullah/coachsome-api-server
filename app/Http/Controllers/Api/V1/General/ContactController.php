@@ -10,9 +10,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Contact\ContactCollection;
 use App\Http\Resources\Contact\ContactResource;
 use App\Http\Resources\Contact\ContactUserCollection;
+use App\Http\Resources\User\UserCollection;
+use App\Http\Resources\User\UserInfoCollection;
+use App\Http\Resources\User\UserResource;
 use App\Services\Contact\ContactService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 
@@ -50,6 +54,33 @@ class ContactController extends Controller
         } catch (\Exception $e) {
 
         }
+    }
+
+    public function getPrivateUser(Request $request)
+    {
+        try {
+            $authUser = Auth::user();
+            $search = $request->query('search');
+            $connectedUsersId = Contact::where('user_id', $authUser->id)
+                ->where('status', '!=', ContactData::STATUS_ARCHIVED)
+                ->where('contact_category_id', ContactData::CATEGORY_ID_PRIVATE)
+                ->orderBy('contacts.last_message_time', 'DESC')
+                ->pluck('connection_user_id');
+            $users = User::whereIn('id', $connectedUsersId)
+                ->where(function ($q) use ($search) {
+                    if ($search) {
+                        foreach (['first_name', 'last_name'] as $column) {
+                            $q->orWhere($column, 'LIKE', '%' . $search . '%');
+                        }
+                    }
+                })->get();
+            return response([
+                'data' => new UserInfoCollection($users)
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+
+        }
+
     }
 
     public function resetContactNewMessageInformation(Request $request)

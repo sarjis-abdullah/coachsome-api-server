@@ -4,6 +4,9 @@ namespace App\Data;
 
 class MessageData
 {
+    const TYPE_TEXT = 'text';
+    const TYPE_STRUCTURE = 'structure';
+
     const CATEGORY_ID_TEXT = 1;
     const CATEGORY_ID_ACCEPTED_BOOKING_TIME = 2;
     const CATEGORY_ID_ACCEPTED_PACKAGE_BOOKING = 3;
