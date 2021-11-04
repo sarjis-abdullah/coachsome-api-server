@@ -15,6 +15,8 @@ class CreateGroupGlobalSettings extends Migration
     {
         Schema::create('group_global_settings', function (Blueprint $table) {
             $table->id();
+            $table->integer('max_people_of_a_group');
+            $table->integer('max_invitation_at_once');
             $table->timestamps();
         });
     }

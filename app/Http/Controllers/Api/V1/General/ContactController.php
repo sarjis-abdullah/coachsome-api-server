@@ -107,14 +107,9 @@ class ContactController extends Controller
     public function unarchive(Request $request)
     {
         try {
-            $userId = $request['userId'];
-            $user = User::find($userId);
-            if (!$user) {
-                throw new \Exception('User not found');
-            }
-            $contact = Contact::where('user_id', Auth::id())
-                ->where('connection_user_id', $user->id)
-                ->first();
+            $contactId = $request['contactId'];
+
+            $contact = Contact::find($contactId);
             if (!$contact) {
                 throw new \Exception('This user is not in your contact list');
             }
@@ -130,14 +125,8 @@ class ContactController extends Controller
     public function archive(Request $request)
     {
         try {
-            $userId = $request['userId'];
-            $user = User::find($userId);
-            if (!$user) {
-                throw new \Exception('User not found');
-            }
-            $contact = Contact::where('user_id', Auth::id())
-                ->where('connection_user_id', $user->id)
-                ->first();
+            $contactId = $request['contactId'];
+            $contact = Contact::find($contactId);
             if (!$contact) {
                 throw new \Exception('This user is not in your contact list');
             }
@@ -152,14 +141,8 @@ class ContactController extends Controller
     public function unread(Request $request)
     {
         try {
-            $userId = $request['userId'];
-            $user = User::find($userId);
-            if (!$user) {
-                throw new \Exception('User not found');
-            }
-            $contact = Contact::where('user_id', Auth::id())
-                ->where('connection_user_id', $user->id)
-                ->first();
+            $contactId = $request['contactId'];
+            $contact = Contact::find($contactId);
             if (!$contact) {
                 throw new \Exception('This user is not in your contact list');
             }

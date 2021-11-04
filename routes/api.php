@@ -60,6 +60,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::apiResource('group-messages', "GroupMessageController");
             Route::post('group-invitations/groups/{id}', "GroupInvitationController@invite");
             Route::post('group-invitations/verify', "GroupInvitationController@verify");
+            Route::get('group-invitations/private-users', "GroupInvitationController@getPrivateUser");
 
             // Contacts
             Route::get('contacts', "ContactController@index");

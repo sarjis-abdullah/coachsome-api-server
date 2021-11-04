@@ -8,8 +8,10 @@ use App\Data\MessageData;
 use App\Data\StatusCode;
 use App\Entities\Contact;
 use App\Entities\Group;
+use App\Entities\GroupGlobalSetting;
 use App\Entities\GroupInvitation;
 use App\Entities\GroupMessage;
+use App\Entities\GroupUser;
 use App\Http\Controllers\Controller;
 use App\Mail\JoinConversation;
 use Carbon\Carbon;
@@ -29,6 +31,11 @@ class GroupController extends Controller
         //
     }
 
+    function validateEmail($email)
+    {
+        return filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -45,6 +52,20 @@ class GroupController extends Controller
                 'description' => 'required'
             ]);
 
+            foreach ($request['emails'] as $email) {
+                if(!$this->validateEmail($email)){
+                    throw new \Exception('All emails should have to valid');
+                }
+            }
+
+            $groupGlobalSetting = GroupGlobalSetting::get()->first();
+            if($groupGlobalSetting){
+                if(sizeof($request['emails']) > $groupGlobalSetting->max_invitation_at_once){
+                    throw new \Exception('You can not invite at once more than '.$groupGlobalSetting->max_invitation_at_once);
+                }
+            }
+
+
             $authUser = Auth::user();
 
             $group = new Group();
@@ -52,6 +73,11 @@ class GroupController extends Controller
             $group->name = $request['name'];
             $group->description = $request['description'];
             $group->save();
+
+            $groupUser = new GroupUser();
+            $groupUser->user_id = $authUser->id;
+            $groupUser->group_id = $group->id;
+            $groupUser->save();
 
             $contact = new Contact();
             $contact->user_id = $authUser->id;

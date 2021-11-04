@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Data\MessageData;
 use App\Entities\Booking;
 use App\Entities\BookingTime;
 use App\Entities\User;
@@ -111,6 +112,7 @@ class MessageFormatterService
             $formattedMessage->type = $messageType;
             $formattedMessage->content = $formattedContent;
             $formattedMessage->me = $isMe;
+            $formattedMessage->scope = MessageData::SCOPE_PRIVATE;
             $formattedMessage->createdAt = $dateTimeIsoString;
         }
 

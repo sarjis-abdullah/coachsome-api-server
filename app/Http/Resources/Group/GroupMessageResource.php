@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Group;
 
+use App\Data\MessageData;
 use App\Entities\User;
 use App\Http\Resources\User\UserResource;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -21,6 +22,7 @@ class GroupMessageResource extends JsonResource
         return [
             'id' => $this->id,
             'type' => $this->type,
+            'scope' => MessageData::SCOPE_GROUP,
             'me' => $this->sender_user_id == Auth::id(),
             'content' => json_decode($this->content),
             'createdAt' => $this->date_time_iso,

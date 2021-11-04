@@ -8,6 +8,7 @@
 - add column contact_category_id at contact table
 - make nullable connection_user_id at contacts table
 - create group_invitations table
+- create group_global_settings table
 - add email template to translation from resources/views/emails/joinConversationEmail.blade.php
 
 

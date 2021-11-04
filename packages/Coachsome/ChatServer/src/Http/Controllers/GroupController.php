@@ -4,20 +4,21 @@ namespace Coachsome\ChatServer\Http\Controllers;
 
 use App\Data\StatusCode;
 use App\Entities\Group;
+use App\Entities\GroupUser;
 use Illuminate\Http\Request;
 
 class GroupController extends Controller
 {
-    public function getConnectedUser(Request $request, $groupId)
+    public function getConnectedUser(Request $request, $id)
     {
         try {
             $this->validateClient($request);
-            $group = Group::find($request['id']);
+            $group = Group::find($id);
             if (!$group) {
                 throw new \Exception('Group is not found');
             }
 
-            $userIdList = $group->connection_users_id ? json_decode($group->connection_users_id, true) : [];
+            $userIdList = GroupUser::where('group_id', $group->id)->pluck('user_id');
 
             return response([
                 'data' => $userIdList

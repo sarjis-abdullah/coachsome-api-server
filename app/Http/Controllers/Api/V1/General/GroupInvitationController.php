@@ -7,9 +7,12 @@ use App\Data\GroupInvitationData;
 use App\Data\StatusCode;
 use App\Entities\Contact;
 use App\Entities\Group;
+use App\Entities\GroupGlobalSetting;
 use App\Entities\GroupInvitation;
 use App\Entities\GroupUser;
+use App\Entities\User;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\User\UserInfoCollection;
 use App\Mail\JoinConversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,12 +33,12 @@ class GroupInvitationController extends Controller
 
             $group = Group::find($groupInvitation->group_id);
             if ($group) {
-                $groupUser = GroupUser::where('group_id',$group->id )->where('user_id', $authUser->id)->first();
-                if($groupUser){
-                   throw new \Exception('Already joined');
+                $groupUser = GroupUser::where('group_id', $group->id)->where('user_id', $authUser->id)->first();
+                if ($groupUser) {
+                    throw new \Exception('Already joined');
                 }
                 $groupUser = new GroupUser();
-                $groupUser->grou_id = $group->id;
+                $groupUser->group_id = $group->id;
                 $groupUser->user_Id = $authUser->id;
                 $groupUser->save();
 
@@ -67,17 +70,42 @@ class GroupInvitationController extends Controller
         }
     }
 
+    function validateEmail($email)
+    {
+        return filter_var($email, FILTER_VALIDATE_EMAIL);
+    }
+
     public function invite(Request $request, $id)
     {
         try {
             $this->validate($request, [
                 'emails' => 'required',
             ]);
+
+            foreach ($request['emails'] as $email) {
+                if (!$this->validateEmail($email)) {
+                    throw new \Exception('All emails should have to valid');
+                }
+            }
+            $group = Group::find($id);
+
+            if (!$group) {
+                throw new \Exception('No group found');
+            }
+
+            $groupGlobalSetting = GroupGlobalSetting::get()->first();
+            $groupUsersCount = GroupUser::where('group_id', $group->id)->count();
+            if ($groupGlobalSetting) {
+                if (($groupUsersCount + sizeof($request['emails'])) > $groupGlobalSetting->max_people_of_a_group) {
+                    throw new \Exception('You can not invite at once more than ' . $groupGlobalSetting->max_invitation_at_once);
+                }
+            }
+
             $authUser = Auth::user();
             foreach ($request['emails'] as $email) {
                 $token = uniqid($authUser->id, true);
                 $groupInvitation = new GroupInvitation();
-                $groupInvitation->group_id = $id;
+                $groupInvitation->group_id = $group->id;
                 $groupInvitation->user_id = $authUser->id;
                 $groupInvitation->token = $token;
                 $groupInvitation->status = GroupInvitationData::STATUS_PENDING;
@@ -85,20 +113,8 @@ class GroupInvitationController extends Controller
                 Mail::to([$email])->send(new JoinConversation($authUser, $token));
             }
 
-            $group = Group::find($groupInvitation->group_id);
-            if ($group) {
-                if ($group->connection_users_id) {
-                    $connectionUsersId = json_decode($group->connection_users_id, true);
-                    $group->connection_users_id = json_encode(array_push($connectionUsersId, $authUser->id));
-                } else {
-                    $group->connection_users_id = json_encode([$authUser->id]);
-                }
-                $group->save();
-            }
-
             return response([
                 'data' => [
-                    'groupId' => $groupInvitation->group_id
                 ]
             ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
@@ -111,37 +127,41 @@ class GroupInvitationController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function getPrivateUser(Request $request)
     {
-        //
-    }
+        try {
+            $authUser = Auth::user();
+            $search = $request->query('search');
+            $groupId = $request->query('groupId');
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
+            $group = Group::find($groupId);
+            if (!$group) {
+                throw new \Exception('Group not found.');
+            }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+            $groupUsersId = GroupUser::where('group_id', $group->id)->pluck('user_id');
+
+            $connectedUsersId = Contact::where('user_id', $authUser->id)
+                ->where('status', '!=', ContactData::STATUS_ARCHIVED)
+                ->where('contact_category_id', ContactData::CATEGORY_ID_PRIVATE)
+                ->whereNotIn('connection_user_id', $groupUsersId)
+                ->orderBy('contacts.last_message_time', 'DESC')
+                ->pluck('connection_user_id');
+
+            $users = User::whereIn('id', $connectedUsersId)
+                ->where(function ($q) use ($search) {
+                    if ($search) {
+                        foreach (['first_name', 'last_name'] as $column) {
+                            $q->orWhere($column, 'LIKE', '%' . $search . '%');
+                        }
+                    }
+                })->get();
+            return response([
+                'data' => new UserInfoCollection($users)
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+
+        }
+
     }
 }
