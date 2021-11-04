@@ -9,7 +9,9 @@
 - make nullable connection_user_id at contacts table
 - create group_invitations table
 - create group_global_settings table
-- add email template to translation from resources/views/emails/joinConversationEmail.blade.php
+- add column contact_category_id to contacts table and default value 1
+- add column group_id to contacts with nullable value
+- add email email_template_join_conversation to translation from resources/views/emails/joinConversationEmail.blade.php
 
 
 
