@@ -13,6 +13,7 @@ use App\Entities\GroupInvitation;
 use App\Entities\GroupMessage;
 use App\Entities\GroupUser;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Group\GroupResource;
 use App\Mail\JoinConversation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -53,15 +54,15 @@ class GroupController extends Controller
             ]);
 
             foreach ($request['emails'] as $email) {
-                if(!$this->validateEmail($email)){
+                if (!$this->validateEmail($email)) {
                     throw new \Exception('All emails should have to valid');
                 }
             }
 
             $groupGlobalSetting = GroupGlobalSetting::get()->first();
-            if($groupGlobalSetting){
-                if(sizeof($request['emails']) > $groupGlobalSetting->max_invitation_at_once){
-                    throw new \Exception('You can not invite at once more than '.$groupGlobalSetting->max_invitation_at_once);
+            if ($groupGlobalSetting) {
+                if (sizeof($request['emails']) > $groupGlobalSetting->max_invitation_at_once) {
+                    throw new \Exception('You can not invite at once more than ' . $groupGlobalSetting->max_invitation_at_once);
                 }
             }
 
@@ -97,14 +98,14 @@ class GroupController extends Controller
             $groupMessage->save();
 
             foreach ($request['emails'] as $email) {
-                $token = uniqid($authUser->id,true);
-                $groupInvitation =new GroupInvitation();
+                $token = uniqid($authUser->id, true);
+                $groupInvitation = new GroupInvitation();
                 $groupInvitation->group_id = $group->id;
                 $groupInvitation->user_id = $authUser->id;
                 $groupInvitation->token = $token;
                 $groupInvitation->status = GroupInvitationData::STATUS_PENDING;
                 $groupInvitation->save();
-                Mail::to([$email])->send(new JoinConversation($authUser,$token));
+                Mail::to([$email])->send(new JoinConversation($authUser, $token));
             }
 
             return response(['data' => []], StatusCode::HTTP_OK);
@@ -113,6 +114,29 @@ class GroupController extends Controller
                 'error' => [
                     'message' => $e->getMessage(),
                     'code' => StatusCode::HTTP_UNPROCESSABLE_ENTITY
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    public function changeTopic(Request $request, $id)
+    {
+        try {
+            $topic = $request['topic'];
+            if(!$topic){
+                throw new \Exception("Topics should not be empty");
+            }
+            $group = Group::find($id);
+            if (!$group) {
+                throw new \Exception('This group is not found');
+            }
+            $group->description = $topic;
+            $group->save();
+            return response()->json(['data' => new GroupResource($group)], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage()
                 ]
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
