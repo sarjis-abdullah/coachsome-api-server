@@ -15,6 +15,7 @@ use App\Entities\GroupUser;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Group\GroupResource;
 use App\Mail\JoinConversation;
+use App\Services\Media\MediaService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -127,10 +128,60 @@ class GroupController extends Controller
                 throw new \Exception("Topics should not be empty");
             }
             $group = Group::find($id);
+            $authUser = Auth::user();
+
             if (!$group) {
                 throw new \Exception('This group is not found');
             }
+            if($authUser->id != $group->created_user_id){
+                throw new \Exception("You are not permitted for this action.");
+            }
             $group->description = $topic;
+            $group->save();
+            return response()->json(['data' => new GroupResource($group)], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    public function saveImage(Request $request, $id)
+    {
+        try {
+            $imageContent = $request['content'];
+            if(!$imageContent){
+                throw new \Exception("Topics should not be empty");
+            }
+            $group = Group::find($id);
+            if (!$group) {
+                throw new \Exception('This group is not found');
+            }
+
+            $authUser = Auth::user();
+
+            if($authUser->id != $group->created_user_id){
+                throw new \Exception("You are not permitted for this action.");
+            }
+
+            $name = 'id_' . $group->id . '_' . time();
+            $mediaService = new MediaService();
+
+            $mediaService->destroyGroupImage($group->image);
+
+            // Image process
+            $image_64 = $imageContent;
+            $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
+            $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
+            $image = str_replace($replace, '', $image_64);
+            $image = str_replace(' ', '+', $image);
+            $imageName = $name . '.' . $extension;
+
+            // store image information
+            $mediaService->storeGroupImage($imageName, $image);
+            $group->image = $imageName;
             $group->save();
             return response()->json(['data' => new GroupResource($group)], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
