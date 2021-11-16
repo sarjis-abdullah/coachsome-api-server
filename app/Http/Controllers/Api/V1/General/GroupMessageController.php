@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\General;
 use App\Data\ContactData;
 use App\Data\MessageData;
 use App\Data\StatusCode;
+use App\Entities\Contact;
 use App\Entities\Group;
 use App\Entities\GroupMessage;
 use App\Http\Controllers\Controller;
@@ -58,7 +59,9 @@ class GroupMessageController extends Controller
                 'type' => 'required',
                 'content' => 'required',
                 'groupId' => 'required',
+                'createdAt' => 'required',
             ]);
+
             $group = Group::find($request['groupId']);
             if(!$group){
                 throw new \Exception('Group is not found');
@@ -70,8 +73,15 @@ class GroupMessageController extends Controller
             $groupMessage->sender_user_id = Auth::id();
             $groupMessage->content = json_encode($request['content']);
             $groupMessage->date_time = Carbon::now();
-            $groupMessage->date_time_iso = Carbon::now()->toISOString();
+            $groupMessage->date_time_iso = $request['createdAt'];
             $groupMessage->save();
+
+            $contacts = Contact::where('group_id', $group->id)->get();
+            foreach ($contacts as $contact) {
+                $contact->last_message_time = Carbon::now();
+                $contact->last_message = $groupMessage->toJson();
+                $contact->save();
+            }
             return response([
                 'data' => new GroupMessageResource($groupMessage),
                 'message' => 'Successfully send a message'

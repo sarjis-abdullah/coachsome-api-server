@@ -35,6 +35,7 @@ class JoinConversation extends Mailable
     {
 
         $inviterName = '';
+        $subject = "";
         $profile = $this->user->profile;
         if($profile){
             $inviterName = $profile->profile_name;
@@ -43,6 +44,9 @@ class JoinConversation extends Mailable
 
         $translationService = new TranslationService();
         $translations = $translationService->getKeyByLanguageCode(App::getLocale());
+        if(array_key_exists('email_template_join_conversation_subject', $translations)){
+            $subject = $translations['email_template_join_conversation_subject'];
+        }
 
         $emailData = [
             'translations' => $translations,
@@ -59,6 +63,7 @@ class JoinConversation extends Mailable
             'logoUrl' => config("company.url.logo"),
         ];
         return $this->view('emails.joinConversationEmail')
+            ->subject($subject)
             ->with($emailData);
     }
 }
