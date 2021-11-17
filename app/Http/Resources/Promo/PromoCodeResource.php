@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources\Promo;
 
-use App\Entites\PromoUser;
+use App\Entities\PromoUser;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class PromoCodeResource extends JsonResource
