@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1\General;
 
+use App\Data\MessageData;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\Contact;
 use App\Entities\Message;
+use App\Entities\MessageCategory;
 use App\Entities\PendingNotification;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
@@ -31,11 +33,13 @@ class MessageController extends Controller
             $newMessages = [];
 
             $authUser = Auth::user();
-            $connectedUser = User::find($request->query('userId'));
+            $contact = Contact::find($request['contactId']);
 
-            if (!$connectedUser) {
-                throw new \Exception('Selected user not found');
+            if (!$contact) {
+                throw new \Exception('Contact information is not found');
             }
+
+            $connectedUser = User::find($contact->connection_user_id);
 
             $contactService = new ContactService();
             $messageFormatterService = new MessageFormatterService();
@@ -52,7 +56,6 @@ class MessageController extends Controller
                 return $messageFormatterService->doFormat($item);
             });
 
-
             // Initial bookings
             $bookings = Booking::where(function ($q) use ($connectedUser, $authUser) {
                 $q->where('package_owner_user_id', $connectedUser->id);
@@ -67,7 +70,6 @@ class MessageController extends Controller
 
             // Reset new message number
             $contactService->resetContactNewMessageCount($authUser, $connectedUser);
-
 
             return response()->json([
                 'messages' => $messages,
@@ -94,12 +96,25 @@ class MessageController extends Controller
             $request->validate([
                 'receiverUserId' => 'required',
                 'content' => 'required',
-                'type' => 'required'
+                'type' => 'nullable',
+                'categoryId' => 'nullable'
+
             ]);
             $receiverUserId = $request['receiverUserId'];
             $messageContent = $request['content'];
-            $createdAt = $request['created_at'];
+            $createdAt = $request['createdAt'];
             $type = $request['type'];
+            $categoryId = $request['categoryId'];
+
+            if($categoryId){
+                $messageCategory = MessageCategory::find($categoryId);
+                if(!$messageCategory){
+                    throw new \Exception('Message category do not found');
+                }
+            } else {
+                $categoryId = MessageData::CATEGORY_ID_TEXT;
+            }
+
 
             $receiverUser = User::find($receiverUserId);
             if (!$receiverUser) {
@@ -115,6 +130,7 @@ class MessageController extends Controller
 
             $message = new Message();
             $message->sender_user_id = $senderUser->id;
+            $message->message_category_id = $categoryId;
             $message->receiver_user_id = $receiverUser->id;
             $message->text_content = $type == 'text' ? $messageContent : null;
             $message->type = $type;
@@ -125,7 +141,7 @@ class MessageController extends Controller
 
             // Disconnected user pending for a mail notification
             if (!$receiverUser->is_online) {
-                $job = (new NewMessageInformer($receiverUser,$message))->delay(now()->addMinutes(1));
+                $job = (new NewMessageInformer($receiverUser,$message))->delay(now()->addMinutes(5));
                 $jobId = $this->dispatch(
                     $job
                 );

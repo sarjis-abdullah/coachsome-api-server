@@ -16,6 +16,7 @@ class CreateContactsTable extends Migration
         Schema::create('contacts', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('user_id');
+            $table->bigInteger('group_id');
             $table->bigInteger('connection_user_id');
             $table->timestamp('last_message_time')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->text('last_message')->nullable();

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\StatusCode;
-use App\Entites\PromoUser;
+use App\Entities\PromoUser;
 use App\Entities\Booking;
 use App\Entities\BookingSetting;
 use App\Entities\Contact;
@@ -144,6 +144,7 @@ class QuickpayController extends Controller
             $order->service_fee = $chargeInfo['serviceFee'];
             $order->status = 'Initial';
             $order->save();
+
             // $order->id only work when it saved
             $orderKey = 'OID-' . $order->id . '-' . time();
             $order->key = $orderKey;

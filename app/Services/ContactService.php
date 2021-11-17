@@ -3,6 +3,7 @@
 
 namespace App\Services;
 
+use App\Data\ContactData;
 use App\Entities\Contact;
 use App\Entities\Message;
 use App\Entities\User;
@@ -79,6 +80,7 @@ class ContactService
                 $receiverExistedContact->last_message = $message;
             }
             $receiverExistedContact->new_message_count = ++$receiverExistedContact->new_message_count;
+            $receiverExistedContact->status = ContactData::STATUS_UNREAD;
             $receiverExistedContact->save();
         }
     }
@@ -90,6 +92,7 @@ class ContactService
             ->first();
         if ($contact) {
             $contact->new_message_count = 0;
+            $contact->status = ContactData::STATUS_READ;
             $contact->save();
         }
     }

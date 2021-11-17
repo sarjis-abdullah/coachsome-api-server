@@ -5,6 +5,7 @@ namespace App\Services;
 
 
 use App\Data\BookingStatus;
+use App\Data\MessageData;
 use App\Data\OrderStatus;
 use App\Entities\Booking;
 use App\Entities\Message;
@@ -85,6 +86,7 @@ class BookingService
                 ]);
                 $newMessage = new Message();
                 $newMessage->type = 'structure';
+                $newMessage->message_category_id = MessageData::CATEGORY_ID_BUY_PACKAGE;
                 $newMessage->sender_user_id = $packageBuyerUser->id;
                 $newMessage->receiver_user_id = $packageOwnerUser->id;
                 $newMessage->structure_content = $buyPackageMessage->toJson();
@@ -107,6 +109,7 @@ class BookingService
                 ]);
                 $newMessage = new Message();
                 $newMessage->type = 'structure';
+                $newMessage->message_category_id = MessageData::CATEGORY_ID_BOOKING_PACKAGE;
                 $newMessage->sender_user_id = $packageBuyerUser->id;
                 $newMessage->receiver_user_id = $packageOwnerUser->id;
                 $newMessage->structure_content = $packageBookingMessage->toJson();

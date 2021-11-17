@@ -4,15 +4,6 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
-
-    /*
-     * Chat Server Api
-     */
-    Route::group(['namespace' => 'ChatServerApi'], function () {
-        Route::get('chatServerApi/users/{id}/online', 'UserController@doOnline');
-        Route::get('chatServerApi/users/{id}/offline', 'UserController@doOffline');
-    });
-
     /*
     * General
     */
@@ -60,9 +51,26 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             // Chats
             Route::get('chats', "ChatController@index");
 
+            // Chat Settings
+            Route::get('chatSettings', "ChatSettingController@index");
+            Route::post('chatSettings/enterPress', "ChatSettingController@enterPress");
+
+            // Groups
+            Route::apiResource('groups', "GroupController");
+            Route::put('groups/{id}/change-topic', "GroupController@changeTopic");
+            Route::post('groups/{id}/save-image', "GroupController@saveImage");
+            Route::apiResource('group-messages', "GroupMessageController");
+            Route::post('group-invitations/groups/{id}', "GroupInvitationController@invite");
+            Route::post('group-invitations/verify', "GroupInvitationController@verify");
+            Route::get('group-invitations/private-users', "GroupInvitationController@getPrivateUser");
+
             // Contacts
             Route::get('contacts', "ContactController@index");
             Route::post('contacts/resetNewMessageInfo', "ContactController@resetContactNewMessageInformation");
+            Route::post('contacts/archive', "ContactController@archive");
+            Route::post('contacts/unarchive', "ContactController@unarchive");
+            Route::post('contacts/unread', "ContactController@unread");
+            Route::get('contacts/private-users', "ContactController@getPrivateUser");
 
             // Messages
             Route::get('messages', "MessageController@index");

@@ -18,6 +18,7 @@ class CreateMessagesTable extends Migration
             $table->bigInteger('sender_user_id');
             $table->bigInteger('receiver_user_id');
             $table->bigInteger('booking_time_id')->nullable();
+            $table->bigInteger('message_category_id')->nullable();
             $table->string('type')->nullable();
             $table->text('text_content')->nullable();
             $table->text('structure_content')->nullable();
