@@ -59,7 +59,8 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
-            "Coachsome\\BaseReview\\": "packages/Coachsome/BaseReview/src"
+            "Coachsome\\BaseReview\\": "packages/Coachsome/BaseReview/src",
+            "Coachsome\\ChatServer\\": "packages/Coachsome/ChatServer/src"
         },
         "classmap": [
             "database/seeders",

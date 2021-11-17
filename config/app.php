@@ -196,6 +196,7 @@ return [
          * Custom packages
          */
         Coachsome\BaseReview\Providers\BaseReviewServiceProvider::class,
+        Coachsome\ChatServer\Providers\ChatServerServiceProvider::class,
 
     ],
 

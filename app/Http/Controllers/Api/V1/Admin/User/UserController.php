@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1\Admin\User;
 
-use App\Data\Constants;
 use App\Data\StatusCode;
 use App\Entities\ActivityStatus;
 use App\Entities\Badge;
@@ -16,18 +15,11 @@ use App\Http\Resources\Admin\User\UserCollection;
 use App\Http\Resources\Admin\User\UserResource;
 use App\Http\Resources\Badge\BadgeResource;
 use App\Http\Resources\Role\RoleCollection;
-use App\Services\Media\MediaService;
-use App\Services\TransformerService;
 use App\Services\UserService;
-use App\Transformers\Admin\User\UserListTransformer;
-use App\Transformers\Admin\User\UserTransformer;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use League\Fractal\Resource\Collection;
-use League\Fractal\Resource\Item;
 use App\Data\ActivityStatus as ActivityStatusData;
 
 class UserController extends Controller
@@ -103,11 +95,11 @@ class UserController extends Controller
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
                 $data['message'] = $e->validator->errors()->first();
-                return response()->json($data, Constants::HTTP_UNPROCESSABLE_ENTITY);
+                return response()->json($data, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $data['message'] = $e->getMessage();
-            return response()->json($data, Constants::HTTP_UNPROCESSABLE_ENTITY);
+            return response()->json($data, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -140,6 +132,7 @@ class UserController extends Controller
             $mobileCode = $request->phoneCode;
             $mobileNumber = $request->phoneNumber;
             $badgeId = $request->badgeId;
+            $roleId = $request->roleId;
             $ranking = $request->ranking;
             $starStatusId = $request->starStatusId;
             $skillLevelValue = $request->skillLevelValue;
@@ -178,30 +171,38 @@ class UserController extends Controller
             }
             $user->save();
 
+            // Update role
+            if($roleId){
+                $role = Role::find($roleId);
+                if($role) {
+                    $user->syncRoles([$role->id]);
+                }
+            }
+
             // User log
             UserLog::createByUser($user);
 
             $response['user'] = new UserResource($user);
             $response['status'] = 'success';
             $response['message'] = 'Successfully updated.';
-            return response()->json($response, Constants::HTTP_OK);
+            return response()->json($response, StatusCode::HTTP_OK);
 
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
                 $response['status'] = 'error';
                 $response['message'] = $e->validator->errors()->first();
-                return response()->json($response, Constants::HTTP_UNPROCESSABLE_ENTITY);
+                return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             if ($e instanceof ModelNotFoundException) {
                 $response['status'] = 'error';
                 $response['message'] = 'User not found';
-                return response()->json($response, Constants::HTTP_UNPROCESSABLE_ENTITY);
+                return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $response['status'] = 'error';
             $response['message'] = $e->getMessage();
-            return response()->json($response, Constants::HTTP_UNPROCESSABLE_ENTITY);
+            return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 

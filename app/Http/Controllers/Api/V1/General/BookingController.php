@@ -4,11 +4,15 @@ namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\BookingStatus;
 use App\Data\Constants;
+use App\Data\MessageData;
 use App\Data\OrderStatus;
+use App\Data\Promo;
 use App\Data\StatusCode;
 use App\Entities\Booking;
+use App\Entities\Currency;
 use App\Entities\Message;
 use App\Entities\Package;
+use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Package\PackageResource;
@@ -18,26 +22,20 @@ use App\Mail\AthleteDeclinedPackage;
 use App\Mail\AthletePackageConfirmation;
 use App\Mail\CoachPackageConfirmation;
 use App\Mail\NewOrderCapture;
-use App\Mail\PackageAccepted;
-use App\Services\BookingService;
 use App\Services\ContactService;
 use App\Services\CurrencyService;
 use App\Services\Media\MediaService;
 use App\Services\MessageFormatterService;
-use App\Services\OrderService;
 use App\Services\PackageService;
+use App\Services\Promo\PromoService;
 use App\Services\QuickpayClientService;
-use App\ValueObjects\Message\BigText;
 use App\ValueObjects\Message\AcceptedPackageBooking;
 use App\ValueObjects\Message\DeclinedPackageBooking;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use AshAllenDesign\LaravelExchangeRates\Classes\ExchangeRate;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
-use QuickPay\QuickPay;
 use Exception;
 
 class BookingController extends Controller
@@ -52,41 +50,36 @@ class BookingController extends Controller
 
         try {
             $request->validate([
-                'packageId' => 'required'
+                'packageId' => 'required',
+                'promoCode' => 'nullable|string'
             ]);
 
             $packageId = $request->packageId;
             $requestedCurrencyCode = $request->header('Currency-Code');
-
             if (!$requestedCurrencyCode) {
                 throw new \Exception('Currency not found');
             }
 
             $package = Package::find($packageId);
-
             if (!$package) {
                 throw new Exception('Package not found');
             }
 
             $packageOwnerUser = $package->user;
+            $packageBuyerUser = Auth::user();
             $packageCategory = $package->category;
             $userPackageSetting = $packageOwnerUser->ownPackageSetting;
-            $authUser = Auth::user();
-
             if (!$packageOwnerUser) {
                 throw new \Exception('Package owner user not found');
             }
 
             $packageService = new PackageService();
+            $promoService = new PromoService();
             $currencyService = new CurrencyService();
             $mediaService = new MediaService();
 
-            $fromCurrencyCode = $currencyService->getUserCurrency($packageOwnerUser)->code;
             $toCurrencyCode = $requestedCurrencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
 
-            $discount = $package->details->discount ?? 0.00;
-            $originalPrice = $packageService->calculateOriginalPrice($packageOwnerUser, $package);
-            $salePrice = $packageService->calculatePackageSalePrice($originalPrice, $discount);
             if ($packageCategory && $packageCategory->id == Constants::PACKAGE_CAMP_ID) {
                 $minPerson = $package->details->attendees_min;
                 $maxPerson = $package->details->attendees_max;
@@ -95,25 +88,38 @@ class BookingController extends Controller
                 $maxPerson = 1;
             }
 
-            $salePriceAfterConvertingCurrency = $currencyService->convert(
-                $salePrice,
-                $fromCurrencyCode,
-                $toCurrencyCode
-            );
-
-            $serviceFee = round((5 / 100) * $salePriceAfterConvertingCurrency, 2);
-            $total = round(($salePriceAfterConvertingCurrency + $serviceFee), 2);
-            $totalPerPerson = round((1 * ($salePriceAfterConvertingCurrency + $serviceFee)), 2);
-
+            // Package charge info
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $request['promoCode'], 'packageBuyerUser' => $packageBuyerUser]);
             $chargeBox = new \stdClass();
-            $chargeBox->priceForPackage = $salePriceAfterConvertingCurrency;
-            $chargeBox->totalPerPerson = $totalPerPerson;
-            $chargeBox->total = $total;
-            $chargeBox->salePrice = round($salePriceAfterConvertingCurrency, 2);
-            $chargeBox->serviceFee = $serviceFee;
+            $chargeBox->priceForPackage = $chargeInfo['salePrice'];
+            $chargeBox->totalPerPerson = $chargeInfo['totalPerPerson'];
+            $chargeBox->total = $chargeInfo['total'];
+            $chargeBox->salePrice = $chargeInfo['salePrice'];
+            $chargeBox->serviceFee = $chargeInfo['serviceFee'];
             $chargeBox->minPerson = $minPerson;
             $chargeBox->maxPerson = $maxPerson;
 
+            // Promo Code Info
+            $promoCodeInfo = [
+                'valid' => false,
+                'value' => '',
+                'amount' => 0.00,
+                'message' => ''
+            ];
+            $promoCode = PromoCode::where('code', $request['promoCode'])->first();
+            if ($promoCode) {
+                if(!$promoService->isExpired($promoCode, $packageBuyerUser)){
+                    $promoCodeInfo['valid'] = true;
+                    $promoCodeInfo['value'] = $promoCode->code;
+                    $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
+                } else {
+                    $promoCodeInfo['message'] = "This code is expired";
+                }
+            } else {
+                $promoCodeInfo['message'] = 'This code is not found';
+            }
+
+            // Availabilities
             $availabilities = $packageOwnerUser->availabilities;
 
             $packageInfo = new PackageResource($package);
@@ -126,7 +132,8 @@ class BookingController extends Controller
                 'packageSetting' => $packageSetting,
                 'profileCard' => $profileCard,
                 'chargeBox' => $chargeBox,
-                'availabilities' => $availabilities
+                'availabilities' => $availabilities,
+                'promoCode' => $promoCodeInfo
             ], StatusCode::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -139,7 +146,9 @@ class BookingController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -311,8 +320,8 @@ class BookingController extends Controller
             // Tracking pixel track the package that accepted
             $trackingPixel = [
                 'status' => false,
-                'orderKey'=> '',
-                'salePrice'=> 0.00
+                'orderKey' => '',
+                'salePrice' => 0.00
             ];
 
             $booking = Booking::find($bookingId);
@@ -352,11 +361,30 @@ class BookingController extends Controller
             }
 
             $contactService = new ContactService();
-            $quickpayClientService = new QuickpayClientService();
             $messageFormatterService = new MessageFormatterService();
 
-
+            $quickpayClientService = new QuickpayClientService();
             $quickpayClient = $quickpayClientService->getClient();
+
+            // Check payment status
+            $isPaymentCapture = false;
+            $paymentResponse = $quickpayClient->request->get('/payments/' . $paymentId)->asArray();
+            if($paymentResponse){
+                if($paymentResponse['operations']){
+                    foreach ($paymentResponse['operations'] as $operation) {
+                        if($operation['type'] == 'capture') {
+                            $isPaymentCapture = true;
+                        }
+                    }
+                }
+            }
+            if($isPaymentCapture){
+                $order->status = OrderStatus::CAPTURE;
+                $order->save();
+                $booking->status = BookingStatus::ACCEPTED;
+                $booking->save();
+                $responseMessage = 'Payment had captured';
+            }
 
             // Accept
             if ($action == 'accept') {
@@ -366,39 +394,41 @@ class BookingController extends Controller
                 $trackingPixel['orderKey'] = $order->key;
                 $trackingPixel['salePrice'] = $order->package_sale_price;
 
-                $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
-                    'amount' => $order->total_amount * 100
-                ]);
-                if ($captureRequest->httpStatus() == 202) {
-                    $order->status = OrderStatus::CAPTURE;
-                    $order->save();
-                    $booking->status = BookingStatus::ACCEPTED;
-                    $booking->date_of_acceptance = date('Y-m-d H:i:s');
-                    $booking->save();
-                    // Mail to users
-                    Mail::to($packageOwnerUser)->queue(new CoachPackageConfirmation($booking));
-                    Mail::to($packageBuyerUser)->queue(new AthletePackageConfirmation($booking));
-                    // Mail to administrator
-                    Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
-                } else {
-                    throw new \Exception('Payment is not captured properly, try again', 106);
+                if(!$isPaymentCapture){
+                    $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
+                        'amount' => $order->total_amount * 100
+                    ]);
+                    if ($captureRequest->httpStatus() == 202) {
+                        $order->status = OrderStatus::CAPTURE;
+                        $order->save();
+                        $booking->status = BookingStatus::ACCEPTED;
+                        $booking->date_of_acceptance = date('Y-m-d H:i:s');
+                        $booking->save();
+                        // Mail to users
+                        Mail::to($packageOwnerUser)->queue(new CoachPackageConfirmation($booking));
+                        Mail::to($packageBuyerUser)->queue(new AthletePackageConfirmation($booking));
+                        // Mail to administrator
+                        Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
+                    } else {
+                        throw new \Exception('Payment is not captured properly, try again', 106);
+                    }
+                    $acceptedPackageBookingMessage = new AcceptedPackageBooking([
+                        'orderSnapshot' => $order->toArray(),
+                        'packageSnapshot' => json_decode($order->package_snapshot),
+                        'status' => 'Accepted',
+                    ]);
+                    $newMessage = new Message();
+                    $newMessage->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_PACKAGE_BOOKING;
+                    $newMessage->sender_user_id = $authUser->id;
+                    $newMessage->receiver_user_id = $packageBuyerUser->id;
+                    $newMessage->type = 'structure';
+                    $newMessage->structure_content = $acceptedPackageBookingMessage->toJson();
+                    $newMessage->date_time = Carbon::now();
+                    $newMessage->save();
+
+                    $responseMessage = 'This request was successfully accepted.';
+                    $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
                 }
-
-                $acceptedPackageBookingMessage = new AcceptedPackageBooking([
-                    'orderSnapshot' => $order->toArray(),
-                    'packageSnapshot' => json_decode($order->package_snapshot),
-                    'status' => 'Accepted',
-                ]);
-                $newMessage = new Message();
-                $newMessage->sender_user_id = $authUser->id;
-                $newMessage->receiver_user_id = $packageBuyerUser->id;
-                $newMessage->type = 'structure';
-                $newMessage->structure_content = $acceptedPackageBookingMessage->toJson();
-                $newMessage->date_time = Carbon::now();
-                $newMessage->save();
-
-                $responseMessage = 'This request was successfully accepted.';
-                $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
 
             }
 
@@ -424,6 +454,7 @@ class BookingController extends Controller
                 ]);
                 $newMessage = new Message();
                 $newMessage->sender_user_id = $authUser->id;
+                $newMessage->message_category_id = MessageData::CATEGORY_ID_DECLINED_PACKAGE_BOOKING;
                 $newMessage->receiver_user_id = $packageBuyerUser->id;
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $declinedPackageBookingMessage->toJson();
@@ -447,7 +478,7 @@ class BookingController extends Controller
             });
 
             return response()->json([
-                'trackingPixel'=> $trackingPixel,
+                'trackingPixel' => $trackingPixel,
                 'message' => $responseMessage,
                 'messages' => $messages,
                 'newMessage' => $messageFormatterService->doFormat($newMessage)

@@ -4,15 +4,6 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
-
-    /*
-     * Chat Server Api
-     */
-    Route::group(['namespace' => 'ChatServerApi'], function () {
-        Route::get('chatServerApi/users/{id}/online', 'UserController@doOnline');
-        Route::get('chatServerApi/users/{id}/offline', 'UserController@doOffline');
-    });
-
     /*
     * General
     */
@@ -29,7 +20,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Company Ratings
         Route::get('companyRatings', 'CompanyRatingController@index');
 
-
         // Profile
         Route::get('publicProfile/{userName}', 'ProfileController@getByUserName');
 
@@ -39,9 +29,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Pending Booking
         Route::post('pendingBookings', 'PendingBookingController@store');
         Route::post('pendingBookings/confirm', 'PendingBookingController@confirm');
-
-        // Bookings
-        Route::post('bookings', 'BookingController@index');
 
         // Translation
         Route::get('translations', "TranslationController@index");
@@ -53,6 +40,10 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::get('storage/video/{name}', 'VideoController@getVideo');
 
         Route::group(['middleware' => ['auth:api']], function () {
+
+            // Bookings
+            Route::get('bookings', 'BookingController@index');
+
             // Payments
             Route::post('payments/quickpay/pay', 'QuickpayController@pay');
             Route::post('payments/quickpay/notify', 'QuickpayController@notify');
@@ -60,9 +51,26 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             // Chats
             Route::get('chats', "ChatController@index");
 
+            // Chat Settings
+            Route::get('chatSettings', "ChatSettingController@index");
+            Route::post('chatSettings/enterPress', "ChatSettingController@enterPress");
+
+            // Groups
+            Route::apiResource('groups', "GroupController");
+            Route::put('groups/{id}/change-topic', "GroupController@changeTopic");
+            Route::post('groups/{id}/save-image', "GroupController@saveImage");
+            Route::apiResource('group-messages', "GroupMessageController");
+            Route::post('group-invitations/groups/{id}', "GroupInvitationController@invite");
+            Route::post('group-invitations/verify', "GroupInvitationController@verify");
+            Route::get('group-invitations/private-users', "GroupInvitationController@getPrivateUser");
+
             // Contacts
             Route::get('contacts', "ContactController@index");
             Route::post('contacts/resetNewMessageInfo', "ContactController@resetContactNewMessageInformation");
+            Route::post('contacts/archive', "ContactController@archive");
+            Route::post('contacts/unarchive', "ContactController@unarchive");
+            Route::post('contacts/unread', "ContactController@unread");
+            Route::get('contacts/private-users', "ContactController@getPrivateUser");
 
             // Messages
             Route::get('messages', "MessageController@index");
@@ -198,6 +206,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['auth:api', 'isAdmin']], function () {
         Route::apiResource('users', 'User\UserController');
         Route::apiResource('userLogs', 'User\UserLogController');
+        Route::apiResource('promoCodes', 'PromoCode\PromoCodeController');
 
         Route::get('payout/requests', 'Payout\PayoutRequestController@index');
         Route::post('payout/requests/paid', 'Payout\PayoutRequestController@paid');
@@ -206,6 +215,9 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
         // Order list
         Route::get('orderList', 'Order\OrderListController@index');
+
+        // Tracking Codes
+        Route::get('tracking-codes/{code}', 'PromoCode\TrackingCodeController@index');
 
         // Dashboard
         Route::get('dashboard', 'Dashboard\DashboardController@index');

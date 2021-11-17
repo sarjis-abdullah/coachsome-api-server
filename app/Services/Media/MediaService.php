@@ -99,6 +99,34 @@ class MediaService
         return env('APP_SERVER_DOMAIN_STORAGE_PATH') . '/images/facebook/' . $name;
     }
 
+    public function storeGroupImage($name, $content)
+    {
+        return Storage::disk('publicImage')->put("group/" . $name, base64_decode($content));
+    }
+
+    public function destroyGroupImage($imageName)
+    {
+        if (Storage::disk('publicImage')->has('group/' . $imageName)) {
+            return Storage::disk('publicImage')->delete('group/' . $imageName);
+        } else {
+            return false;
+        }
+    }
+
+    public function hasGroupImage($imageName)
+    {
+        if($imageName){
+            return Storage::disk('publicImage')->has('group/' . $imageName);
+        } else {
+            return null;
+        }
+    }
+
+    public function getGroupImageUrl($name)
+    {
+        return env('APP_SERVER_DOMAIN_STORAGE_PATH') . '/images/group/' . $name;
+    }
+
     public function getGalleryImageUrl($name)
     {
         return env('APP_SERVER_DOMAIN_STORAGE_PATH') . '/images/' . $name;

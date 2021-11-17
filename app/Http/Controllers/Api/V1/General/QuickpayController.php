@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\StatusCode;
+use App\Entities\PromoUser;
 use App\Entities\Booking;
 use App\Entities\BookingSetting;
 use App\Entities\Contact;
@@ -10,6 +11,7 @@ use App\Entities\Message;
 use App\Entities\Order;
 use App\Entities\Package;
 use App\Entities\Payment;
+use App\Entities\PromoCode;
 use App\Http\Controllers\Controller;
 use App\Mail\AthletePackageConfirmation;
 use App\Mail\CoachPackageConfirmation;
@@ -19,6 +21,11 @@ use App\Mail\PackageAccepted;
 use App\Mail\AthletePendingPackageRequest;
 use App\Services\BookingService;
 use App\Services\ContactService;
+use App\Services\CurrencyService;
+use App\Services\Media\MediaService;
+use App\Services\PackageService;
+use App\Services\Promo\PromoService;
+use App\Services\QuickpayClientService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -40,7 +47,8 @@ class QuickpayController extends Controller
                 'currency' => 'required',
                 'serviceFee' => 'required',
                 'totalAmount' => 'required',
-                'salePrice' => 'required'
+                'salePrice' => 'required',
+                'promoCode' => 'nullable'
             ]);
 
             $packageId = $request->packageId;
@@ -54,6 +62,7 @@ class QuickpayController extends Controller
             $paymentMethod = $request->paymentMethod;
             $continueUrl = $request->packageUrl . "?payment_status=paid";
             $cancelUrl = $request->packageUrl . "?payment_status=cancel";
+            $promoCodeValue = $request->promoCode;
 
             $package = Package::with(['category', 'details', 'user'])
                 ->where('id', $packageId)
@@ -89,10 +98,15 @@ class QuickpayController extends Controller
                 throw new Exception('You can not buy your package. We can apply it in next version.');
             }
 
-            $packageOwnerPackageSetting = $packageOwnerUser->ownPackageSetting;
             $contactService = new ContactService();
+            $promoService = new PromoService();
+            $packageService = new PackageService();
+            $currencyService = new CurrencyService();
+
+            $toCurrencyCode = $currencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
 
 
+            $packageOwnerPackageSetting = $packageOwnerUser->ownPackageSetting;
             $isQuickBooking = $packageOwnerPackageSetting->is_quick_booking ?? false;
 
             DB::beginTransaction();
@@ -113,6 +127,9 @@ class QuickpayController extends Controller
             $booking->is_quick_booking = $isQuickBooking;
             $booking->save();
 
+            // Package charge info
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $promoCodeValue, 'packageBuyerUser' => $packageBuyerUser]);
+
             // Creating order
             $order = new Order();
             $order->booking_id = $booking->id;
@@ -120,21 +137,37 @@ class QuickpayController extends Controller
             $order->package_category_id = $packageCategory->id;
             $order->package_snapshot = $package->toJson();
             $order->number_of_attendees = $numberOfAttendees;
-            $order->package_sale_price = $salePrice;
-            $order->total_per_person = $totalPerPerson;
+            $order->package_sale_price = $chargeInfo['salePrice'];
+            $order->total_per_person = $chargeInfo['totalPerPerson'];
             $order->currency = $currencyCode;
-            $order->total_amount = $totalAmount;
-            $order->service_fee = $serviceFee;
+            $order->total_amount = $chargeInfo['total'];
+            $order->service_fee = $chargeInfo['serviceFee'];
             $order->status = 'Initial';
             $order->save();
 
-            // Order key manage
+            // $order->id only work when it saved
             $orderKey = 'OID-' . $order->id . '-' . time();
             $order->key = $orderKey;
+
+            $promoCode = PromoCode::where('code', $promoCodeValue)->first();
+            if ($promoCode) {
+                $promoUser = new PromoUser();
+                $promoUser->user_id = $packageBuyerUser->id;
+                $promoUser->order_id = $order->id;
+                $promoUser->promo_code_id = $promoCode->id;
+                $promoUser->code = $promoCode->code;
+                $promoUser->promo_code_data = $promoCode->toJson();
+                $promoUser->save();
+
+                // Cut down discount from order
+                $order->promo_discount = $chargeInfo['promoDiscount'];
+            }
+
+            // Save order information after change
             $order->save();
 
-            $api_key = env('QUICKPAY_API_KEY');
-            $client = new QuickPay(":{$api_key}");
+            $quickpayClientService = new QuickpayClientService();
+            $client = $quickpayClientService->getClient();
 
             // Create payment
             $payment = $client->request->post('/payments', [
@@ -146,15 +179,13 @@ class QuickpayController extends Controller
 
             // Determine if payment was created successfully
             if ($status === 201) {
-
                 $paymentObject = $payment->asObject();
 
                 // Construct url to create payment link
                 $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
 
-
                 // Issue a put request to create payment link
-                $modifiedContinueUrl= $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
+                $modifiedContinueUrl = $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
                 $linkRequest = $client->request->put($endpoint, [
                     'amount' => $totalAmount * 100,
                     'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
@@ -179,7 +210,7 @@ class QuickpayController extends Controller
                     DB::commit();
 
                     // Mail to administrator
-                    if($isQuickBooking){
+                    if ($isQuickBooking) {
                         Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
                     }
 

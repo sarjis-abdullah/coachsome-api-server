@@ -1,26 +1,18 @@
-##[dev,test]
+## feature/chat-improvements [dev]
+- composer dump-autoload -o
+- Add table message_categories
+- Add column message_category_id at messages table
+- php artisan update:db
+- create chat_settings table
+- create contact_categories, groups table
+- add column contact_category_id at contact table
+- make nullable connection_user_id at contacts table
+- create group_invitations table
+- create group_global_settings table
+- add column contact_category_id to contacts table and default value 1
+- add column group_id to contacts with nullable value
+- add email email_template_join_conversation to translation from resources/views/emails/joinConversationEmail.blade.php
 
-### Add
-- add translation email_new_order_capture
-
-## [dev,test,master]
-
-### Add
-- add field is_online at users table default value 0
-- add QUEUE_CONNECTION=database to env
-- add jobs table
-- add pending_notifications table
-- add translation email_new_txt_message
-### CMD
-- composer dump-autoload
-
-## [dev,test,master] 
-
-### CMD
-- php artisan migrate --path=database/migrations/2021_07_13_130658_create_badges_table.php
-- php artisan db:seed BadgesTableSeeder
-- add column badge_id at users table default value 1
-- booking_locations zip and city allow null
 
 
 
