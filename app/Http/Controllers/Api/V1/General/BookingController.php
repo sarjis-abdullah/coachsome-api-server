@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\BookingStatus;
 use App\Data\Constants;
+use App\Data\MessageData;
 use App\Data\OrderStatus;
 use App\Data\Promo;
 use App\Data\StatusCode;
@@ -21,27 +22,20 @@ use App\Mail\AthleteDeclinedPackage;
 use App\Mail\AthletePackageConfirmation;
 use App\Mail\CoachPackageConfirmation;
 use App\Mail\NewOrderCapture;
-use App\Mail\PackageAccepted;
-use App\Services\BookingService;
 use App\Services\ContactService;
 use App\Services\CurrencyService;
 use App\Services\Media\MediaService;
 use App\Services\MessageFormatterService;
-use App\Services\OrderService;
 use App\Services\PackageService;
 use App\Services\Promo\PromoService;
 use App\Services\QuickpayClientService;
-use App\ValueObjects\Message\BigText;
 use App\ValueObjects\Message\AcceptedPackageBooking;
 use App\ValueObjects\Message\DeclinedPackageBooking;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use AshAllenDesign\LaravelExchangeRates\Classes\ExchangeRate;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
-use QuickPay\QuickPay;
 use Exception;
 
 class BookingController extends Controller
@@ -367,11 +361,30 @@ class BookingController extends Controller
             }
 
             $contactService = new ContactService();
-            $quickpayClientService = new QuickpayClientService();
             $messageFormatterService = new MessageFormatterService();
 
-
+            $quickpayClientService = new QuickpayClientService();
             $quickpayClient = $quickpayClientService->getClient();
+
+            // Check payment status
+            $isPaymentCapture = false;
+            $paymentResponse = $quickpayClient->request->get('/payments/' . $paymentId)->asArray();
+            if($paymentResponse){
+                if($paymentResponse['operations']){
+                    foreach ($paymentResponse['operations'] as $operation) {
+                        if($operation['type'] == 'capture') {
+                            $isPaymentCapture = true;
+                        }
+                    }
+                }
+            }
+            if($isPaymentCapture){
+                $order->status = OrderStatus::CAPTURE;
+                $order->save();
+                $booking->status = BookingStatus::ACCEPTED;
+                $booking->save();
+                $responseMessage = 'Payment had captured';
+            }
 
             // Accept
             if ($action == 'accept') {
@@ -381,39 +394,41 @@ class BookingController extends Controller
                 $trackingPixel['orderKey'] = $order->key;
                 $trackingPixel['salePrice'] = $order->package_sale_price;
 
-                $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
-                    'amount' => $order->total_amount * 100
-                ]);
-                if ($captureRequest->httpStatus() == 202) {
-                    $order->status = OrderStatus::CAPTURE;
-                    $order->save();
-                    $booking->status = BookingStatus::ACCEPTED;
-                    $booking->date_of_acceptance = date('Y-m-d H:i:s');
-                    $booking->save();
-                    // Mail to users
-                    Mail::to($packageOwnerUser)->queue(new CoachPackageConfirmation($booking));
-                    Mail::to($packageBuyerUser)->queue(new AthletePackageConfirmation($booking));
-                    // Mail to administrator
-                    Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
-                } else {
-                    throw new \Exception('Payment is not captured properly, try again', 106);
+                if(!$isPaymentCapture){
+                    $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
+                        'amount' => $order->total_amount * 100
+                    ]);
+                    if ($captureRequest->httpStatus() == 202) {
+                        $order->status = OrderStatus::CAPTURE;
+                        $order->save();
+                        $booking->status = BookingStatus::ACCEPTED;
+                        $booking->date_of_acceptance = date('Y-m-d H:i:s');
+                        $booking->save();
+                        // Mail to users
+                        Mail::to($packageOwnerUser)->queue(new CoachPackageConfirmation($booking));
+                        Mail::to($packageBuyerUser)->queue(new AthletePackageConfirmation($booking));
+                        // Mail to administrator
+                        Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
+                    } else {
+                        throw new \Exception('Payment is not captured properly, try again', 106);
+                    }
+                    $acceptedPackageBookingMessage = new AcceptedPackageBooking([
+                        'orderSnapshot' => $order->toArray(),
+                        'packageSnapshot' => json_decode($order->package_snapshot),
+                        'status' => 'Accepted',
+                    ]);
+                    $newMessage = new Message();
+                    $newMessage->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_PACKAGE_BOOKING;
+                    $newMessage->sender_user_id = $authUser->id;
+                    $newMessage->receiver_user_id = $packageBuyerUser->id;
+                    $newMessage->type = 'structure';
+                    $newMessage->structure_content = $acceptedPackageBookingMessage->toJson();
+                    $newMessage->date_time = Carbon::now();
+                    $newMessage->save();
+
+                    $responseMessage = 'This request was successfully accepted.';
+                    $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
                 }
-
-                $acceptedPackageBookingMessage = new AcceptedPackageBooking([
-                    'orderSnapshot' => $order->toArray(),
-                    'packageSnapshot' => json_decode($order->package_snapshot),
-                    'status' => 'Accepted',
-                ]);
-                $newMessage = new Message();
-                $newMessage->sender_user_id = $authUser->id;
-                $newMessage->receiver_user_id = $packageBuyerUser->id;
-                $newMessage->type = 'structure';
-                $newMessage->structure_content = $acceptedPackageBookingMessage->toJson();
-                $newMessage->date_time = Carbon::now();
-                $newMessage->save();
-
-                $responseMessage = 'This request was successfully accepted.';
-                $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
 
             }
 
@@ -439,6 +454,7 @@ class BookingController extends Controller
                 ]);
                 $newMessage = new Message();
                 $newMessage->sender_user_id = $authUser->id;
+                $newMessage->message_category_id = MessageData::CATEGORY_ID_DECLINED_PACKAGE_BOOKING;
                 $newMessage->receiver_user_id = $packageBuyerUser->id;
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $declinedPackageBookingMessage->toJson();

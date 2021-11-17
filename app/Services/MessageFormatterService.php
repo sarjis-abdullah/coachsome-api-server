@@ -4,6 +4,7 @@
 namespace App\Services;
 
 
+use App\Data\MessageData;
 use App\Entities\Booking;
 use App\Entities\BookingTime;
 use App\Entities\User;
@@ -28,6 +29,7 @@ class MessageFormatterService
             $structureContent = json_decode($message->structure_content);
             $textContent = $message->text_content;
             $dateTimeIsoString = $message->date_time_iso;
+            $categoryId = $message->message_category_id;
 
             // Formatting
             if ($structureContent) {
@@ -106,10 +108,12 @@ class MessageFormatterService
 
             $formattedMessage = new \stdClass();
             $formattedMessage->id = $messageId;
+            $formattedMessage->categoryId = $categoryId;
             $formattedMessage->type = $messageType;
             $formattedMessage->content = $formattedContent;
             $formattedMessage->me = $isMe;
-            $formattedMessage->created_at = $dateTimeIsoString;
+            $formattedMessage->scope = MessageData::SCOPE_PRIVATE;
+            $formattedMessage->createdAt = $dateTimeIsoString;
         }
 
         return $formattedMessage;
