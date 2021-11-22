@@ -92,7 +92,6 @@ class ContactService
             ->first();
         if ($contact) {
             $contact->new_message_count = 0;
-            $contact->status = ContactData::STATUS_READ;
             $contact->save();
         }
     }
