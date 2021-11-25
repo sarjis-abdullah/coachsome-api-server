@@ -14,11 +14,8 @@ class SportTagCollection extends ResourceCollection
      */
     public function toArray($request)
     {
-        return $this->collection->transform(function($sportTag){
-            return [
-                'id' => $sportTag->id,
-                'name' => $sportTag->name,
-            ];
+        return $this->collection->map(function($item){
+            return new SportTagResource($item);
         });
     }
 }

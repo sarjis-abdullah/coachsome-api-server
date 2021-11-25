@@ -29,6 +29,7 @@ class MarketplaceService
     {
         // Request value
         $cityName = $request->query('cityName');
+        $tagName = $request->query('tagName');
         $categoryName = $request->query('categoryName');
         $categoryIdList = $request->query('categoryId') ? explode(",", $request->query('categoryId')) : [];
         $date = date('Y-m-d', strtotime($request->date)) ?? '';
@@ -179,10 +180,19 @@ class MarketplaceService
             });
         }
 
+
+        
         // City name
         if ($cityName) {
             $userQuery->whereHas('locations', function ($q) use ($cityName) {
                 $q->where('city', 'LIKE', '%' . $cityName . '%');
+            });
+        }
+
+        // Tag name
+        if ($tagName) {
+            $userQuery->whereHas('sportTags', function ($q) use ($tagName) {
+                $q->where('name', 'LIKE', '%' . $tagName . '%');
             });
         }
 
