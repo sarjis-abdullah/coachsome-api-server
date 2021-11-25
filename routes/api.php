@@ -11,6 +11,9 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Booting
         Route::get('booting', 'BootingController@index')->name("booting");
 
+        // Search
+        Route::get('marketplace-searches', 'SearchController@index');
+
         // Home page
         Route::get('pages/frontHome', "HomeController@index");
 
