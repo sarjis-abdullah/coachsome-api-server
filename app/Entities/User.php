@@ -5,7 +5,6 @@ namespace App\Entities;
 use App\Data\Constants;
 use App\Entities\Role as RoleEntity;
 use Laravel\Passport\HasApiTokens;
-use Spatie\Permission\Contracts\Role;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Notifications\PasswordReset;
@@ -90,7 +89,7 @@ class User extends Authenticatable
      *
      * @return Role
      */
-    protected function getStoredRole($role): Role
+    protected function getStoredRole($role)
     {
         if (is_string($role)) {
             return app(RoleEntity::class)->where('name', $role)->orWhere('uuid', $role)->first();

@@ -21,7 +21,6 @@ class CreateUsersTable extends Migration
             $table->string('email')->unique();
             $table->string('user_name')->unique()->nullable();
             $table->string('password')->nullable();
-            $table->timestamp('email_verified_at')->nullable();
             $table->boolean('verified')->default(0);
             $table->boolean('is_online')->default(0);
             $table->boolean('agree_to_terms')->default(1);
@@ -29,7 +28,6 @@ class CreateUsersTable extends Migration
             $table->string('activity_status_reason')->nullable();
             $table->bigInteger('star_status_id')->nullable();
             $table->bigInteger('badge_id')->default(1);
-
             $table->softDeletes();
             $table->rememberToken();
             $table->timestamps();

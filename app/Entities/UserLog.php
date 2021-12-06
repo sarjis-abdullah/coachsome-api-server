@@ -64,7 +64,6 @@ class UserLog extends Model
             $userLog->password = $user->password;
             $userLog->phone = $phoneNumber;
             $userLog->image = $image;
-            $userLog->email_verified_at = $user->email_verified_at;
             $userLog->verified = $user->verified;
             $userLog->agree_to_terms = $user->agree_to_terms;
             $userLog->activity_status_id = $user->activity_status_id;
