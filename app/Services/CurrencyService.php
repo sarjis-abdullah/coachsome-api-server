@@ -137,4 +137,8 @@ class CurrencyService
         return Currency::where('is_def_based_currency', 1)->first();
     }
 
+    public function getByCode($code)
+    {
+        return Currency::where('code', $code)->first();
+    }
 }
