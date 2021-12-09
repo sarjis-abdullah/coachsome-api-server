@@ -8,6 +8,9 @@ Route::get('auth/login/{provider}/callback', 'SocialAuthController@handleProvide
 // Gift card payment
 Route::get('gift-cards/payments/continue', 'GiftCardPaymentCallbackController@continue')->name('gift-cards.payments.continue');
 Route::get('gift-cards/payments/cancel', 'GiftCardPaymentCallbackController@cancel')->name('gift-cards.payments.cancel');
+Route::get('gift-cards/template', function () {
+    return view("emails.giftCard");
+});
 
 
 // Email Template

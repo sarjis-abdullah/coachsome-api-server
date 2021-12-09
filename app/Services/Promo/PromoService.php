@@ -3,9 +3,9 @@
 namespace App\Services\Promo;
 
 use App\Data\Promo;
-use App\Entites\PromoUser;
 use App\Entities\Currency;
 use App\Entities\PromoCode;
+use App\Entities\PromoUser;
 use App\Services\CurrencyService;
 use Illuminate\Support\Facades\Log;
 

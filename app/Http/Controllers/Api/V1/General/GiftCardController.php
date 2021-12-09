@@ -89,7 +89,7 @@ class GiftCardController extends Controller
                 $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
                 $linkRequest = $client->request->put($endpoint, [
                     'amount' => $request['totalAmount'] * 100,
-                    'continue_url' => $continueUrl,
+                    'continue_url' => $continueUrl.'?id='.$order->id,
                     'cancel_url' => $cancelUrl,
                     'auto_capture' => true
                 ]);
