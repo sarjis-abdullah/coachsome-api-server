@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\OrderStatus;
 use App\Entities\GiftOrder;
+use App\Entities\GiftPayment;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Services\TranslationService;
@@ -20,10 +22,12 @@ class GiftCardPaymentCallbackController extends Controller
         $id = $request->query('id');
         $giftOrder = GiftOrder::find($id);
 
-        if ($giftOrder) {
+        if ($giftOrder && $giftOrder->status != OrderStatus::CAPTURE) {
             $user = User::find($giftOrder->user_id);
             $promoCode = PromoCode::find($giftOrder->promo_code_id);
             if ($promoCode) {
+                $giftOrder->status = OrderStatus::CAPTURE;
+                $giftOrder->save();
                 $translationService = new TranslationService();
                 $translations = $translationService->getKeyByLanguageCode(App::getLocale());
 
@@ -44,12 +48,21 @@ class GiftCardPaymentCallbackController extends Controller
                         ->attachData($pdf->output(), "gift-card.pdf");
                 });
             }
+            return Redirect::to(config('company.url.gift_checkout_page')."?id=".$id."&status=success");
+        } else {
+            return Redirect::to(config('company.url.gift_page'));
         }
-        // return Redirect::to(config('company.url.gift_checkout_page'));
     }
 
-    public function cancel()
+    public function cancel(Request $request)
     {
-        return redirect(config('company.url.gift_checkout_page'));
+        $id = $request->query('id');
+        $giftOrder = GiftOrder::find($id);
+        $giftOrder->status = OrderStatus::CANCELED;
+        if($giftOrder){
+            $promoCode = PromoCode::find($giftOrder->promo_code_id);
+            $promoCode->delete();
+        }
+        return redirect(config('company.url.gift_page'));
     }
 }

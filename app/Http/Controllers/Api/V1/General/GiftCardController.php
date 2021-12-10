@@ -9,13 +9,17 @@ use App\Data\StatusCode;
 use App\Entities\GiftOrder;
 use App\Entities\GiftPayment;
 use App\Entities\PromoCode;
+use App\Entities\User;
 use App\Http\Controllers\Controller;
 use App\Services\CurrencyService;
 use App\Services\QuickpayClientService;
 use App\Services\TokenService;
+use App\Services\TranslationService;
+use Barryvdh\DomPDF\Facade as PDF;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -89,8 +93,8 @@ class GiftCardController extends Controller
                 $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
                 $linkRequest = $client->request->put($endpoint, [
                     'amount' => $request['totalAmount'] * 100,
-                    'continue_url' => $continueUrl.'?id='.$order->id,
-                    'cancel_url' => $cancelUrl,
+                    'continue_url' => $continueUrl . '?id=' . $order->id,
+                    'cancel_url' => $cancelUrl. '?id=' . $order->id,
                     'auto_capture' => true
                 ]);
 
@@ -112,6 +116,49 @@ class GiftCardController extends Controller
                     'link' => $linkRequest->asObject()->url
                 ]
             ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                return response([
+                    'error' => [
+                        'message' => $e->validator->errors()->first()
+                    ]
+                ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            return response([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    public function  downloadGiftCard(Request $request, $id)
+    {
+        try {
+            $giftOrder = GiftOrder::find($id);
+            if (!$giftOrder) {
+                throw new Exception("Gift order is not found.");
+            }
+
+            $promoCode = PromoCode::find($giftOrder->promo_code_id);
+            if (!$promoCode) {
+                throw new Exception('Promo code is not found');
+            }
+
+            $user = User::find($giftOrder->user_id);
+            $translationService = new TranslationService();
+            $translations = $translationService->getKeyByLanguageCode(App::getLocale());
+            $data["title"] = "Gift Card";
+            $data["email"] = $user->email;
+            $data["translations"] = $translations;
+            $data["firstName"] = $user->first_name;
+            $data["lastName"] = $user->last_name;
+            $data["code"] = $promoCode->code;
+            $data["value"] = $giftOrder->total_amount;
+            $data["currency"] = $giftOrder->currency;
+            $pdf = PDF::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('emails.giftCard', $data);
+            return $pdf->download();
+
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
                 return response([

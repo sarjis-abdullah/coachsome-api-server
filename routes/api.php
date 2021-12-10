@@ -168,6 +168,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
             // gift-cards
             Route::post('gift-cards/pay', 'GiftCardController@pay');
+            Route::get('gift-cards/{id}/download', 'GiftCardController@downloadGiftCard');
         });
     });
 
