@@ -14,6 +14,7 @@ php artisan cache:clear
 ### Added
 
 - Add table athlete_settings, setting_values, user_verifications
+- Add table git_orders, gift_payments
 - Add fonts dir at storage folder
 
 ### Removed
