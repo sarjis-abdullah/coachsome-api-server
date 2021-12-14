@@ -20,4 +20,9 @@ class TokenService
     {
         return $user->token();
     }
+
+    public function getUniqueId($pre, $l = 10)
+    {
+        return $pre . '-' . substr(md5(uniqid(time(), true)), 0, $l);
+    }
 }

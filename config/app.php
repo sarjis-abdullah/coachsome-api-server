@@ -181,6 +181,7 @@ return [
          */
         Snowfire\Beautymail\BeautymailServiceProvider::class,
         Rickycezar\Impersonate\ImpersonateServiceProvider::class,
+        Barryvdh\DomPDF\ServiceProvider::class,
 
 
         /*
