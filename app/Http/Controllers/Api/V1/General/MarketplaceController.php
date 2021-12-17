@@ -13,7 +13,7 @@ use App\Http\Controllers\Controller;
 
 use Coachsome\BaseReview\Repositories\BaseReviewRepository;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
 use PeterColes\Countries\CountriesFacade;
 
 class MarketplaceController extends Controller
@@ -48,7 +48,7 @@ class MarketplaceController extends Controller
 
         $localeService = new LocaleService();
         $mPackageService = new PackageService();
-        $data['countryCode'] = $localeService->getUserCountryCodeFromSetting(\Auth::guard('api')->user()) ?? $localeService->currentCountryCode();
+        $data['countryCode'] = $localeService->getUserCountryCodeFromSetting(Auth::guard('api')->user()) ?? $localeService->currentCountryCode();
         $data['categories'] = SportCategoryResource::collection(SportCategory::get());
         $data['min'] = $mPackageService->getMinRange();
         $data['max'] = $mPackageService->getMaxRange();

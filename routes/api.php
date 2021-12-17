@@ -11,6 +11,9 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Booting
         Route::get('booting', 'BootingController@index')->name("booting");
 
+        // Search
+        Route::get('marketplace-searches', 'SearchController@index');
+
         // Home page
         Route::get('pages/frontHome', "HomeController@index");
 
@@ -41,21 +44,21 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
         Route::group(['middleware' => ['auth:api']], function () {
 
-            // Bookings
+            // bookings
             Route::get('bookings', 'BookingController@index');
 
-            // Payments
+            // payments
             Route::post('payments/quickpay/pay', 'QuickpayController@pay');
             Route::post('payments/quickpay/notify', 'QuickpayController@notify');
 
-            // Chats
+            // chats
             Route::get('chats', "ChatController@index");
 
-            // Chat Settings
+            // chat settings
             Route::get('chatSettings', "ChatSettingController@index");
             Route::post('chatSettings/enterPress', "ChatSettingController@enterPress");
 
-            // Groups
+            // groups
             Route::apiResource('groups', "GroupController");
             Route::put('groups/{id}/change-topic', "GroupController@changeTopic");
             Route::post('groups/{id}/save-image', "GroupController@saveImage");
@@ -64,7 +67,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('group-invitations/verify', "GroupInvitationController@verify");
             Route::get('group-invitations/private-users', "GroupInvitationController@getPrivateUser");
 
-            // Contacts
+            // contacts
             Route::get('contacts', "ContactController@index");
             Route::post('contacts/resetNewMessageInfo', "ContactController@resetContactNewMessageInformation");
             Route::post('contacts/archive', "ContactController@archive");
@@ -72,34 +75,33 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('contacts/unread', "ContactController@unread");
             Route::get('contacts/private-users', "ContactController@getPrivateUser");
 
-            // Messages
+            // messages
             Route::get('messages', "MessageController@index");
             Route::post('messages', "MessageController@store");
             Route::get('messages/newCount', "MessageController@getNewCount");
 
-            // Bookings
+            // bookings
             Route::get('bookings/packages', 'BookingController@getBookingPackage');
             Route::post('bookings/acceptance', 'BookingController@changeStatus');
 
 
-            // Booking Time
+            // booking times
             Route::post('bookingTimes', 'BookingTimeController@store');
             Route::post('bookingTimes/acceptance', 'BookingTimeController@changeStatus');
 
-
-            // Calenders
+            // calenders
             Route::get('calenders/days', 'CalenderController@getTimeSlotByDateRange');
 
-            // Reviews
+            // reviews
             Route::resource('reviews', 'ReviewController');
 
 
-            // Profile
+            // profiles
             Route::get('profiles', 'ProfileController@index');
             Route::post('profiles', 'ProfileController@store');
             Route::post('profiles/images', 'ProfileController@uploadImage');
 
-            // Profile Images
+            // profile images
             Route::get('profileImages', "GeneralProfileController@getImage");
             Route::post('profileImages', "GeneralProfileController@uploadImage");
             Route::delete('profileImages', "GeneralProfileController@destroyImage");
@@ -109,12 +111,12 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::resource('videos', 'VideoController');
             Route::resource('galleries', 'GalleryController');
 
-            // Geography
+            // geography
             Route::resource('locations', 'LocationController');
             Route::resource('distances', 'DistanceController');
             Route::get('pages/geography', 'GeographyController@index');
 
-            // Package
+            // package
             Route::get('pages/package', 'PackageController@index');
             Route::post('pages/package/hourlyRate', 'PackageController@saveHourlyRate');
             Route::post('pages/package/quickBooking', 'PackageController@toggleQuickBooking');
@@ -128,35 +130,45 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('packages/changeStatus', 'PackageController@changeStatus');
             Route::post('packages/order', 'PackageController@updateOrder');
 
-            // Availability
+            // availabilities
             Route::get('pages/availabilities', 'AvailabilityController@index');
             Route::post('availabilities/default', 'AvailabilityController@saveDefaultAvailability');
             Route::post('availabilities/update', 'AvailabilityController@updateAvailability');
 
 
-            // Language
+            // languages
             Route::get('languages', 'LanguageController@index');
 
-            // Category
+            // categories
             Route::get('sport/categories', 'SportCategoryController@index');
 
-            // Tag
+            // tags
             Route::get('sport/tags', 'SportTagController@index');
             Route::post('sport/tags', 'SportTagController@store');
 
-            // User
+            // user
             Route::post('user/{userName}', 'UserController@updateUserName');
             Route::get('authUserInformation', 'UserController@getAuthUserInformation');
 
-            // Setting
+            // setting
             Route::get('settings', 'SettingController@index');
 
-            // Countries
+            // countries
             Route::get('countries', 'CountryController@index');
 
-            // Drawer
+            // drawer
             Route::get('drawer/back', 'DrawerController@getBackendDrawerInitialData');
             Route::post('drawer/back/changeActiveStatus', 'DrawerController@changeActiveStatus');
+
+            // accounts
+            Route::delete('accounts/delete', 'AccountController@delete');
+
+            // securities
+            Route::get('securities', 'SecuritySettingController@index');
+
+            // gift-cards
+            Route::post('gift-cards/pay', 'GiftCardController@pay');
+            Route::get('gift-cards/{id}/download', 'GiftCardController@downloadGiftCard');
         });
     });
 
@@ -176,11 +188,11 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
         Route::post('payout/request', 'PayoutRequestController@doRequest');
 
-        // Timezones
+        // timezones
         Route::get('timezones', 'TimezoneController@index');
         Route::get('balanceEarnings', 'BalanceEarningController@index');
 
-        // Payout Information
+        // payout information
         Route::get('payoutInformation', 'PayoutInformationController@index');
         Route::post('payoutInformation', 'PayoutInformationController@save');
     });
@@ -197,6 +209,12 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::get('bookingTimes', 'BookingTimeController@index');
         Route::get('searchValues', 'SearchValueController@index');
         Route::get('explore/coach', 'PackageController@explore');
+
+        // settings
+        Route::put('settings/reset-email', 'SettingController@resetEmail');
+        Route::put('settings/reset-password', 'SettingController@resetEmail');
+        Route::get('settings', 'SettingController@index');
+        Route::put('settings/{id}', 'SettingController@update');
     });
 
 
@@ -263,10 +281,5 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('impersonate/{id}', 'ImpersonateController@impersonate')->middleware('auth:api');
             Route::get('impersonate/revert', 'ImpersonateController@revert')->middleware('auth:api');
         });
-
     });
 });
-
-
-
-
