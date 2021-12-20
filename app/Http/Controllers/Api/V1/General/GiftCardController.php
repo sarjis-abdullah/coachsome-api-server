@@ -35,7 +35,8 @@ class GiftCardController extends Controller
                 'currency' => 'required',
                 'totalAmount' => 'nullable|numeric',
                 'paymentMethod' => 'required',
-                'message' => 'nullable'
+                'message' => 'nullable',
+                'recipentName' => 'required'
             ]);
 
             $cancelUrl = route('gift-cards.payments.cancel');
@@ -47,7 +48,8 @@ class GiftCardController extends Controller
             if (!$currency) {
                 throw new Exception("Currecny is not found");
             }
-            $token = bin2hex(openssl_random_pseudo_bytes(16));
+
+            $token = substr(md5(time()), 0, 8);
 
             DB::beginTransaction();
 
@@ -66,6 +68,7 @@ class GiftCardController extends Controller
             $order->promo_code_id = $promoCode->id;
             $order->currency = $currency->code;
             $order->message = $request['message'];
+            $order->recipent_name = $request['recipentName'];
             $order->total_amount = $request['totalAmount'];
             $order->status = OrderStatus::INITIAL;
             $order->order_date = Carbon::now();
@@ -156,6 +159,7 @@ class GiftCardController extends Controller
             $data["code"] = $promoCode->code;
             $data["value"] = $giftOrder->total_amount;
             $data["currency"] = $giftOrder->currency;
+            $data["recipentName"] = $giftOrder->recipent_name;
             $pdf = PDF::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('emails.giftCard', $data);
             return $pdf->download();
 

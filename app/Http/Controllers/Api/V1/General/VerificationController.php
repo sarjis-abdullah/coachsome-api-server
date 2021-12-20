@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class VerificationController extends Controller
 {
@@ -66,7 +67,7 @@ class VerificationController extends Controller
 
     public function verifyGoogle()
     {
-        //
+        return Socialite::driver('google')->redirect();
     }
 
     public function verifyTwitter()
