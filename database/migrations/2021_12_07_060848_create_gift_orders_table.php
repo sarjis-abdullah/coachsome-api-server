@@ -19,6 +19,7 @@ class CreateGiftOrdersTable extends Migration
             $table->bigInteger('user_id');
             $table->bigInteger('promo_code_id');
             $table->text('message')->nullable();
+            $table->text('recipent_name')->nullable();
             $table->string('currency');
             $table->decimal('total_amount', 20, 2);
             $table->string('status');

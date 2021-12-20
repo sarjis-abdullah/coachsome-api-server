@@ -166,6 +166,13 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             // securities
             Route::get('securities', 'SecuritySettingController@index');
 
+            // verifications
+            Route::post('verifications/email-verify', 'VerificationController@verifyEmail');
+            Route::post('verifications/phone-verify', 'VerificationController@verifyPhone');
+            Route::post('verifications/facbook-verify', 'VerificationController@verifyFacebook');
+            Route::post('verifications/google-verify', 'VerificationController@verifyGoogle');
+            Route::post('verifications/twitter-verify', 'VerificationController@verifyTwitter');
+
             // gift-cards
             Route::post('gift-cards/pay', 'GiftCardController@pay');
             Route::get('gift-cards/{id}/download', 'GiftCardController@downloadGiftCard');

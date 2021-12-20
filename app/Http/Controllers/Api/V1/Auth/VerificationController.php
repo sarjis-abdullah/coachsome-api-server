@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Data\StatusCode;
+use App\Entities\UserVerification;
 use App\Entities\VerifyUser;
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Foundation\Auth\VerifiesEmails;
 use Illuminate\Http\Request;
 
@@ -51,7 +53,7 @@ class VerificationController extends Controller
 
             $veryUser = VerifyUser::where('token', $request->token)->first();
             if (!$veryUser) {
-                throw new \Exception('Token not found. You have to register again.');
+                throw new \Exception('Token not found');
             }
 
             $user = $veryUser->user;
@@ -59,11 +61,20 @@ class VerificationController extends Controller
             if ($user->save()) {
                 $veryUser->delete();
             }
+
+            // User verificaton information
+            $userVerification = UserVerification::where('user_id', $user->id)->first();
+            if (!$userVerification) {
+                $userVerification = new  UserVerification();
+                $userVerification->user_id = $user->id;
+            }
+            $userVerification->email_verified_at = Carbon::now();
+            $userVerification->save();
+            
             $data['message'] = 'Successfully verify your account';
             return response($data, StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
-
 }
