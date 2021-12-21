@@ -8,14 +8,13 @@ All notable changes to this project will be documented in this file.
 
 ## CMD
 
-composer require barryvdh/laravel-dompdf
-php artisan cache:clear
+### Update
+- translation table pdf_template_gift_card key
 
 ### Added
 
 - Add table athlete_settings, setting_values, user_verifications
-- Add table git_orders, gift_payments
-- Add fonts dir at storage folder
+- Add column recipent_name at table git_orders
 
 ### Removed
 

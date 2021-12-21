@@ -3,6 +3,7 @@
         'firstName' => $firstName,
         'lastName' => $lastName,
         'recipentName' => $recipentName,
+        'recipentMessage' => $recipentMessage,
         'code' => $code,
         'value' => $value,
         'currency' => $currency,
