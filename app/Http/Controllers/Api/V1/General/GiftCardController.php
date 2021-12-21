@@ -50,12 +50,13 @@ class GiftCardController extends Controller
             }
 
             $token = substr(md5(time()), 0, 8);
+            $authUser = Auth::user();
 
             DB::beginTransaction();
 
             $promoCode = new PromoCode();
             $promoCode->code = $token;
-            $promoCode->name = $token;
+            $promoCode->name = $authUser->first_name . " " . $authUser->last_name;
             $promoCode->promo_type_id = Promo::TYPE_ID_FIXED;
             $promoCode->promo_duration_id = Promo::DURATION_ID_ONCE;
             $promoCode->currency_id = $currency->id;
@@ -97,7 +98,7 @@ class GiftCardController extends Controller
                 $linkRequest = $client->request->put($endpoint, [
                     'amount' => $request['totalAmount'] * 100,
                     'continue_url' => $continueUrl . '?id=' . $order->id,
-                    'cancel_url' => $cancelUrl. '?id=' . $order->id,
+                    'cancel_url' => $cancelUrl . '?id=' . $order->id,
                     'auto_capture' => true
                 ]);
 
@@ -160,9 +161,9 @@ class GiftCardController extends Controller
             $data["value"] = $giftOrder->total_amount;
             $data["currency"] = $giftOrder->currency;
             $data["recipentName"] = $giftOrder->recipent_name;
+            $data["recipentMessage"] = $giftOrder->message;
             $pdf = PDF::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('emails.giftCard', $data);
             return $pdf->download();
-
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
                 return response([
