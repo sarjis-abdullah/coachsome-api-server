@@ -173,9 +173,18 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('verifications/google-verify', 'VerificationController@verifyGoogle');
             Route::post('verifications/twitter-verify', 'VerificationController@verifyTwitter');
 
-            // gift-cards
-            Route::post('gift-cards/pay', 'GiftCardController@pay');
-            Route::get('gift-cards/{id}/download', 'GiftCardController@downloadGiftCard');
+            Route::group(['namespace' => 'Gift'], function () {
+                // gift-cards
+                Route::post('gift-cards/pay', 'GiftCardController@pay');
+                Route::get('gift-cards/{id}/download', 'GiftCardController@downloadGiftCard');
+                
+                // gift-balances
+                Route::get('gift-balances', 'GiftBalanceController@index');
+                
+                // gift-transactions
+                Route::get('gift-transactions', 'GiftTransactionController@index');
+                Route::post('gift-transactions', 'GiftTransactionController@store');
+            });
         });
     });
 
