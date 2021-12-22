@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\General;
+namespace App\Http\Controllers\Api\V1\General\Gift;
 
 use App\Data\OrderStatus;
 use App\Data\Promo;
@@ -58,6 +58,7 @@ class GiftCardController extends Controller
             $promoCode->code = $token;
             $promoCode->name = $authUser->first_name . " " . $authUser->last_name;
             $promoCode->promo_type_id = Promo::TYPE_ID_FIXED;
+            $promoCode->promo_category_id = Promo::CATEGORY_ID_GIFT_CARD;
             $promoCode->promo_duration_id = Promo::DURATION_ID_ONCE;
             $promoCode->currency_id = $currency->id;
             $promoCode->discount_amount = $request['totalAmount'];

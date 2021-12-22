@@ -9,4 +9,7 @@ class Promo
 
     const DURATION_ID_ONCE = 1;
     const DURATION_ID_FOREVER = 2;
+
+    const CATEGORY_ID_DEFAULT = 1;
+    const CATEGORY_ID_GIFT_CARD = 2;
 }
