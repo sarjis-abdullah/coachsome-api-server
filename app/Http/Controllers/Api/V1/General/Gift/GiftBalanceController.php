@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Api\V1\General\Gift;
 
 use App\Data\StatusCode;
-use App\Entities\GiftAccount;
+use App\Data\TransactionType;
+use App\Entities\GiftTransaction;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,16 +19,23 @@ class GiftBalanceController extends Controller
     public function index()
     {
         try {
-            $giftAccount = GiftAccount::where('user_id', Auth::id())->first();
-            if (!$giftAccount) {
-                $giftAccount = new GiftAccount();
-                $giftAccount->user_id = Auth::id();
-                $giftAccount->balance = 0.00;
-                $giftAccount->save();
-            }
+            $balance = 0.00;
+
+            $debitAmount = GiftTransaction::where('user_id', Auth::id())
+                ->where('type', TransactionType::DEBIT)
+                ->get()
+                ->sum('amount');
+
+            $creditAmount = GiftTransaction::where('user_id', Auth::id())
+                ->where('type', TransactionType::CREDIT)
+                ->get()
+                ->sum('amount');
+
+            $balance = $debitAmount - $creditAmount;
+
             return response([
                 'data' => [
-                    'balance' => $giftAccount->balance
+                    'balance' => $balance
                 ]
             ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {

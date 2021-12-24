@@ -92,6 +92,7 @@ class PackageService
             'serviceFee' => 0.00,
             'totalPerPerson' => 0.00,
             'promoDiscount' => 0.00,
+            'giftCardBalance' => 0.00,
             'total' => 0.00,
         ];
 

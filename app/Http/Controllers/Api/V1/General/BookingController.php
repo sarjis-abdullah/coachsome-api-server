@@ -8,8 +8,10 @@ use App\Data\MessageData;
 use App\Data\OrderStatus;
 use App\Data\Promo;
 use App\Data\StatusCode;
+use App\Data\TransactionType;
 use App\Entities\Booking;
 use App\Entities\Currency;
+use App\Entities\GiftTransaction;
 use App\Entities\Message;
 use App\Entities\Package;
 use App\Entities\PromoCode;
@@ -51,7 +53,8 @@ class BookingController extends Controller
         try {
             $request->validate([
                 'packageId' => 'required',
-                'promoCode' => 'nullable|string'
+                'promoCode' => 'nullable|string',
+                'useGiftCard' => 'nullable'
             ]);
 
             $packageId = $request->packageId;
@@ -88,8 +91,31 @@ class BookingController extends Controller
                 $maxPerson = 1;
             }
 
+            $authUser = Auth::user();
+
+            $giftCardBalance = 0.00;
+            $giftCardTransactions = GiftTransaction::where('user_id', $authUser->id)
+                ->get()
+                ->each(function ($item) use ($currencyService, $toCurrencyCode, &$giftCardBalance) {
+                    $amount =  $currencyService->convert(
+                        $item->amount,
+                        $item->currency,
+                        $toCurrencyCode
+                    );
+                    if ($item->type == TransactionType::DEBIT) {
+                        $giftCardBalance += $amount;
+                    } else {
+                        $giftCardBalance -= $amount;
+                    }
+                });
+
             // Package charge info
-            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $request['promoCode'], 'packageBuyerUser' => $packageBuyerUser]);
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, [
+                'promoCode' => $request['promoCode'],
+                'packageBuyerUser' => $packageBuyerUser,
+                'useGiftCard' => $request['useGiftCard']
+            ]);
+
             $chargeBox = new \stdClass();
             $chargeBox->priceForPackage = $chargeInfo['salePrice'];
             $chargeBox->totalPerPerson = $chargeInfo['totalPerPerson'];
@@ -108,7 +134,7 @@ class BookingController extends Controller
             ];
             $promoCode = PromoCode::where('code', $request['promoCode'])->first();
             if ($promoCode) {
-                if(!$promoService->isExpired($promoCode, $packageBuyerUser)){
+                if (!$promoService->isExpired($promoCode, $packageBuyerUser)) {
                     $promoCodeInfo['valid'] = true;
                     $promoCodeInfo['value'] = $promoCode->code;
                     $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
@@ -132,10 +158,10 @@ class BookingController extends Controller
                 'packageSetting' => $packageSetting,
                 'profileCard' => $profileCard,
                 'chargeBox' => $chargeBox,
+                'giftCardBalance' => $giftCardBalance,
                 'availabilities' => $availabilities,
                 'promoCode' => $promoCodeInfo
             ], StatusCode::HTTP_OK);
-
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
                 return response()->json(
@@ -151,7 +177,6 @@ class BookingController extends Controller
                 'line' => $e->getLine()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
-
     }
 
     public function getBookingPackage(Request $request)
@@ -292,19 +317,19 @@ class BookingController extends Controller
                     ];
                 });
 
-            return response()->json([
-                'userName' => $selectedUser->user_name,
-                'purchasedPackages' => $purchasedPackageBookings,
-                'soldPackages' => $soldPackageBookings,
-            ],
+            return response()->json(
+                [
+                    'userName' => $selectedUser->user_name,
+                    'purchasedPackages' => $purchasedPackageBookings,
+                    'soldPackages' => $soldPackageBookings,
+                ],
                 StatusCode::HTTP_OK
             );
-
-
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ],
+            return response()->json(
+                [
+                    'message' => $e->getMessage(),
+                ],
                 StatusCode::HTTP_UNPROCESSABLE_ENTITY
             );
         }
@@ -369,16 +394,16 @@ class BookingController extends Controller
             // Check payment status
             $isPaymentCapture = false;
             $paymentResponse = $quickpayClient->request->get('/payments/' . $paymentId)->asArray();
-            if($paymentResponse){
-                if($paymentResponse['operations']){
+            if ($paymentResponse) {
+                if ($paymentResponse['operations']) {
                     foreach ($paymentResponse['operations'] as $operation) {
-                        if($operation['type'] == 'capture') {
+                        if ($operation['type'] == 'capture') {
                             $isPaymentCapture = true;
                         }
                     }
                 }
             }
-            if($isPaymentCapture){
+            if ($isPaymentCapture) {
                 $order->status = OrderStatus::CAPTURE;
                 $order->save();
                 $booking->status = BookingStatus::ACCEPTED;
@@ -394,7 +419,7 @@ class BookingController extends Controller
                 $trackingPixel['orderKey'] = $order->key;
                 $trackingPixel['salePrice'] = $order->package_sale_price;
 
-                if(!$isPaymentCapture){
+                if (!$isPaymentCapture) {
                     $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
                         'amount' => $order->total_amount * 100
                     ]);
@@ -429,7 +454,6 @@ class BookingController extends Controller
                     $responseMessage = 'This request was successfully accepted.';
                     $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
                 }
-
             }
 
             // Decline
@@ -463,7 +487,6 @@ class BookingController extends Controller
 
                 $responseMessage = 'This request was declined.';
                 $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
-
             }
 
             // All message
@@ -477,23 +500,23 @@ class BookingController extends Controller
                 return $messageFormatterService->doFormat($item);
             });
 
-            return response()->json([
-                'trackingPixel' => $trackingPixel,
-                'message' => $responseMessage,
-                'messages' => $messages,
-                'newMessage' => $messageFormatterService->doFormat($newMessage)
-            ],
+            return response()->json(
+                [
+                    'trackingPixel' => $trackingPixel,
+                    'message' => $responseMessage,
+                    'messages' => $messages,
+                    'newMessage' => $messageFormatterService->doFormat($newMessage)
+                ],
                 StatusCode::HTTP_OK
             );
-
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'erroCode' => $e->getCode()
-            ],
+            return response()->json(
+                [
+                    'message' => $e->getMessage(),
+                    'erroCode' => $e->getCode()
+                ],
                 StatusCode::HTTP_UNPROCESSABLE_ENTITY
             );
         }
-
     }
 }
