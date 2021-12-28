@@ -1,10 +1,10 @@
 <?php
 
 
-namespace App\Helpers;
+namespace App\Utils;
 
 
-class StringUtility
+class StringUtil
 {
     public static function firstWord($sentence)
     {

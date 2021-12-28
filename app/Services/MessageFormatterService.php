@@ -7,7 +7,9 @@ namespace App\Services;
 use App\Data\MessageData;
 use App\Entities\Booking;
 use App\Entities\BookingTime;
+use App\Entities\GiftTransaction;
 use App\Entities\User;
+use App\Utils\CurrencyUtil;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +35,7 @@ class MessageFormatterService
 
             // Formatting
             if ($structureContent) {
+
                 if ($structureContent->key == 'booking_time') {
                     $bookingTime = BookingTime::find($structureContent->bookingTimeId);
                     if ($bookingTime) {
@@ -44,18 +47,34 @@ class MessageFormatterService
 
                 // Normal booking
                 if ($structureContent->key == 'booking_package') {
+                    $amount = 0.00;
                     $booking = Booking::find($structureContent->bookingId);
+                    $order = $booking->order;
                     if ($booking) {
                         $structureContent->status = $booking->status;
                     }
+                    if ($order) {
+                        $amount = $order->total_amount;
+                    }
+                    if ($order->gift_transaction_id) {
+                        $giftTransaction = GiftTransaction::find($order->gift_transaction_id);
+                        if ($giftTransaction) {
+                            $amount = CurrencyUtil::convert(
+                                $giftTransaction->amount, 
+                                request()->header('Currency-Code'), 
+                                $giftTransaction->transaction_date
+                            );
+                        }
+                    }
+                    $structureContent->amount = $amount;
                 }
 
                 // For quick booking
                 if ($structureContent->key == 'buy_package') {
                     $orderKey = "";
                     $packageTitle = "";
-                    $buyerText ="";
-                    $buyerName ="";
+                    $buyerText = "";
+                    $buyerName = "";
                     $packageSnapshot = null;
                     $orderSnapshot = null;
                     $status = "";
@@ -64,23 +83,23 @@ class MessageFormatterService
                     $currency = "";
 
                     $orderSnapshot = json_decode($structureContent->orderSnapshot, true);
-                    $bookingPackageSnapshot = json_decode($structureContent->packageSnapshot,true);
-                    if(array_key_exists("package_snapshot", $bookingPackageSnapshot)){
+                    $bookingPackageSnapshot = json_decode($structureContent->packageSnapshot, true);
+                    if (array_key_exists("package_snapshot", $bookingPackageSnapshot)) {
                         $packageSnapshot = json_decode($bookingPackageSnapshot['package_snapshot'], true);
-                        if($packageSnapshot){
+                        if ($packageSnapshot) {
                             $packageTitle = $packageSnapshot["details"]["title"];
                             $session = $packageSnapshot["details"]["session"];
                         }
                     }
-                    if($orderSnapshot){
+                    if ($orderSnapshot) {
                         $booking = Booking::find($orderSnapshot['booking_id']);
                         $packageBuyerUser = $booking->packageBuyerUser;
                         if ($booking) {
                             $status = $booking->status;
                             $buyerText = $booking->package_buyer_message;
                         }
-                        if($packageBuyerUser){
-                            $buyerName= $packageBuyerUser->first_name ." ".$packageBuyerUser->last_anme;
+                        if ($packageBuyerUser) {
+                            $buyerName = $packageBuyerUser->first_name . " " . $packageBuyerUser->last_anme;
                         }
                         $orderKey = $orderSnapshot["key"];
                         $currency = $orderSnapshot['currency'];

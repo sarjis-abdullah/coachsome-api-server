@@ -6,16 +6,15 @@ use App\Data\StatusCode;
 use App\Entities\Package;
 use App\Entities\PendingBooking;
 use App\Entities\User;
-use App\Helpers\StringUtility;
 use App\Http\Controllers\Controller;
 use App\Mail\PendingBookingRequestConfirmation;
-use App\Services\TransformerService;
 use App\Services\TranslationService;
 use App\Services\UserService;
+use App\Utils\StringUtil;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 use Ramsey\Uuid\Uuid;
 
 class PendingBookingController extends Controller
@@ -68,8 +67,8 @@ class PendingBookingController extends Controller
 
             $package = Package::find($packageId);
             $packageOwnerUser = User::where('user_name', $userName)->first();
-            $firstName = StringUtility::firstWord($name);
-            $lastName = StringUtility::lastWord($name);
+            $firstName = StringUtil::firstWord($name);
+            $lastName = StringUtil::lastWord($name);
             $generatedUserName = $userService->generateUserName($firstName, $lastName);
 
             if (!$packageOwnerUser) {

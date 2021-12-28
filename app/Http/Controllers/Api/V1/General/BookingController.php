@@ -122,6 +122,8 @@ class BookingController extends Controller
             $chargeBox->total = $chargeInfo['total'];
             $chargeBox->salePrice = $chargeInfo['salePrice'];
             $chargeBox->serviceFee = $chargeInfo['serviceFee'];
+            $chargeBox->giftPayableAmount = $chargeInfo['giftCard']['payableAmount'];
+            $chargeBox->giftBalanceAfterPaid = $chargeInfo['giftCard']['balanceAfterPaid'];
             $chargeBox->minPerson = $minPerson;
             $chargeBox->maxPerson = $maxPerson;
 

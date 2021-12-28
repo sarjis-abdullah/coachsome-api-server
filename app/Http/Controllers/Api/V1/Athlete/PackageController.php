@@ -8,7 +8,6 @@ use App\Data\Constants;
 use App\Entities\Currency;
 use App\Entities\SportCategory;
 use App\Entities\User;
-use App\Helpers\Util;
 use App\Services\PackageService;
 use App\Services\SearchValueService;
 use App\Services\StorageService;
@@ -186,9 +185,10 @@ class PackageController
 
 
         $mCurrency = new Currency();
+        $packageService = new PackageService();
         $requestedCurrency = $mCurrency->getByCode($requestedCurrencyCode);
 
-        $response['coaches'] = $userQuery->paginate(50)->map(function ($item) use ($storageService, $mCurrency, $requestedCurrency) {
+        $response['coaches'] = $userQuery->paginate(50)->map(function ($item) use ($storageService, $mCurrency, $requestedCurrency, $packageService) {
             $coach = new \stdClass();
             $coach->name = $item->profile->profile_name ?? '';
 
@@ -209,7 +209,7 @@ class PackageController
 
             // Price
             $coach->price = $item->ownPackageSetting
-                ? Util::calculateAmountByUserBasedCurrency($item->ownPackageSetting->hourly_rate, $mCurrency->getUserBasedCurrency($item), $requestedCurrency)
+                ? $packageService->calculateAmountByUserBasedCurrency($item->ownPackageSetting->hourly_rate, $mCurrency->getUserBasedCurrency($item), $requestedCurrency)
                 : 0.00;
 
             // Review
