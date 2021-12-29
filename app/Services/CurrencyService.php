@@ -7,6 +7,8 @@ namespace App\Services;
 use App\Entities\Currency;
 use App\Entities\CurrencyRate;
 use Carbon\Carbon;
+use Exception;
+use NumberFormatter;
 
 class CurrencyService
 {

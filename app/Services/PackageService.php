@@ -3,13 +3,15 @@
 
 namespace App\Services;
 
-
+use App\Data\TransactionType;
+use App\Entities\Currency;
+use App\Entities\GiftTransaction;
 use App\Entities\Package;
 use App\Entities\PackageUserSetting;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Services\Promo\PromoService;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PackageService
 {
@@ -92,6 +94,10 @@ class PackageService
             'serviceFee' => 0.00,
             'totalPerPerson' => 0.00,
             'promoDiscount' => 0.00,
+            'giftCard' => [
+                'payableAmount' => 0.00,
+                'balanceAfterPaid' => 0.00
+            ],
             'total' => 0.00,
         ];
 
@@ -115,16 +121,52 @@ class PackageService
             $totalPerPerson = round((1 * ($salePriceAfterConvertingCurrency + $serviceFee)), 2);
 
             $promoDiscount = 0.00;
-            if (array_key_exists('promoCode', $otherInfo) && array_key_exists('packageBuyerUser',$otherInfo)) {
+            if (array_key_exists('promoCode', $otherInfo) && array_key_exists('packageBuyerUser', $otherInfo)) {
                 $promoCode = PromoCode::where('code', $otherInfo['promoCode'])->first();
                 if ($promoCode) {
-                    if(!$promoService->isExpired($promoCode, $otherInfo['packageBuyerUser'])){
+                    if (!$promoService->isExpired($promoCode, $otherInfo['packageBuyerUser'])) {
                         $promoDiscount = $promoService->calculateDiscount($promoCode->code, $total, $toCurrencyCode);
                         $total = $total - $promoDiscount;
                         $totalPerPerson = $totalPerPerson - $promoDiscount;
                     }
                 }
             }
+
+            // Total amount will be changed if there gift amount added
+            $giftCardBalance = 0.00;
+            if ($otherInfo['useGiftCard']) {
+                $giftCardTransactions = GiftTransaction::where('user_id', Auth::id())
+                    ->get()
+                    ->each(function ($item) use ($currencyService, $toCurrencyCode, &$giftCardBalance) {
+                        $amount =  $currencyService->convert(
+                            $item->amount,
+                            $item->currency,
+                            $toCurrencyCode
+                        );
+                        if ($item->type == TransactionType::DEBIT) {
+                            $giftCardBalance += $amount;
+                        } else {
+                            $giftCardBalance -= $amount;
+                        }
+                    });
+
+                // Gift card balance and total balance need to check amount so that calculate the blance easily
+                if($giftCardBalance > 0){
+                    $payableAmount = 0.00;
+                    if ($total > $giftCardBalance) {
+                        $total = $total - $giftCardBalance;
+                        $payableAmount =  $giftCardBalance;
+                        $giftCardBalance = 0.00;
+                    } else {
+                        $giftCardBalance = $giftCardBalance - $total;
+                        $payableAmount =  $total;
+                        $total = 0.00;
+                    }              
+                    $data['giftCard']['payableAmount'] = $payableAmount;
+                    $data['giftCard']['balanceAfterPaid'] = $giftCardBalance;
+                }
+            }
+            
             $data['originalPrice'] = $originalPrice;
             $data['salePrice'] = $salePrice;
             $data['serviceFee'] = $serviceFee;
@@ -133,7 +175,20 @@ class PackageService
             $data['total'] = $total;
         }
 
-        return $data;
 
+        return $data;
+    }
+
+    public static function calculateAmountByUserBasedCurrency($amount, $userBasedCurrency, $toConvertCurrency)
+    {
+        $calculateAmount = 0;
+        $mCurrency = new Currency();
+        $defaultBasedCurrency = $mCurrency->getDefaultBasedCurrency();
+        if($defaultBasedCurrency->id == $userBasedCurrency->id){
+             $calculateAmount = $amount * $toConvertCurrency->exchange_rate;
+        } else {
+            $calculateAmount = $amount / $toConvertCurrency->exchange_rate;
+        }
+        return $calculateAmount;
     }
 }

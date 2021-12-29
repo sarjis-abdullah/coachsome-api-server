@@ -2,25 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
-use App\Data\Constants;
 use App\Data\StatusCode;
-use App\Entities\Profile;
 use App\Entities\User;
-use App\Entities\VerifyUser;
 use App\Events\UserRegisteredEvent;
 use App\Http\Controllers\Controller;
-use App\Helpers\Util;
-use App\Services\TranslationService;
 use App\Services\UserService;
-use GuzzleHttp\Exception\BadResponseException;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
-use Ramsey\Uuid\Uuid;
 
 class RegisterController extends Controller
 {

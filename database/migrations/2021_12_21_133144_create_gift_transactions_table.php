@@ -15,9 +15,9 @@ class CreateGiftTransactionsTable extends Migration
     {
         Schema::create('gift_transactions', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('gift_account_id');
+            $table->bigInteger('user_id');
             $table->bigInteger('gift_order_id')->nullable();
-            $table->dateTime('date');
+            $table->dateTime('transaction_date');
             $table->decimal('amount', 20, 2);
             $table->string('currency');
             $table->string('type');

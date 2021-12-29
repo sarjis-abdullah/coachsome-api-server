@@ -9,7 +9,6 @@ use App\Entities\Role;
 use App\Entities\SocialAccount;
 use App\Entities\User;
 use App\Events\UserRegisteredEvent;
-use App\Helpers\Util;
 use App\Services\TokenService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
@@ -94,16 +93,15 @@ class SocialAuthController extends Controller
 
             if ($providerEmail) {
                 $user = User::where('email', $providerEmail)->first();
-
                 if (!$user) {
-                    $util = new Util();
+                    $userService = new UserService(); ;
                     $user = new User();
 
                     $fullName = explode(" ", $providerName);
                     $user->first_name = array_key_exists(0, $fullName) ? $fullName[0] : '';
                     $user->last_name = array_key_exists(1, $fullName) ? $fullName[1] : '';
                     $user->email = $providerEmail;
-                    $user->user_name = $util->getUserName($user->first_name, $user->last_name);
+                    $user->user_name = $userService->generateUserName($user->first_name, $user->last_name);
                     $user->save();
                 }
 

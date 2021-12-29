@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Api\V1\General\Gift;
 use App\Data\Promo;
 use App\Data\StatusCode;
 use App\Data\TransactionType;
-use App\Entities\Currency;
-use App\Entities\GiftAccount;
 use App\Entities\GiftOrder;
 use App\Entities\GiftTransaction;
 use App\Entities\PromoCode;
@@ -50,13 +48,6 @@ class GiftTransactionController extends Controller
             if (!$giftOrder) {
                 throw new Exception('Gift card is not found');
             }
-            $giftAccount = GiftAccount::where('user_id', Auth::id())->first();
-            if (!$giftAccount) {
-                $giftAccount = new GiftAccount();
-                $giftAccount->user_id = Auth::id();
-                $giftAccount->balance = 0.00;
-                $giftAccount->save();
-            }
             // Find the transacetion happened befor
             $searchedTransaction = GiftTransaction::where('gift_order_id', $giftOrder->id)
                 ->where('type',TransactionType::DEBIT)
@@ -67,21 +58,29 @@ class GiftTransactionController extends Controller
 
             // New transaction
             $giftTransaction = new GiftTransaction();
-            $giftTransaction->gift_account_id = $giftAccount->id;
+            $giftTransaction->user_id = Auth::id();
             $giftTransaction->gift_order_id = $giftOrder->id;
-            $giftTransaction->date = Carbon::now();
+            $giftTransaction->transaction_date = Carbon::now();
             $giftTransaction->amount = $giftOrder->total_amount;
             $giftTransaction->currency = $giftOrder->currency;
             $giftTransaction->type = TransactionType::DEBIT;
             $giftTransaction->save();
 
-            // Increase balance
-            $giftAccount->balance += $giftTransaction->amount;
-            $giftAccount->save();
+            $balance = 0.00;
+            $debitAmount = GiftTransaction::where('user_id', Auth::id())
+                ->where('type', TransactionType::DEBIT)
+                ->get()
+                ->sum('amount');
+            $creditAmount = GiftTransaction::where('user_id', Auth::id())
+                ->where('type', TransactionType::CREDIT)
+                ->get()
+                ->sum('amount');
+            $balance = $debitAmount - $creditAmount;
 
+         
             return response([
                 'data' => [
-                    'balance' => $giftAccount->balance
+                    'balance' => $balance
                 ]
             ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
