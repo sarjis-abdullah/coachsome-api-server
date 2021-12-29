@@ -3,23 +3,28 @@
 
 namespace App\Utils;
 
-use App\Data\CurrencyCode;
 use App\Entities\CurrencyRate;
 use Carbon\Carbon;
 use Exception;
 
+/**
+ * Currency uitl helps to take action on amount
+ * Base currency is DKK
+ * System contains only one currency for removing collision
+ */
 class CurrencyUtil
 {
     /**
-     * Convert currency according base currency Danish Kroner
+     * Convert currency according to exchange rates
      * 
-     * @param $amount float
-     * @param $code string
-     * @param $date string
+     * @param float $amount 
+     * @param string $from
+     * @param string $to
+     * @param string $date 
      * 
-     * @return $result float
+     * @return float $result 
      */
-    public static function convert($amount, $code, $date = null)
+    public static function convert($amount, $from, $to, $date = null)
     {
         $rate = null;
         $isHistory = false;
@@ -34,33 +39,34 @@ class CurrencyUtil
             $latestDate = Carbon::now()->format("Y-m-d");
         }
         if ($isHistory) {
-            $currencyRate = CurrencyRate::where('base', CurrencyCode::DANISH_KRONER)
+            $currencyRate = CurrencyRate::where('base', $from)
                 ->where("date", $historyDate)
                 ->first();
+
             if (!$currencyRate) {
-                $rates = self::rates(CurrencyCode::DANISH_KRONER, $historyDate);
+                $rates = self::rates($from, $historyDate);
                 $currencyRate = new CurrencyRate();
-                $currencyRate->base = CurrencyCode::DANISH_KRONER;
+                $currencyRate->base = $from;
                 $currencyRate->date = $historyDate;
                 $currencyRate->rates = json_encode($rates);
                 $currencyRate->save();
             }
             $rates = json_decode($currencyRate->rates, true);
-            $rate = $rates[$code];
+            $rate = $rates[$to];
         } else {
-            $currencyRate = CurrencyRate::where('base', CurrencyCode::DANISH_KRONER)
+            $currencyRate = CurrencyRate::where('base', $from)
                 ->where("date", $latestDate)
                 ->first();
             if (!$currencyRate) {
-                $rates = self::rates(CurrencyCode::DANISH_KRONER);
+                $rates = self::rates($from);
                 $currencyRate = new CurrencyRate();
-                $currencyRate->base = CurrencyCode::DANISH_KRONER;
+                $currencyRate->base = $from;
                 $currencyRate->date = $latestDate;
                 $currencyRate->rates = json_encode($rates);
                 $currencyRate->save();
             }
             $rates = json_decode($currencyRate->rates, true);
-            $rate = $rates[$code];
+            $rate = $rates[$to];
         }
 
         $result = $amount * $rate;
@@ -71,10 +77,10 @@ class CurrencyUtil
     /**
      * Get exchange rate according to base currency
      * 
-     * @param $base string
-     * @param $date string
+     * @param string $base
+     * @param string $date 
      * 
-     * @return $data array
+     * @return array $data 
      */
     public static function rates($base, $date = null)
     {

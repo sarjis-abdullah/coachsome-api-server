@@ -161,6 +161,7 @@ class QuickpayController extends Controller
             $order->booking_id = $booking->id;
             $order->package_id = $package->id;
             $order->gift_transaction_id = $giftTransaction ?  $giftTransaction->id : null;
+            $order->gift_card_amount = $giftTransaction ?  $giftTransaction->amount : 0.00;
             $order->package_category_id = $packageCategory->id;
             $order->package_snapshot = $package->toJson();
             $order->number_of_attendees = $numberOfAttendees;
@@ -170,6 +171,7 @@ class QuickpayController extends Controller
             $order->total_amount = $chargeInfo['total'];
             $order->service_fee = $chargeInfo['serviceFee'];
             $order->status = OrderStatus::INITIAL;
+            $order->transaction_date = Carbon::now();
             $order->save();
 
             // $order->id only work when it saved

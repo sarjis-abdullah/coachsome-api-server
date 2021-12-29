@@ -7,12 +7,7 @@ namespace App\Services;
 use App\Data\MessageData;
 use App\Entities\Booking;
 use App\Entities\BookingTime;
-use App\Entities\GiftTransaction;
-use App\Entities\User;
-use App\Utils\CurrencyUtil;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class MessageFormatterService
 {
@@ -47,24 +42,18 @@ class MessageFormatterService
 
                 // Normal booking
                 if ($structureContent->key == 'booking_package') {
-                    $amount = 0.00;
+                    
                     $booking = Booking::find($structureContent->bookingId);
-                    $order = $booking->order;
+                    $order = $booking->order;                    
+                    
                     if ($booking) {
                         $structureContent->status = $booking->status;
                     }
+
+                    $amount = 0.00;
                     if ($order) {
-                        $amount = $order->total_amount;
-                    }
-                    if ($order->gift_transaction_id) {
-                        $giftTransaction = GiftTransaction::find($order->gift_transaction_id);
-                        if ($giftTransaction) {
-                            $amount = CurrencyUtil::convert(
-                                $giftTransaction->amount, 
-                                request()->header('Currency-Code'), 
-                                $giftTransaction->transaction_date
-                            );
-                        }
+                        $amount += $order->gift_card_amount;
+                        $amount += $order->total_amount;
                     }
                     $structureContent->amount = $amount;
                 }
