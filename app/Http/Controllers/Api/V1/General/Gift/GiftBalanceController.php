@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1\General\Gift;
 
+use App\Data\CurrencyCode;
 use App\Data\StatusCode;
 use App\Data\TransactionType;
 use App\Entities\GiftTransaction;
 use App\Http\Controllers\Controller;
+use App\Utils\CurrencyUtil;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -24,11 +26,29 @@ class GiftBalanceController extends Controller
             $debitAmount = GiftTransaction::where('user_id', Auth::id())
                 ->where('type', TransactionType::DEBIT)
                 ->get()
+                ->each(function($item){
+                    $item->amount = CurrencyUtil::convert(
+                        $item->amount,
+                        CurrencyCode::DANISH_KRONER,
+                        request()->header('Currency-Code'),
+                        date('Y-m-d', strtotime($item->transaction_date))
+                    );
+                    return $item;
+                })
                 ->sum('amount');
 
             $creditAmount = GiftTransaction::where('user_id', Auth::id())
                 ->where('type', TransactionType::CREDIT)
                 ->get()
+                ->each(function($item){
+                    $item->amount = CurrencyUtil::convert(
+                        $item->amount,
+                        CurrencyCode::DANISH_KRONER,
+                        request()->header('Currency-Code'),
+                        date('Y-m-d', strtotime($item->transaction_date))
+                    );
+                    return $item;
+                })
                 ->sum('amount');
 
             $balance = $debitAmount - $creditAmount;

@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [develop] - 22/12/2021
+## [develop] - 30/12/2021
+- change order_date to transaction_date at gift_orders table
+
+## [develop,test] - 22/12/2021
 
 -   Add table gift_transactions, promo_categories
 -   Add column promo_category_id at promo_codes table default value is 1

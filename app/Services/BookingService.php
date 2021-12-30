@@ -61,6 +61,8 @@ class BookingService
             $packageDetails = $packageSnapshot->details;
 
             $payment = $order ? $order->payment : null;
+
+            // If it has payment then you have to again check the payment status
             if ($payment) {
                 $paymentDetails = $order ? json_decode($payment->details) : null;
                 $paymentId = $paymentDetails ? $paymentDetails->payment_id : null;
@@ -71,22 +73,23 @@ class BookingService
                     $paymentObject = $payment->asObject();
                     $order = $orderService->updateOrderStatusBasedOnPaymentStatus($order, $paymentObject);
                     $booking = $bookingService->updateBookingStatusBasedOnOrderStatus($booking, $order);
-                    // Rejected order do not need to send message so skip it
+                    // Rejected booking do not take any action so skip it
                     if ($order->status == OrderStatus::REJECTED) {
                         continue;
                     }
                 }
-            } else {
-                // The booking is not paid buy any payment method.
-                // It should be from any balance like gift card balance
-                // So the status should be capture
-                $booking->status = BookingStatus::ACCEPTED;
-                $order->status = OrderStatus::CAPTURE;
+            }
+
+            // The booking is not paid by any payment method.
+            // It should be from any balance like gift card balance
+            if (!$payment) {
+                $booking->status = BookingStatus::PENDING;
+                $order->status = OrderStatus::AUTHORIZED;
                 $order->save();
                 $booking->save();
             }
 
-            // Inital booking needs to notify the users
+            // Initial booking needs to notify the users
             // Message should be formatted for both booking style
             if ($booking->is_quick_booking) {
                 $buyPackageMessage = new BuyPackage([

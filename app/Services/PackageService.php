@@ -3,6 +3,7 @@
 
 namespace App\Services;
 
+use App\Data\CurrencyCode;
 use App\Data\TransactionType;
 use App\Entities\Currency;
 use App\Entities\GiftTransaction;
@@ -11,6 +12,7 @@ use App\Entities\PackageUserSetting;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Services\Promo\PromoService;
+use App\Utils\CurrencyUtil;
 use Illuminate\Support\Facades\Auth;
 
 class PackageService
@@ -102,17 +104,15 @@ class PackageService
         ];
 
         if ($package) {
-            $currencyService = new CurrencyService();
             $promoService = new PromoService();
 
             $packageOwnerUser = $package->user;
             $packageDiscount = $package->details->discount ?? 0.00;
             $originalPrice = $this->calculateOriginalPrice($packageOwnerUser, $package);
-            $fromCurrencyCode = $currencyService->getUserCurrency($packageOwnerUser)->code;
             $salePrice = $this->calculatePackageSalePrice($originalPrice, $packageDiscount);
-            $salePriceAfterConvertingCurrency = $currencyService->convert(
+            $salePriceAfterConvertingCurrency = CurrencyUtil::convert(
                 $salePrice,
-                $fromCurrencyCode,
+                CurrencyCode::DANISH_KRONER,
                 $toCurrencyCode
             );
 
@@ -135,13 +135,14 @@ class PackageService
             // Total amount will be changed if there gift amount added
             $giftCardBalance = 0.00;
             if ($otherInfo['useGiftCard']) {
-                $giftCardTransactions = GiftTransaction::where('user_id', Auth::id())
+                GiftTransaction::where('user_id', Auth::id())
                     ->get()
-                    ->each(function ($item) use ($currencyService, $toCurrencyCode, &$giftCardBalance) {
-                        $amount =  $currencyService->convert(
+                    ->each(function ($item) use ($toCurrencyCode, &$giftCardBalance) {
+                        $amount = CurrencyUtil::convert(
                             $item->amount,
                             $item->currency,
-                            $toCurrencyCode
+                            $toCurrencyCode,
+                            date('Y-m-d', strtotime($item->transaction_date))
                         );
                         if ($item->type == TransactionType::DEBIT) {
                             $giftCardBalance += $amount;
@@ -151,30 +152,29 @@ class PackageService
                     });
 
                 // Gift card balance and total balance need to check amount so that calculate the blance easily
-                if($giftCardBalance > 0){
+                if ($giftCardBalance > 0) {
                     $payableAmount = 0.00;
                     if ($total > $giftCardBalance) {
                         $total = $total - $giftCardBalance;
-                        $payableAmount =  $giftCardBalance;
+                        $payableAmount = $giftCardBalance;
                         $giftCardBalance = 0.00;
                     } else {
                         $giftCardBalance = $giftCardBalance - $total;
-                        $payableAmount =  $total;
+                        $payableAmount = $total;
                         $total = 0.00;
-                    }              
+                    }
                     $data['giftCard']['payableAmount'] = $payableAmount;
                     $data['giftCard']['balanceAfterPaid'] = $giftCardBalance;
                 }
             }
-            
+
             $data['originalPrice'] = $originalPrice;
-            $data['salePrice'] = $salePrice;
+            $data['salePrice'] = CurrencyUtil::convert($salePrice, CurrencyCode::DANISH_KRONER, $toCurrencyCode);
             $data['serviceFee'] = $serviceFee;
             $data['totalPerPerson'] = $totalPerPerson;
             $data['promoDiscount'] = $promoDiscount;
             $data['total'] = $total;
         }
-
 
         return $data;
     }
@@ -184,8 +184,8 @@ class PackageService
         $calculateAmount = 0;
         $mCurrency = new Currency();
         $defaultBasedCurrency = $mCurrency->getDefaultBasedCurrency();
-        if($defaultBasedCurrency->id == $userBasedCurrency->id){
-             $calculateAmount = $amount * $toConvertCurrency->exchange_rate;
+        if ($defaultBasedCurrency->id == $userBasedCurrency->id) {
+            $calculateAmount = $amount * $toConvertCurrency->exchange_rate;
         } else {
             $calculateAmount = $amount / $toConvertCurrency->exchange_rate;
         }
