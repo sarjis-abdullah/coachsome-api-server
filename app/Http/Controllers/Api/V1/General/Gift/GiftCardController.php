@@ -12,6 +12,7 @@ use App\Entities\GiftPayment;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Gift\GiftOrderResource;
 use App\Services\CurrencyService;
 use App\Services\QuickpayClientService;
 use App\Services\TokenService;
@@ -28,6 +29,33 @@ use Illuminate\Validation\ValidationException;
 
 class GiftCardController extends Controller
 {
+
+    public function getOrder(Request $request, $id)
+    {
+        try {
+            $giftOrder = GiftOrder::find($id);
+            if (!$giftOrder) {
+                throw new Exception("Gift order is not found.");
+            }
+            return response([
+                'data' =>new GiftOrderResource($giftOrder)
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                return response([
+                    'error' => [
+                        'message' => $e->validator->errors()->first()
+                    ]
+                ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            return response([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
     public function pay(Request $request)
     {
 

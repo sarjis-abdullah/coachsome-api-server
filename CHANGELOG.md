@@ -7,8 +7,13 @@ All notable changes to this project will be documented in this file.
 ## [develop] - 03/01/2022
 - Add column local_currency, local_total_amount at orders table
 - php artisan update:db
+
+---
+
 ## [develop,test] - 30/12/2021
 - change order_date to transaction_date at gift_orders table
+
+---
 
 ## [develop,test] - 22/12/2021
 
