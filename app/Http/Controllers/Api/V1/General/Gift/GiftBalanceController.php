@@ -26,29 +26,11 @@ class GiftBalanceController extends Controller
             $debitAmount = GiftTransaction::where('user_id', Auth::id())
                 ->where('type', TransactionType::DEBIT)
                 ->get()
-                ->each(function($item){
-                    $item->amount = CurrencyUtil::convert(
-                        $item->amount,
-                        CurrencyCode::DANISH_KRONER,
-                        request()->header('Currency-Code'),
-                        date('Y-m-d', strtotime($item->transaction_date))
-                    );
-                    return $item;
-                })
                 ->sum('amount');
 
             $creditAmount = GiftTransaction::where('user_id', Auth::id())
                 ->where('type', TransactionType::CREDIT)
                 ->get()
-                ->each(function($item){
-                    $item->amount = CurrencyUtil::convert(
-                        $item->amount,
-                        CurrencyCode::DANISH_KRONER,
-                        request()->header('Currency-Code'),
-                        date('Y-m-d', strtotime($item->transaction_date))
-                    );
-                    return $item;
-                })
                 ->sum('amount');
 
             $balance = $debitAmount - $creditAmount;

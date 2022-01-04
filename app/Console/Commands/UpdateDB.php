@@ -10,6 +10,7 @@ use App\Entities\ChatSetting;
 use App\Entities\Contact;
 use App\Entities\GiftOrder;
 use App\Entities\Message;
+use App\Entities\Order;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use Illuminate\Console\Command;
@@ -56,6 +57,13 @@ class UpdateDB extends Command
                 $promoCode->promo_category_id = Promo::CATEGORY_ID_GIFT_CARD;
                 $promoCode->save();
             }
+        }
+
+        $orders = Order::get();
+        foreach ($orders as $order) {
+            $order->local_currency = $order->currency;
+            $order->local_total_amount = $order->total_amount;
+            $order->save();
         }
     }
 }

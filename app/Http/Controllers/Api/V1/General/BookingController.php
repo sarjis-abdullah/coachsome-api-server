@@ -26,6 +26,7 @@ use App\Mail\CoachPackageConfirmation;
 use App\Mail\NewOrderCapture;
 use App\Services\ContactService;
 use App\Services\CurrencyService;
+use App\Services\GiftCard\GiftCardService;
 use App\Services\Media\MediaService;
 use App\Services\MessageFormatterService;
 use App\Services\PackageService;
@@ -81,6 +82,7 @@ class BookingController extends Controller
             $promoService = new PromoService();
             $currencyService = new CurrencyService();
             $mediaService = new MediaService();
+            $giftCardService = new GiftCardService();
 
             $toCurrencyCode = $requestedCurrencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
 
@@ -94,21 +96,8 @@ class BookingController extends Controller
 
             $authUser = Auth::user();
 
-            $giftCardBalance = 0.00;
-            $giftCardTransactions = GiftTransaction::where('user_id', $authUser->id)
-                ->get()
-                ->each(function ($item) use ($currencyService, $toCurrencyCode, &$giftCardBalance) {
-                    $amount = $currencyService->convert(
-                        $item->amount,
-                        $item->currency,
-                        $toCurrencyCode
-                    );
-                    if ($item->type == TransactionType::DEBIT) {
-                        $giftCardBalance += $amount;
-                    } else {
-                        $giftCardBalance -= $amount;
-                    }
-                });
+            $giftCardBalance = $giftCardService->balance($authUser);
+
 
             // Package charge info
             $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, [
@@ -433,7 +422,7 @@ class BookingController extends Controller
                 if (!$isPaymentCapture) {
                     if ($paymentId) {
                         $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
-                            'amount' => $order->total_amount * 100
+                            'amount' => $order->local_total_amount * 100
                         ]);
 
                         if ($captureRequest->httpStatus() == 202) {
