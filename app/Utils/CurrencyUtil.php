@@ -16,13 +16,13 @@ class CurrencyUtil
 {
     /**
      * Convert currency according to exchange rates
-     * 
-     * @param float $amount 
+     *
+     * @param float $amount
      * @param string $from
      * @param string $to
-     * @param string $date 
-     * 
-     * @return float $result 
+     * @param string $date
+     *
+     * @return float $result
      */
     public static function convert($amount, $from, $to, $date = null)
     {
@@ -71,16 +71,16 @@ class CurrencyUtil
 
         $result = $amount * $rate;
 
-        return $result;
+        return round($result,2);
     }
 
     /**
      * Get exchange rate according to base currency
-     * 
+     *
      * @param string $base
-     * @param string $date 
-     * 
-     * @return array $data 
+     * @param string $date
+     *
+     * @return array $data
      */
     public static function rates($base, $date = null)
     {

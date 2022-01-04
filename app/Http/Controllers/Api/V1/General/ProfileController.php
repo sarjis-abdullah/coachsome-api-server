@@ -29,6 +29,7 @@ use App\Services\TransformerService;
 use App\Transformers\Category\CategoriesTransformer;
 use App\Transformers\Language\LanguagesTransformer;
 use App\Transformers\Tag\TagsTransformer;
+use App\Utils\CurrencyUtil;
 use Coachsome\BaseReview\Repositories\BaseReviewRepository;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -107,7 +108,7 @@ class ProfileController extends Controller
 
             return $response;
         } catch (Exception $e) {
-            return response(['message'=>$e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 
     }
@@ -315,8 +316,8 @@ class ProfileController extends Controller
             $reviewService = new ReviewService($baseReviewRepository);
 
             // User name formatting
-            if($userName){
-                $userName = str_replace("-",".",$userName);
+            if ($userName) {
+                $userName = str_replace("-", ".", $userName);
             }
 
             $user = User::where('user_name', $userName)->with(['sportTags'])->first();
@@ -387,18 +388,22 @@ class ProfileController extends Controller
             $ratingInfo->reviewers = $reviewService->reviewers($user);
 
             // Packages
-            $packages = $user->packages()->orderBy("order")->where('status', 1)->get()->map(function ($item) use ($toCurrencyCode, $fromCurrencyCode, $packageService, $user, $currencyService) {
-                $discount = $item->details->discount ?? 0.00;
-                $originalPrice = $packageService->calculateOriginalPrice($user, $item);
-                $salePrice = $packageService->calculatePackageSalePrice($originalPrice, $discount);
-                $modifiedItem = new \stdClass();
-                $modifiedItem->id = $item->id;
-                $modifiedItem->details = $item->details;
-                $modifiedItem->originalPrice = $currencyService->convert($originalPrice, $fromCurrencyCode, $toCurrencyCode);
-                $modifiedItem->salePrice = $currencyService->convert($salePrice, $fromCurrencyCode, $toCurrencyCode);
-                $modifiedItem->category = $item->category;
-                return $modifiedItem;
-            });
+            $packages = $user->packages()
+                ->orderBy("order")
+                ->where('status', 1)
+                ->get()
+                ->map(function ($item) use ($toCurrencyCode, $fromCurrencyCode, $packageService, $user) {
+                    $discount = $item->details->discount ?? 0.00;
+                    $originalPrice = $packageService->calculateOriginalPrice($user, $item);
+                    $salePrice = $packageService->calculatePackageSalePrice($originalPrice, $discount);
+                    $modifiedItem = new \stdClass();
+                    $modifiedItem->id = $item->id;
+                    $modifiedItem->details = $item->details;
+                    $modifiedItem->originalPrice = CurrencyUtil::convert($originalPrice, $fromCurrencyCode, $toCurrencyCode);
+                    $modifiedItem->salePrice = CurrencyUtil::convert($salePrice, $fromCurrencyCode, $toCurrencyCode);
+                    $modifiedItem->category = $item->category;
+                    return $modifiedItem;
+                });
 
 
             $links = Gallery::where('user_id', $user->id)->get()->map(function ($item) use ($mediaService) {

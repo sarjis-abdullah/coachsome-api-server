@@ -31,6 +31,8 @@ class CreateOrdersTable extends Migration
             $table->decimal('service_fee', 20, 2);
             $table->string('status')->default('Initial');
             $table->dateTime('transaction_date')->nullable();
+            $table->string('local_currency')->nullable();
+            $table->decimal('local_total_amount', 20, 2)->nullable();
             $table->timestamps();
         });
     }

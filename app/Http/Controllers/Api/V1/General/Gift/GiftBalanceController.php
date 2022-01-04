@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1\General\Gift;
 
+use App\Data\CurrencyCode;
 use App\Data\StatusCode;
 use App\Data\TransactionType;
 use App\Entities\GiftTransaction;
 use App\Http\Controllers\Controller;
+use App\Utils\CurrencyUtil;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
