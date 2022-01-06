@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [develop] - 03/01/2022
+## [develop,test] - 03/01/2022
 - Add column local_currency, local_total_amount at orders table
 - php artisan update:db
 

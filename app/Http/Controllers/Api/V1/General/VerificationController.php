@@ -25,9 +25,9 @@ class VerificationController extends Controller
             $translation = $translationService->getKeyByLanguageCode($locale);
             $token = Str::uuid()->toString();
             $link = config('company.url.email_verification_page') . '?token=' . $token;
-    
+
             VerifyUser::create(['user_id' => $user->id, 'token' => $token]);
-    
+
             $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
             $beautymail->send(
                 'emails.verifyEmail',
@@ -67,7 +67,7 @@ class VerificationController extends Controller
 
     public function verifyGoogle()
     {
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')->getTargetUrl();
     }
 
     public function verifyTwitter()
