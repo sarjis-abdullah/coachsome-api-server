@@ -39,6 +39,10 @@ class SearchController extends Controller
 
             if ($searchKey) {
                 $users = User::join('profiles', 'profiles.user_id', '=', 'users.id')
+                    ->whereHas('roles', function($q){
+                        $q->where('roles.id', RoleData::ROLE_ID_COACH);
+                    })
+                    ->where('users.activity_status_id', ActivityStatus::ACTIVE)
                     ->where('users.activity_status_id', ActivityStatus::ACTIVE)
                     ->select('profiles.profile_name', 'users.user_name')
                     ->where(function ($q) use ($searchKey) {
