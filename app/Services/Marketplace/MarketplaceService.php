@@ -181,7 +181,7 @@ class MarketplaceService
         }
 
 
-        
+
         // City name
         if ($cityName) {
             $userQuery->whereHas('locations', function ($q) use ($cityName) {
