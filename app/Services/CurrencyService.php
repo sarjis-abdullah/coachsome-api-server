@@ -8,6 +8,8 @@ use App\Entities\Currency;
 use App\Entities\CurrencyRate;
 use Carbon\Carbon;
 use Exception;
+
+use Illuminate\Support\Facades\Log;
 use NumberFormatter;
 
 class CurrencyService
@@ -73,21 +75,35 @@ class CurrencyService
     public function rates($base, $date = null)
     {
         $data = [];
-        if ($date) {
-            $req_url = 'https://api.exchangerate.host/' . $date . '?base=' . $base;
-        } else {
-            $req_url = 'https://api.exchangerate.host/latest?base=' . $base;
-        }
-        $response_json = file_get_contents($req_url);
-        if (false !== $response_json) {
-            try {
-                $response = json_decode($response_json, true);
-                if ($response['success'] === true) {
-                    $data = $response["rates"];
-                }
-            } catch (Exception $e) {
+
+        try {
+            // Exchange rate host
+            if ($date) {
+                $req_url = 'https://api.exchangerate.host/' . $date . '?base=' . $base;
+            } else {
+                $req_url = 'https://api.exchangerate.host/latest?base=' . $base;
             }
+            $response_json = file_get_contents($req_url);
+            $response = json_decode($response_json, true);
+            $data = $response["rates"];
+        } catch (Exception $e) {
+            // Fallback free currency api
+            throw new Exception("Error");
+            if ($date) {
+                $req_url = "https://freecurrencyapi.net/api/v2/historical?apikey=78e27350-721e-11ec-a972-5f85bd619f72&base_currency="
+                    . $base
+                    . "&date_from="
+                    . $date
+                    . "&date_to="
+                    . $date;
+            } else {
+                $req_url = "https://freecurrencyapi.net/api/v2/latest?apikey=78e27350-721e-11ec-a972-5f85bd619f72&base_currency=" . $base;
+            }
+            $response_json = file_get_contents($req_url);
+            $response = json_decode($response_json, true);
+            $data = $response["data"];
         }
+
         return $data;
     }
 
