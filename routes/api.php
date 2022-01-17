@@ -282,4 +282,14 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::get('impersonate/revert', 'ImpersonateController@revert')->middleware('auth:api');
         });
     });
+
+     /*
+     * PWA
+     */
+    Route::group(['prefix' => 'pwa', 'namespace' => 'PWA'], function () {
+        // Client auth
+        Route::group(['namespace' => 'Auth'], function () {
+            Route::post('register', 'RegisterController@register');
+        });
+    });
 });
