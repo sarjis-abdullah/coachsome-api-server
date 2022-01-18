@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\PWA\Auth;
 use App\Data\Constants;
 use App\Data\StatusCode;
 use App\Entities\Profile;
+use App\Entities\Role;
 use App\Entities\User;
 use App\Entities\VerifyUser;
 use App\Events\UserRegisteredEvent;
@@ -14,6 +15,7 @@ use App\Services\TranslationService;
 use App\Services\UserService;
 use GuzzleHttp\Exception\BadResponseException;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
@@ -107,6 +109,66 @@ class RegisterController extends Controller
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+    }
+
+    public function postRegister(Request $request)
+    {
+
+        try {
+            $data = [];
+
+            $validator = Validator::make($request->all(), [
+                'first_name' => 'required',
+                'last_name' => 'required',
+                'email' => "unique:users,email",
+                'password' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                throw new \Exception("This email already exist.");
+            }
+
+
+            $userService = new UserService();
+
+            $user = new User;
+            $user->first_name = $request->first_name;
+            $user->last_name = $request->last_name;
+            $user->email = $request->email;
+            $user->user_name = $userService->generateUserName($user->first_name, $user->last_name);
+            $user->password = $userService->generateUserHashPassword($request->password);
+            $user->save();
+
+            if ($user) {
+                VerifyUser::create(['user_id' => $user->id, 'token' => $request->confirmation_token]);
+                $data['status'] = 'success';
+                $data['message'] = 'Successfully registered.';
+            } else {
+                throw new \Exception('Something went wrong, try again.');
+            }
+
+            return response($data, StatusCode::HTTP_OK);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+    }
+
+    public function attachUserRole(Request $request){
+        $data = [];
+        $role = Role::where('name', $request->user_type)->first();
+        $user = User::where('email', $request->email)->first();
+        if($user && $role){
+            $user->attachRole($role);
+            $data['status'] = 'success';
+            $data['message'] = 'Congrats! You have joined Coachsome as, '.$role->display_name;
+        }else {
+            throw new \Exception('Something went wrong, try again.');
+        }
+        return response($data, StatusCode::HTTP_OK);
     }
 
     /*
