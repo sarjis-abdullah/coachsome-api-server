@@ -8,8 +8,10 @@ use App\Data\MessageData;
 use App\Data\OrderStatus;
 use App\Data\Promo;
 use App\Data\StatusCode;
+use App\Data\TransactionType;
 use App\Entities\Booking;
 use App\Entities\Currency;
+use App\Entities\GiftTransaction;
 use App\Entities\Message;
 use App\Entities\Package;
 use App\Entities\PromoCode;
@@ -24,6 +26,7 @@ use App\Mail\CoachPackageConfirmation;
 use App\Mail\NewOrderCapture;
 use App\Services\ContactService;
 use App\Services\CurrencyService;
+use App\Services\GiftCard\GiftCardService;
 use App\Services\Media\MediaService;
 use App\Services\MessageFormatterService;
 use App\Services\PackageService;
@@ -34,6 +37,7 @@ use App\ValueObjects\Message\DeclinedPackageBooking;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Exception;
@@ -51,7 +55,8 @@ class BookingController extends Controller
         try {
             $request->validate([
                 'packageId' => 'required',
-                'promoCode' => 'nullable|string'
+                'promoCode' => 'nullable|string',
+                'useGiftCard' => 'nullable'
             ]);
 
             $packageId = $request->packageId;
@@ -77,6 +82,7 @@ class BookingController extends Controller
             $promoService = new PromoService();
             $currencyService = new CurrencyService();
             $mediaService = new MediaService();
+            $giftCardService = new GiftCardService();
 
             $toCurrencyCode = $requestedCurrencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
 
@@ -88,14 +94,26 @@ class BookingController extends Controller
                 $maxPerson = 1;
             }
 
+            $authUser = Auth::user();
+
+            $giftCardBalance = $giftCardService->balance($authUser);
+
+
             // Package charge info
-            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $request['promoCode'], 'packageBuyerUser' => $packageBuyerUser]);
+            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, [
+                'promoCode' => $request['promoCode'],
+                'packageBuyerUser' => $packageBuyerUser,
+                'useGiftCard' => $request['useGiftCard']
+            ]);
+
             $chargeBox = new \stdClass();
             $chargeBox->priceForPackage = $chargeInfo['salePrice'];
             $chargeBox->totalPerPerson = $chargeInfo['totalPerPerson'];
             $chargeBox->total = $chargeInfo['total'];
             $chargeBox->salePrice = $chargeInfo['salePrice'];
             $chargeBox->serviceFee = $chargeInfo['serviceFee'];
+            $chargeBox->giftPayableAmount = $chargeInfo['giftCard']['payableAmount'];
+            $chargeBox->giftBalanceAfterPaid = $chargeInfo['giftCard']['balanceAfterPaid'];
             $chargeBox->minPerson = $minPerson;
             $chargeBox->maxPerson = $maxPerson;
 
@@ -108,7 +126,7 @@ class BookingController extends Controller
             ];
             $promoCode = PromoCode::where('code', $request['promoCode'])->first();
             if ($promoCode) {
-                if(!$promoService->isExpired($promoCode, $packageBuyerUser)){
+                if (!$promoService->isExpired($promoCode, $packageBuyerUser)) {
                     $promoCodeInfo['valid'] = true;
                     $promoCodeInfo['value'] = $promoCode->code;
                     $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
@@ -132,10 +150,10 @@ class BookingController extends Controller
                 'packageSetting' => $packageSetting,
                 'profileCard' => $profileCard,
                 'chargeBox' => $chargeBox,
+                'giftCardBalance' => $giftCardBalance,
                 'availabilities' => $availabilities,
                 'promoCode' => $promoCodeInfo
             ], StatusCode::HTTP_OK);
-
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
                 return response()->json(
@@ -151,7 +169,6 @@ class BookingController extends Controller
                 'line' => $e->getLine()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
-
     }
 
     public function getBookingPackage(Request $request)
@@ -292,19 +309,19 @@ class BookingController extends Controller
                     ];
                 });
 
-            return response()->json([
-                'userName' => $selectedUser->user_name,
-                'purchasedPackages' => $purchasedPackageBookings,
-                'soldPackages' => $soldPackageBookings,
-            ],
+            return response()->json(
+                [
+                    'userName' => $selectedUser->user_name,
+                    'purchasedPackages' => $purchasedPackageBookings,
+                    'soldPackages' => $soldPackageBookings,
+                ],
                 StatusCode::HTTP_OK
             );
-
-
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ],
+            return response()->json(
+                [
+                    'message' => $e->getMessage(),
+                ],
                 StatusCode::HTTP_UNPROCESSABLE_ENTITY
             );
         }
@@ -314,15 +331,16 @@ class BookingController extends Controller
     {
         try {
 
-            $bookingId = $request->bookingId;
-            $action = $request->action;
-
             // Tracking pixel track the package that accepted
             $trackingPixel = [
                 'status' => false,
                 'orderKey' => '',
                 'salePrice' => 0.00
             ];
+
+            $action = $request->action;
+            $bookingId = $request->bookingId;
+
 
             $booking = Booking::find($bookingId);
             if (!$booking) {
@@ -352,7 +370,8 @@ class BookingController extends Controller
 
             $paymentId = null;
             $newMessage = null;
-            $responseMessage = 'This request is still pending';
+            $isPaymentCapture = false;
+            $responseMessage = '';
 
             $order = $booking->order;
             $payment = $order->payment ?? null;
@@ -362,31 +381,36 @@ class BookingController extends Controller
 
             $contactService = new ContactService();
             $messageFormatterService = new MessageFormatterService();
-
             $quickpayClientService = new QuickpayClientService();
+
             $quickpayClient = $quickpayClientService->getClient();
 
-            // Check payment status
-            $isPaymentCapture = false;
-            $paymentResponse = $quickpayClient->request->get('/payments/' . $paymentId)->asArray();
-            if($paymentResponse){
-                if($paymentResponse['operations']){
-                    foreach ($paymentResponse['operations'] as $operation) {
-                        if($operation['type'] == 'capture') {
-                            $isPaymentCapture = true;
+            // If the package is booked as quick booking then the booking is already captured
+            // Check the payment status is it capture or not
+            // Update order and booking status according to the payment status result
+            if ($payment) {
+                $paymentResponse = $quickpayClient->request->get('/payments/' . $paymentId)->asArray();
+                if ($paymentResponse) {
+                    if ($paymentResponse['operations']) {
+                        foreach ($paymentResponse['operations'] as $operation) {
+                            if ($operation['type'] == 'capture') {
+                                $isPaymentCapture = true;
+                            }
                         }
                     }
                 }
-            }
-            if($isPaymentCapture){
-                $order->status = OrderStatus::CAPTURE;
-                $order->save();
-                $booking->status = BookingStatus::ACCEPTED;
-                $booking->save();
-                $responseMessage = 'Payment had captured';
+
+                if ($isPaymentCapture) {
+                    $order->status = OrderStatus::CAPTURE;
+                    $order->save();
+                    $booking->status = BookingStatus::ACCEPTED;
+                    $booking->save();
+                    $responseMessage = 'Payment had captured';
+                }
             }
 
-            // Accept
+            DB::beginTransaction();
+
             if ($action == 'accept') {
 
                 // Tracking pixel only assign when accept a package request
@@ -394,29 +418,43 @@ class BookingController extends Controller
                 $trackingPixel['orderKey'] = $order->key;
                 $trackingPixel['salePrice'] = $order->package_sale_price;
 
-                if(!$isPaymentCapture){
-                    $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
-                        'amount' => $order->total_amount * 100
-                    ]);
-                    if ($captureRequest->httpStatus() == 202) {
+                // If payment is not capture then it needs to capture
+                if (!$isPaymentCapture) {
+                    if ($paymentId) {
+                        $captureRequest = $quickpayClient->request->post(sprintf("/payments/%s/capture", $paymentId), [
+                            'amount' => $order->local_total_amount * 100
+                        ]);
+
+                        if ($captureRequest->httpStatus() == 202) {
+                            $isPaymentCapture = true;
+
+                        } else {
+                            throw new \Exception('Payment is not captured properly, try again', 106);
+                        }
+
+                    }
+
+                    if ($isPaymentCapture) {
                         $order->status = OrderStatus::CAPTURE;
                         $order->save();
                         $booking->status = BookingStatus::ACCEPTED;
                         $booking->date_of_acceptance = date('Y-m-d H:i:s');
                         $booking->save();
+
                         // Mail to users
                         Mail::to($packageOwnerUser)->queue(new CoachPackageConfirmation($booking));
                         Mail::to($packageBuyerUser)->queue(new AthletePackageConfirmation($booking));
+
                         // Mail to administrator
                         Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
-                    } else {
-                        throw new \Exception('Payment is not captured properly, try again', 106);
                     }
+
                     $acceptedPackageBookingMessage = new AcceptedPackageBooking([
                         'orderSnapshot' => $order->toArray(),
                         'packageSnapshot' => json_decode($order->package_snapshot),
                         'status' => 'Accepted',
                     ]);
+
                     $newMessage = new Message();
                     $newMessage->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_PACKAGE_BOOKING;
                     $newMessage->sender_user_id = $authUser->id;
@@ -429,24 +467,51 @@ class BookingController extends Controller
                     $responseMessage = 'This request was successfully accepted.';
                     $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
                 }
-
             }
 
-            // Decline
             if ($action == 'decline') {
 
-                $cancelRequest = $quickpayClient->request->post(sprintf("/payments/%s/cancel", $paymentId));
-                if ($cancelRequest->httpStatus() == 202) {
-                    $order->status = OrderStatus::CANCELED;
-                    $order->save();
-                    $booking->status = BookingStatus::DECLINED;
-                    $booking->date_of_decline = date('Y-m-d H:i:s');
-                    $booking->save();
-                    Mail::to($packageBuyerUser)->send(new AthleteDeclinedPackage($booking));
-                } else {
-                    throw new \Exception('Payment is not canceled properly, try again', 106);
+                if ($paymentId) {
+                    $cancelRequest = $quickpayClient->request->post(sprintf("/payments/%s/cancel", $paymentId));
+                    if (!$cancelRequest->httpStatus() == 202) {
+                        throw new \Exception('Payment is not canceled properly, try again', 106);
+                    }
                 }
 
+                $order->status = OrderStatus::CANCELED;
+                $order->save();
+                $booking->status = BookingStatus::DECLINED;
+                $booking->date_of_decline = date('Y-m-d H:i:s');
+                $booking->save();
+
+                // Mail to the package buyer so that he can be notified
+                Mail::to($packageBuyerUser)->send(new AthleteDeclinedPackage($booking));
+
+                // Redeem the amount that was added to the order
+                // Check transaction if it redeems before
+                if ($order->gift_transaction_id) {
+                    $giftTransaction = GiftTransaction::find($order->gift_transaction_id);
+                    if ($giftTransaction) {
+                        // Check the transaction redeem before
+                        $giftTransactionCredit = GiftTransaction::where('id', $order->gift_transaction_id)
+                            ->where('type', TransactionType::DEBIT)
+                            ->first();
+
+                        // Redeem the transaction if it is not happened before
+                        if (!$giftTransactionCredit) {
+                            $newGiftTransaction = new GiftTransaction();
+                            $newGiftTransaction->user_id = $giftTransaction->user_id;
+                            $newGiftTransaction->gift_order_id = $giftTransaction->gift_order_id;
+                            $newGiftTransaction->transaction_date = Carbon::now();
+                            $newGiftTransaction->amount = $giftTransaction->amount;
+                            $newGiftTransaction->currency = $giftTransaction->currency;
+                            $newGiftTransaction->type = TransactionType::DEBIT;
+                            $newGiftTransaction->save();
+
+                        }
+
+                    }
+                }
                 $declinedPackageBookingMessage = new DeclinedPackageBooking([
                     'orderSnapshot' => $order->toArray(),
                     'packageSnapshot' => json_decode($order->package_snapshot),
@@ -463,8 +528,9 @@ class BookingController extends Controller
 
                 $responseMessage = 'This request was declined.';
                 $contactService->updateLastMessageAndTime($authUser, $packageBuyerUser, $newMessage);
-
             }
+
+            DB::commit();
 
             // All message
             $messages = Message::where(function ($q) use ($packageOwnerUser, $packageBuyerUser) {
@@ -477,23 +543,20 @@ class BookingController extends Controller
                 return $messageFormatterService->doFormat($item);
             });
 
-            return response()->json([
+            return response([
                 'trackingPixel' => $trackingPixel,
                 'message' => $responseMessage,
                 'messages' => $messages,
                 'newMessage' => $messageFormatterService->doFormat($newMessage)
-            ],
-                StatusCode::HTTP_OK
-            );
-
+            ], StatusCode::HTTP_OK );
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'erroCode' => $e->getCode()
-            ],
+            return response(
+                [
+                    'message' => $e->getMessage(),
+                    'erroCode' => $e->getCode()
+                ],
                 StatusCode::HTTP_UNPROCESSABLE_ENTITY
             );
         }
-
     }
 }

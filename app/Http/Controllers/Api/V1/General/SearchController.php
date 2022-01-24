@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\General;
 
+use App\Data\ActivityStatus;
 use App\Data\RoleData;
 use App\Data\StatusCode;
 use App\Entities\Location;
@@ -37,6 +38,23 @@ class SearchController extends Controller
             $searchKey = $request->query('key') ?? "";
 
             if ($searchKey) {
+                $users = User::join('profiles', 'profiles.user_id', '=', 'users.id')
+                    ->whereHas('roles', function($q){
+                        $q->where('roles.id', RoleData::ROLE_ID_COACH);
+                    })
+                    ->where('users.activity_status_id', ActivityStatus::ACTIVE)
+                    ->where('users.activity_status_id', ActivityStatus::ACTIVE)
+                    ->select('profiles.profile_name', 'users.user_name')
+                    ->where(function ($q) use ($searchKey) {
+                        $q->where('profiles.profile_name', 'LIKE', "%$searchKey%");
+                    })->get()
+                    ->map(function ($item) {
+                        return [
+                            'userName' => $item->user_name,
+                            'profileName' => $item->profile_name
+                        ];
+                    });
+
                 $categories = SportCategory::get()->map(function ($item) use ($translations) {
                     if (array_key_exists($item->t_key, $translations)) {
                         $item->name = $translations[$item->t_key];
@@ -48,6 +66,7 @@ class SearchController extends Controller
 
                 $tags = SportTag::groupBy('name')
                     ->select('name', DB::raw('count(*) as total'))
+                    ->whereIn('user_id', $users->pluck('id')->toArray())
                     ->where(function ($q) use ($searchKey) {
                         $q->where('name', 'LIKE', "%$searchKey%");
                     })->get();
@@ -58,17 +77,7 @@ class SearchController extends Controller
                         $q->where('city', 'LIKE', "%$searchKey%");
                     })->get();
 
-                $users = User::join('profiles', 'profiles.user_id', '=', 'users.id')
-                    ->select('profiles.profile_name', 'users.user_name')
-                    ->where(function ($q) use ($searchKey) {
-                        $q->where('profiles.profile_name', 'LIKE', "%$searchKey%");
-                    })->get()
-                    ->map(function ($item) {
-                        return [
-                            'userName' => $item->user_name,
-                            'profileName' => $item->profile_name
-                        ];
-                    });
+
             }
 
             return response()->json([

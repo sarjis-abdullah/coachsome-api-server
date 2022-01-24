@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\MessageData;
+use App\Data\OrderStatus;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\Contact;
@@ -60,9 +61,10 @@ class MessageController extends Controller
             $bookings = Booking::where(function ($q) use ($connectedUser, $authUser) {
                 $q->where('package_owner_user_id', $connectedUser->id);
                 $q->where('package_buyer_user_id', $authUser->id);
-            })->where('status', 'Initial')->get();
+            })->where('status', OrderStatus::INITIAL)->get();
 
             // New messages
+            // Initial status bookings needs to send message to the client
             if ($bookings->count() > 0) {
                 $initialBookingMessages = $bookingService->checkPaymentStatusOfInitialBookings($bookings);
                 $newMessages = $initialBookingMessages["newMessages"];

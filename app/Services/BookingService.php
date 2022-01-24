@@ -54,35 +54,49 @@ class BookingService
 
         foreach ($bookings as $booking) {
             $order = $booking->order;
+            $packageBuyerUser = $booking->packageBuyerUser;
+            $packageOwnerUser = $booking->packageOwnerUser;
+
             $packageSnapshot = $order ? json_decode($order->package_snapshot) : null;
             $packageDetails = $packageSnapshot->details;
 
             $payment = $order ? $order->payment : null;
-            $paymentDetails = $order ? json_decode($payment->details) : null;
-            $paymentId = $paymentDetails ? $paymentDetails->payment_id : null;
 
-            $packageBuyerUser = $booking->packageBuyerUser;
-            $packageOwnerUser = $booking->packageOwnerUser;
-
-            $client = $quickpayClientService->getClient();
-            $payment = $client->request->get('/payments/' . $paymentId);
-            $status = $payment->httpStatus();
-            if ($status == 200) {
-                $paymentObject = $payment->asObject();
-                $order = $orderService->updateOrderStatusBasedOnPaymentStatus($order, $paymentObject);
-                $booking = $bookingService->updateBookingStatusBasedOnOrderStatus($booking, $order);
-                // Rejected order do not need to send message so skip it
-                if ($order->status == 'Rejected') {
-                    continue;
+            // If it has payment then you have to again check the payment status
+            if ($payment) {
+                $paymentDetails = $order ? json_decode($payment->details) : null;
+                $paymentId = $paymentDetails ? $paymentDetails->payment_id : null;
+                $client = $quickpayClientService->getClient();
+                $payment = $client->request->get('/payments/' . $paymentId);
+                $status = $payment->httpStatus();
+                if ($status == 200) {
+                    $paymentObject = $payment->asObject();
+                    $order = $orderService->updateOrderStatusBasedOnPaymentStatus($order, $paymentObject);
+                    $booking = $bookingService->updateBookingStatusBasedOnOrderStatus($booking, $order);
+                    // Rejected booking do not take any action so skip it
+                    if ($order->status == OrderStatus::REJECTED) {
+                        continue;
+                    }
                 }
             }
 
+            // The booking is not paid by any payment method.
+            // It should be from any balance like gift card balance
+            if (!$payment) {
+                $booking->status = BookingStatus::PENDING;
+                $order->status = OrderStatus::AUTHORIZED;
+                $order->save();
+                $booking->save();
+            }
+
+            // Initial booking needs to notify the users
+            // Message should be formatted for both booking style
             if ($booking->is_quick_booking) {
                 $buyPackageMessage = new BuyPackage([
                     'orderSnapshot' => $order->toJson(),
                     'packageSnapshot' => $order->toJson(),
                     'packageBuyerName' => $packageBuyerUser->profileName(),
-                    'status' => $order->status == 'Capture' ? 'Accepted' : 'Initial'
+                    'status' => $order->status == OrderStatus::CAPTURE ? 'Accepted' : 'Initial'
                 ]);
                 $newMessage = new Message();
                 $newMessage->type = 'structure';
@@ -123,5 +137,4 @@ class BookingService
 
         return $data;
     }
-
 }

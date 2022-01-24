@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateGiftOrdersTable extends Migration
+class CreateGiftTransactionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,17 +13,14 @@ class CreateGiftOrdersTable extends Migration
      */
     public function up()
     {
-        Schema::create('gift_orders', function (Blueprint $table) {
+        Schema::create('gift_transactions', function (Blueprint $table) {
             $table->id();
-            $table->text('key')->nullable();
             $table->bigInteger('user_id');
-            $table->bigInteger('promo_code_id');
-            $table->text('message')->nullable();
-            $table->text('recipent_name')->nullable();
+            $table->bigInteger('gift_order_id')->nullable();
+            $table->dateTime('transaction_date');
+            $table->decimal('amount', 20, 2);
             $table->string('currency');
-            $table->decimal('total_amount', 20, 2);
-            $table->string('status');
-            $table->dateTime('order_date');
+            $table->string('type');
             $table->timestamps();
         });
     }
@@ -35,6 +32,6 @@ class CreateGiftOrdersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('gift_orders');
+        Schema::dropIfExists('gift_transactions');
     }
 }

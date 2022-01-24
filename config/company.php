@@ -16,6 +16,7 @@ return [
         'home_page' => env('APP_CLIENT_DOMAIN'),
         'gift_checkout_page' => env('APP_CLIENT_DOMAIN').'/gift/checkout',
         'gift_page' => env('APP_CLIENT_DOMAIN').'/gift',
+        'email_verification_page' => env('APP_CLIENT_DOMAIN').'/email-verification',
         'linkedin' => "https://www.linkedin.com/company/coachsome/",
         'facebook' => "https://www.facebook.com/coachsome/app/212104595551052/?ref=page_internal",
         'linkedin_icon' => env('APP_SERVER_DOMAIN_PUBLIC_PATH') . '/assets/images/icons/linkedin.png',

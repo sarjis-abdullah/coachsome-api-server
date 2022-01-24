@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\General;
+namespace App\Http\Controllers\Api\V1\General\Gift;
 
+use App\Data\CurrencyCode;
 use App\Data\OrderStatus;
 use App\Data\Promo;
 use App\Data\ServiceProviderData;
@@ -11,10 +12,12 @@ use App\Entities\GiftPayment;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Gift\GiftOrderResource;
 use App\Services\CurrencyService;
 use App\Services\QuickpayClientService;
 use App\Services\TokenService;
 use App\Services\TranslationService;
+use App\Utils\CurrencyUtil;
 use Barryvdh\DomPDF\Facade as PDF;
 use Carbon\Carbon;
 use Exception;
@@ -26,6 +29,33 @@ use Illuminate\Validation\ValidationException;
 
 class GiftCardController extends Controller
 {
+
+    public function getOrder(Request $request, $id)
+    {
+        try {
+            $giftOrder = GiftOrder::find($id);
+            if (!$giftOrder) {
+                throw new Exception("Gift order is not found.");
+            }
+            return response([
+                'data' =>new GiftOrderResource($giftOrder)
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                return response([
+                    'error' => [
+                        'message' => $e->validator->errors()->first()
+                    ]
+                ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            return response([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
     public function pay(Request $request)
     {
 
@@ -35,26 +65,30 @@ class GiftCardController extends Controller
                 'currency' => 'required',
                 'totalAmount' => 'nullable|numeric',
                 'paymentMethod' => 'required',
-                'message' => 'nullable'
+                'message' => 'nullable',
+                'recipentName' => 'required'
             ]);
 
             $cancelUrl = route('gift-cards.payments.cancel');
             $continueUrl = route('gift-cards.payments.continue');
 
-            $currencyService  = new CurrencyService();
-            $tokenService  = new TokenService();
-            $currency = $currencyService->getByCode($request['currency']);
+            $currencyService = new CurrencyService();
+            $tokenService = new TokenService();
+            $currency = $currencyService->getDefaultBasedCurrency();
             if (!$currency) {
                 throw new Exception("Currecny is not found");
             }
-            $token = bin2hex(openssl_random_pseudo_bytes(16));
+
+            $token = substr(md5(time()), 0, 8);
+            $authUser = Auth::user();
 
             DB::beginTransaction();
 
             $promoCode = new PromoCode();
             $promoCode->code = $token;
-            $promoCode->name = $token;
+            $promoCode->name = $authUser->first_name . " " . $authUser->last_name;
             $promoCode->promo_type_id = Promo::TYPE_ID_FIXED;
+            $promoCode->promo_category_id = Promo::CATEGORY_ID_GIFT_CARD;
             $promoCode->promo_duration_id = Promo::DURATION_ID_ONCE;
             $promoCode->currency_id = $currency->id;
             $promoCode->discount_amount = $request['totalAmount'];
@@ -64,11 +98,16 @@ class GiftCardController extends Controller
             $order = new GiftOrder();
             $order->user_id = Auth::id();
             $order->promo_code_id = $promoCode->id;
-            $order->currency = $currency->code;
+            $order->currency = CurrencyCode::DANISH_KRONER;
             $order->message = $request['message'];
-            $order->total_amount = $request['totalAmount'];
+            $order->recipent_name = $request['recipentName'];
+            $order->total_amount = CurrencyUtil::convert(
+                $request['totalAmount'],
+                $request->header('Currency-Code'),
+                CurrencyCode::DANISH_KRONER
+            );
             $order->status = OrderStatus::INITIAL;
-            $order->order_date = Carbon::now();
+            $order->transaction_date = Carbon::now();
             $order->save();
 
             // $order->id only work when it saved
@@ -83,7 +122,7 @@ class GiftCardController extends Controller
             // Create payment
             $payment = $client->request->post('/payments', [
                 'order_id' => $orderKey,
-                'currency' => $currency->code,
+                'currency' => $request->header('Currency-Code'),
             ]);
 
             $status = $payment->httpStatus();
@@ -94,7 +133,7 @@ class GiftCardController extends Controller
                 $linkRequest = $client->request->put($endpoint, [
                     'amount' => $request['totalAmount'] * 100,
                     'continue_url' => $continueUrl . '?id=' . $order->id,
-                    'cancel_url' => $cancelUrl. '?id=' . $order->id,
+                    'cancel_url' => $cancelUrl . '?id=' . $order->id,
                     'auto_capture' => true
                 ]);
 
@@ -132,7 +171,7 @@ class GiftCardController extends Controller
         }
     }
 
-    public function  downloadGiftCard(Request $request, $id)
+    public function downloadGiftCard(Request $request, $id)
     {
         try {
             $giftOrder = GiftOrder::find($id);
@@ -154,11 +193,19 @@ class GiftCardController extends Controller
             $data["firstName"] = $user->first_name;
             $data["lastName"] = $user->last_name;
             $data["code"] = $promoCode->code;
-            $data["value"] = $giftOrder->total_amount;
-            $data["currency"] = $giftOrder->currency;
+            $data["value"] = round(
+                CurrencyUtil::convert(
+                    $giftOrder->total_amount,
+                    $giftOrder->currency,
+                    $request->header('Currency-Code'),
+                    date('Y-m-d', strtotime($giftOrder->transaction_date))
+                )
+            );
+            $data["currency"] = $request->header('Currency-Code');
+            $data["recipentName"] = $giftOrder->recipent_name;
+            $data["recipentMessage"] = $giftOrder->message;
             $pdf = PDF::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('emails.giftCard', $data);
             return $pdf->download();
-
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
                 return response([

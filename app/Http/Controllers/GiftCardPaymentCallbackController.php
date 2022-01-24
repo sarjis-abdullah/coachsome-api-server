@@ -40,6 +40,8 @@ class GiftCardPaymentCallbackController extends Controller
                 $data["code"] = $promoCode->code;
                 $data["value"] = $giftOrder->total_amount;
                 $data["currency"] = $giftOrder->currency;
+                $data["recipentName"] = $giftOrder->recipent_name;
+                $data["recipentMessage"] = $giftOrder->message;
 
                 $pdf = PDF::setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true])->loadView('emails.giftCard', $data);
                 Mail::send('emails.giftCard', $data, function ($message) use ($data, $pdf) {

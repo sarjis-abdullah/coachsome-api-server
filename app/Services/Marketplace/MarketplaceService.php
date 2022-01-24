@@ -181,7 +181,7 @@ class MarketplaceService
         }
 
 
-        
+
         // City name
         if ($cityName) {
             $userQuery->whereHas('locations', function ($q) use ($cityName) {
@@ -197,9 +197,10 @@ class MarketplaceService
         }
 
         // Radius
-        if (!empty($radiusFilterUserIdList)) {
+        if (!empty($originLocation) && !empty($originLat) && !empty($originLon) && !empty($distance)) {
             $userQuery->whereIn('id', $radiusFilterUserIdList);
         }
+
 
         // Hourly rate range
         $userQuery->whereHas('ownPackageSetting', function ($q) use ($minRange, $maxRange) {

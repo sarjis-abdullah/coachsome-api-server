@@ -1,5 +1,8 @@
 <?php
 
+use App\Utils\CurrencyUtil;
+use Illuminate\Support\Facades\Route;
+
 // Social Auth
 Route::get('auth/login/{provider}', 'SocialAuthController@redirectToProvider');
 Route::get('auth/login/{provider}/callback', 'SocialAuthController@handleProviderCallback');
@@ -33,3 +36,13 @@ Route::get('images/{size}/{filename}', function ($size, $filename) {
 Route::get('images/{filename}', function ($filename) {
     return response()->file(storage_path('app/public/images/' . $filename));
 })->name("images.gallery");
+
+
+// Currency conversion 
+Route::get('/currency/{amount}/{from}/{to}/latest', function ($amount, $from, $to) {
+    return CurrencyUtil::convert($amount, $from, $to);
+});
+
+Route::get('/currency/{amount}/{from}/{to}/{date}', function ($amount, $from, $to, $date) {
+    return CurrencyUtil::convert($amount, $from, $to, $date);
+});

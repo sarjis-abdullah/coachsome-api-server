@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1\General;
 
+use App\Data\CurrencyCode;
+use App\Data\OrderStatus;
 use App\Data\StatusCode;
+use App\Data\TransactionType;
 use App\Entities\PromoUser;
 use App\Entities\Booking;
 use App\Entities\BookingSetting;
 use App\Entities\Contact;
+use App\Entities\GiftTransaction;
 use App\Entities\Message;
 use App\Entities\Order;
 use App\Entities\Package;
@@ -29,7 +33,7 @@ use App\Services\QuickpayClientService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -44,32 +48,28 @@ class QuickpayController extends Controller
         try {
             $request->validate([
                 'packageId' => 'required',
-                'currency' => 'required',
-                'serviceFee' => 'required',
-                'totalAmount' => 'required',
-                'salePrice' => 'required',
-                'promoCode' => 'nullable'
+                'promoCode' => 'nullable',
+                'useGiftCard' => 'nullable',
+                'paymentMethod' => 'nullable'
             ]);
 
             $packageId = $request->packageId;
-            $currencyCode = $request->currency;
+            $localCurrency = $request->header('Currency-Code');
             $packageBuyerMessage = $request->message;
             $numberOfAttendees = $request->numberOfAttendees;
-            $serviceFee = $request->serviceFee;
-            $totalAmount = $request->totalAmount;
-            $totalPerPerson = $request->totalPerPerson;
             $salePrice = $request->salePrice;
             $paymentMethod = $request->paymentMethod;
+            $promoCodeValue = $request->promoCode;
+            $useGiftCard = $request->useGiftCard;
             $continueUrl = $request->packageUrl . "?payment_status=paid";
             $cancelUrl = $request->packageUrl . "?payment_status=cancel";
-            $promoCodeValue = $request->promoCode;
 
             $package = Package::with(['category', 'details', 'user'])
                 ->where('id', $packageId)
                 ->first();
 
 
-            if (!$paymentMethod) {
+            if (!$paymentMethod && !$useGiftCard) {
                 throw new Exception('Sorry, payment method is not selected');
             }
 
@@ -99,12 +99,13 @@ class QuickpayController extends Controller
             }
 
             $contactService = new ContactService();
-            $promoService = new PromoService();
             $packageService = new PackageService();
             $currencyService = new CurrencyService();
 
-            $toCurrencyCode = $currencyCode ?? $currencyService->getDefaultBasedCurrency()->code;
-
+            // Set fallback currency
+            if(!$localCurrency){
+                $localCurrency = $currencyService->getDefaultBasedCurrency()->code;
+            }
 
             $packageOwnerPackageSetting = $packageOwnerUser->ownPackageSetting;
             $isQuickBooking = $packageOwnerPackageSetting->is_quick_booking ?? false;
@@ -128,29 +129,58 @@ class QuickpayController extends Controller
             $booking->save();
 
             // Package charge info
-            $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, ['promoCode' => $promoCodeValue, 'packageBuyerUser' => $packageBuyerUser]);
+            $chargeInfo = $packageService->chargeInformation(
+                $package,
+                CurrencyCode::DANISH_KRONER,
+                [
+                    'promoCode' => $promoCodeValue,
+                    'packageBuyerUser' => $packageBuyerUser,
+                    'useGiftCard' => $request['useGiftCard']
+                ]
+            );
 
-            // Creating order
+            // Save gift transaction amount
+            $giftTransaction = null;
+            if ($chargeInfo['giftCard']['payableAmount']) {
+                $giftTransaction = new GiftTransaction();
+                $giftTransaction->user_id = Auth::id();
+                $giftTransaction->gift_order_id = null;
+                $giftTransaction->transaction_date = Carbon::now();
+                $giftTransaction->amount = $chargeInfo['giftCard']['payableAmount'];
+                $giftTransaction->currency = CurrencyCode::DANISH_KRONER;
+                $giftTransaction->type = TransactionType::CREDIT;
+                $giftTransaction->save();
+            }
+
+            // Create order
+            // The order currency is default base currency
             $order = new Order();
             $order->booking_id = $booking->id;
             $order->package_id = $package->id;
+            $order->gift_transaction_id = $giftTransaction ? $giftTransaction->id : null;
+            $order->gift_card_amount = $giftTransaction ? $giftTransaction->amount : 0.00;
             $order->package_category_id = $packageCategory->id;
             $order->package_snapshot = $package->toJson();
             $order->number_of_attendees = $numberOfAttendees;
             $order->package_sale_price = $chargeInfo['salePrice'];
             $order->total_per_person = $chargeInfo['totalPerPerson'];
-            $order->currency = $currencyCode;
+            $order->currency = CurrencyCode::DANISH_KRONER;
             $order->total_amount = $chargeInfo['total'];
             $order->service_fee = $chargeInfo['serviceFee'];
-            $order->status = 'Initial';
+            $order->status = OrderStatus::INITIAL;
+            $order->transaction_date = Carbon::now();
             $order->save();
 
-            // $order->id only work when it saved
+            // Order needs to save multiple time
+            // because order id is not found until it is saved
             $orderKey = 'OID-' . $order->id . '-' . time();
             $order->key = $orderKey;
+            $order->save();
 
+            // Promo code value is a discount amount
             $promoCode = PromoCode::where('code', $promoCodeValue)->first();
             if ($promoCode) {
+                // Save the promo user
                 $promoUser = new PromoUser();
                 $promoUser->user_id = $packageBuyerUser->id;
                 $promoUser->order_id = $order->id;
@@ -160,84 +190,109 @@ class QuickpayController extends Controller
                 $promoUser->save();
 
                 // Cut down discount from order
+                // Save order information after change
                 $order->promo_discount = $chargeInfo['promoDiscount'];
+                $order->save();
             }
 
-            // Save order information after change
-            $order->save();
 
-            $quickpayClientService = new QuickpayClientService();
-            $client = $quickpayClientService->getClient();
+            // If order total amount is equal to 0 then it is not required to pay by quickpay
+            if ($order->total_amount < 1) {
+                $contactService->create($packageOwnerUser, $packageBuyerUser);
 
-            // Create payment
-            $payment = $client->request->post('/payments', [
-                'order_id' => $orderKey,
-                'currency' => $currencyCode,
-            ]);
+                DB::commit();
+                Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
+                return response([], StatusCode::HTTP_OK);
+            }
 
-            $status = $payment->httpStatus();
+            // If order has total amount value then it should be paid by quickpay
+            if ($order->total_amount > 0) {
+                $quickpayClientService = new QuickpayClientService();
+                $client = $quickpayClientService->getClient();
 
-            // Determine if payment was created successfully
-            if ($status === 201) {
-                $paymentObject = $payment->asObject();
+                // This charge info contains local currency of the user
+                // because user only pay by their local currency
+                // Quickpay payment currency will be the user local currency
+                $chargeInfo = $packageService->chargeInformation(
+                    $package,
+                    $localCurrency,
+                    [
+                        'promoCode' => $promoCodeValue,
+                        'packageBuyerUser' => $packageBuyerUser,
+                        'useGiftCard' => $request['useGiftCard']
+                    ]
+                );
 
-                // Construct url to create payment link
-                $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
+                // Local currency is user currency
+                // Local total amount that paid by quickpay
+                $order->local_currency = $localCurrency;
+                $order->local_total_amount =  $chargeInfo['total'];
+                $order->save();
 
-                // Issue a put request to create payment link
-                $modifiedContinueUrl = $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
-                $linkRequest = $client->request->put($endpoint, [
-                    'amount' => $totalAmount * 100,
-                    'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
-                    'cancel_url' => $cancelUrl,
-                    'auto_capture' => $isQuickBooking ? true : false
+                // Create payment
+                $payment = $client->request->post('/payments', [
+                    'order_id' => $orderKey,
+                    'currency' => $localCurrency,
                 ]);
 
-                //Determine if payment link was created succesfully
-                if ($linkRequest->httpStatus() === 200) {
+                $status = $payment->httpStatus();
 
-                    // Store payment information
-                    $payment = new Payment();
-                    $payment->order_id = $order->id;
-                    $payment->details = json_encode(['payment_id' => $paymentObject->id]);
-                    $payment->authorization_link = $linkRequest->asObject()->url;
-                    $payment->service_provider = 'QuickPay';
-                    $payment->method = $paymentMethod;
-                    $payment->save();
+                // Determine if payment was created successfully
+                if ($status === 201) {
+                    $paymentObject = $payment->asObject();
 
-                    $contactService->create($packageOwnerUser, $packageBuyerUser);
+                    // Construct url to create payment link
+                    $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
 
-                    DB::commit();
+                    // Issue a put request to create payment link
+                    $modifiedContinueUrl = $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
+                    $linkRequest = $client->request->put($endpoint, [
+                        'amount' => $chargeInfo['total'] * 100,
+                        'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
+                        'cancel_url' => $cancelUrl,
+                        'auto_capture' => $isQuickBooking ? true : false,
+                    ]);
 
-                    // Mail to administrator
-                    if ($isQuickBooking) {
-                        Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
+                    //Determine if payment link was created succesfully
+                    if ($linkRequest->httpStatus() === 200) {
+
+                        // Store payment information
+                        $payment = new Payment();
+                        $payment->order_id = $order->id;
+                        $payment->details = json_encode(['payment_id' => $paymentObject->id]);
+                        $payment->authorization_link = $linkRequest->asObject()->url;
+                        $payment->service_provider = 'QuickPay';
+                        $payment->method = $paymentMethod;
+                        $payment->save();
+
+                        $contactService->create($packageOwnerUser, $packageBuyerUser);
+
+                        DB::commit();
+
+                        // Mail to administrator
+                        if ($isQuickBooking) {
+                            Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
+                        }
+
+                        return response(
+                            [
+                                'bookingId' => $booking->id,
+                                'link' => $linkRequest->asObject()->url
+                            ]
+                        );
                     }
-
-                    return response()->json(
-                        [
-                            'bookingId' => $booking->id,
-                            'link' => $linkRequest->asObject()->url
-                        ]
-                    );
                 }
-            } else {
-                throw new Exception('Something wrong, booking order is not working correctly.');
             }
-
         } catch (Exception $e) {
             DB::rollBack();
-
             if ($e instanceof ValidationException) {
                 return response()->json(
                     $e->validator->errors()->first(),
                     StatusCode::HTTP_UNPROCESSABLE_ENTITY
                 );
             }
-
-            return response()->json([
+            return response([
                 'message' => $e->getMessage(),
-                'line' => $e->getLine()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
@@ -275,12 +330,10 @@ class QuickpayController extends Controller
                 Mail::to($packageBuyerUser)->send(new AthletePendingPackageRequest($packageBuyerUser, $order));
                 Mail::to($packageOwnerUser)->send(new CoachPendingPackageRequest($packageOwnerUser, $packageBuyerUser, $order));
             }
-
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
-
     }
 }
