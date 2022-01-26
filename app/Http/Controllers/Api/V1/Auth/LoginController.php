@@ -67,6 +67,8 @@ class LoginController extends Controller
         $t_key = '';
         $response = [];
         $isSwitched = false;
+        $response['email_exist'] = false;
+        $response['is_social_register'] = false;
 
 
         try {
@@ -74,11 +76,30 @@ class LoginController extends Controller
                 'email' => 'required|email|max:255',
             ]);
 
-            $user = User::where('email', $request->email)->first();
+            $user = User::with('socialAccount')->where('email', $request->email)->first();
             $roles = $user ? $user->roles : null;
 
             if (!$user) {
-                throw new \Exception('This email does not exist');
+
+                if($request->has('email') && $request->missing('password')){
+                    return response()->json($response, Constants::HTTP_OK); // Return Email doesn't exist Response for PWA
+                }else{
+                    throw new \Exception('This email does not exist');
+                }
+                
+            }else{
+                $response['email_exist'] = true;
+                if($request->has('email') && $request->missing('password')){ 
+
+                    // If user registered using social media
+
+                    if(!empty($user->socialAccount)){
+                        $response['is_social_register'] = true;
+                        $response['social_acount'] = $user->socialAccount;
+                    }
+
+                    return response()->json($response, Constants::HTTP_OK);
+                }
             }
 
             if ($user->activity_status_id == ActivityStatus::ARCHIVE) {
@@ -119,6 +140,7 @@ class LoginController extends Controller
 
                 $response['status'] = 'success';
                 $response['user'] = $userService->getUserInformation($user, $isSwitched);
+
                 $response['access_token'] = $tokenService->createUserAccessToken($user);
                 return response()->json($response, Constants::HTTP_OK);
 

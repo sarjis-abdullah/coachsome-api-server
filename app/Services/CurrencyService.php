@@ -6,8 +6,11 @@ namespace App\Services;
 
 use App\Entities\Currency;
 use App\Entities\CurrencyRate;
+use App\Utils\CurrencyUtil;
 use Carbon\Carbon;
 use Exception;
+
+use Illuminate\Support\Facades\Log;
 use NumberFormatter;
 
 class CurrencyService
@@ -23,72 +26,12 @@ class CurrencyService
      */
     public function convert($amount, $fromCurrencyCode, $toCurrencyCode, $date = null)
     {
-        $rate = null;
-        $isHistory = false;
-        $latestDate = null;
-        $historyDate = null;
-        $result = null;
-
-        if ($date) {
-            $isHistory = true;
-            $historyDate = Carbon::parse($date)->format("Y-m-d");
-        } else {
-            $latestDate = Carbon::now()->format("Y-m-d");
-        }
-        if ($isHistory) {
-            $currencyRate = CurrencyRate::where('base', $fromCurrencyCode)
-                ->where("date", $historyDate)
-                ->first();
-            if (!$currencyRate) {
-                $rates = $this->rates($fromCurrencyCode, $historyDate);
-                $currencyRate = new CurrencyRate();
-                $currencyRate->base = $fromCurrencyCode;
-                $currencyRate->date = $historyDate;
-                $currencyRate->rates = json_encode($rates);
-                $currencyRate->save();
-            }
-            $rates = json_decode($currencyRate->rates, true);
-            $rate = $rates[$toCurrencyCode];
-        } else {
-            $currencyRate = CurrencyRate::where('base', $fromCurrencyCode)
-                ->where("date", $latestDate)
-                ->first();
-            if (!$currencyRate) {
-                $rates = $this->rates($fromCurrencyCode);
-                $currencyRate = new CurrencyRate();
-                $currencyRate->base = $fromCurrencyCode;
-                $currencyRate->date = $latestDate;
-                $currencyRate->rates = json_encode($rates);
-                $currencyRate->save();
-            }
-            $rates = json_decode($currencyRate->rates, true);
-            $rate = $rates[$toCurrencyCode];
-        }
-
-        $result = $amount * $rate;
-
-        return $result;
+        return CurrencyUtil::convert($amount, $fromCurrencyCode, $toCurrencyCode, $date = null);
     }
 
     public function rates($base, $date = null)
     {
-        $data = [];
-        if ($date) {
-            $req_url = 'https://api.exchangerate.host/' . $date . '?base=' . $base;
-        } else {
-            $req_url = 'https://api.exchangerate.host/latest?base=' . $base;
-        }
-        $response_json = file_get_contents($req_url);
-        if (false !== $response_json) {
-            try {
-                $response = json_decode($response_json, true);
-                if ($response['success'] === true) {
-                    $data = $response["rates"];
-                }
-            } catch (Exception $e) {
-            }
-        }
-        return $data;
+        return CurrencyUtil::rates($base, $date);
     }
 
     public function format($amount, $code)
