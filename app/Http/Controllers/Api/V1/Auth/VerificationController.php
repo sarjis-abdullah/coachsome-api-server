@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Auth;
 
 use App\Data\StatusCode;
+use App\Entities\User;
 use App\Entities\UserVerification;
 use App\Entities\VerifyUser;
 use App\Http\Controllers\Controller;
@@ -51,15 +52,25 @@ class VerificationController extends Controller
         try {
             $data = [];
 
-            $veryUser = VerifyUser::where('token', $request->token)->first();
-            if (!$veryUser) {
-                throw new \Exception('Token not found');
+            if($request->has('request_from_pwa')){
+                $user =  User::where('email', $request->email)->first();
+                if (!$user) {
+                    throw new \Exception('User not found');
+                }
+            }else{
+                $veryUser = VerifyUser::where('token', $request->token)->first();
+                if (!$veryUser) {
+                    throw new \Exception('Token not found');
+                }
+                $user = $veryUser->user;
             }
-
-            $user = $veryUser->user;
+            
+            
             $user->verified = 1;
             if ($user->save()) {
-                $veryUser->delete();
+                if($request->has('token')){
+                    $veryUser->delete();
+                }
             }
 
             // User verificaton information

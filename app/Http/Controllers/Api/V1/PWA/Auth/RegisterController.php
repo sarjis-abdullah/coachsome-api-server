@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\PWA\Auth;
 
 use App\Data\Constants;
 use App\Data\StatusCode;
+use App\Entities\OTP;
 use App\Entities\Profile;
 use App\Entities\Role;
 use App\Entities\User;
@@ -79,17 +80,23 @@ class RegisterController extends Controller
             ]);
 
             if ($validator->fails()) {
-                throw new \Exception("This email already exist.");
+                throw new \Exception("We've already sent a verification code to this email before. please check!");
             }
             $locale = App::currentLocale();
             $translation = $this->translationService->getKeyByLanguageCode($locale);
-            $token = Uuid::uuid1()->toString();
-            $link = env('APP_PWA_DOMAIN_EMAIL_VERIFICATION_URL') . '?token=' . $token.'&&email=' .$request->email ;
+
+            $otp = $this->newOtp();
 
             $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+
+            OTP::create([
+                'email' => $request->email,
+                'otp' => $otp
+            ]);
+
             $beautymail->send('emails.PWA.verifyEmail',
                 [
-                    'link' => $link,
+                    'otp' => $otp,
                     'translation' => $translation
                 ],
                 function ($message) use ($request) {
@@ -103,6 +110,41 @@ class RegisterController extends Controller
             $data['message'] = 'Verification email has been sent, successfully..';
 
             return response($data, StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+    }
+
+    public function otpValidation(Request $request)
+    {
+
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => "required",
+                'otp' => "required",
+            ]);
+
+            if ($validator->fails()) {
+                throw new \Exception("Doesn't match!");
+            }
+
+            $otp_exists = OTP::where('email', $request->email)->where('otp', $request->otp)->exists();
+
+            if($otp_exists){
+
+                OTP::where('email', $request->email)->where('otp', $request->otp)->delete();
+
+                $data['message'] = 'Your email has been verified successfully. you can register now!';
+
+                return response($data, StatusCode::HTTP_OK);
+            }else{
+                throw new \Exception("OTP doesn't match!");
+            }
+
+            
         } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()
@@ -140,7 +182,6 @@ class RegisterController extends Controller
             $user->save();
 
             if ($user) {
-                VerifyUser::create(['user_id' => $user->id, 'token' => $request->confirmation_token]);
                 $data['status'] = 'success';
                 $data['message'] = 'Successfully registered.';
             } else {
@@ -169,6 +210,15 @@ class RegisterController extends Controller
             throw new \Exception('Something went wrong, try again.');
         }
         return response($data, StatusCode::HTTP_OK);
+    }
+
+    public function newOtp(){
+        $otp = rand(1000,9999);
+        $otp_exists = OTP::where('otp', $otp)->exists();
+        if($otp_exists){
+            $otp = $this->newOtp();
+        }
+        return $otp;
     }
 
     /*
