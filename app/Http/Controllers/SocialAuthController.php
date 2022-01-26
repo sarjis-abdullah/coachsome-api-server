@@ -129,20 +129,21 @@ class SocialAuthController extends Controller
 
                 // Store verification information according to provider
                 if ($user) {
-                    $userVerfication = UserVerification::where('user_id', $user->id)->first();
-                    if (!$userVerfication) {
-                        $userVerfication = new UserVerification();
+                    $userVerification = UserVerification::where('user_id', $user->id)->first();
+                    if (!$userVerification) {
+                        $userVerification = new UserVerification();
+                        $userVerification->user_id = $user->id;
                     }
 
                     if ($provider == 'facebook') {
-                        $userVerfication->facebook_connected_at = Carbon::now();
+                        $userVerification->facebook_connected_at = Carbon::now();
                     }
 
                     if ($provider == 'google') {
-                        $userVerfication->google_connected_at = Carbon::now();
+                        $userVerification->google_connected_at = Carbon::now();
                     }
 
-                    $userVerfication->save();
+                    $userVerification->save();
                 }
 
 
