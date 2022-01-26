@@ -76,11 +76,11 @@ class RegisterController extends Controller
             $data = [];
 
             $validator = Validator::make($request->all(), [
-                'email' => "unique:users,email",
+                'email' => "email",
             ]);
 
             if ($validator->fails()) {
-                throw new \Exception("We've already sent a verification code to this email before. please check!");
+                throw new \Exception("Please Provide a valid email!");
             }
             $locale = App::currentLocale();
             $translation = $this->translationService->getKeyByLanguageCode($locale);
@@ -89,10 +89,12 @@ class RegisterController extends Controller
 
             $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
 
-            OTP::create([
-                'email' => $request->email,
+            OTP::updateOrCreate(
+                ['email' => $request->email],
+                [
                 'otp' => $otp
-            ]);
+                ]
+            );
 
             $beautymail->send('emails.PWA.verifyEmail',
                 [
