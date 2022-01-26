@@ -81,7 +81,8 @@ class SocialAuthController extends Controller
             return redirect(
                 config('company.url.client')
                 . '/redirect?'
-                . 'request_from='
+                . self::KEY_ACTION
+                .'='
                 . session(self::KEY_ACTION)
             );
         }
