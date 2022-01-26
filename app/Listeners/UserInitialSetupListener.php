@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Data\Constants;
+use App\Data\RoleData;
 use App\Entities\Profile;
 use App\Entities\UserSetting;
 use App\Entities\VerifyUser;
@@ -36,11 +37,11 @@ class UserInitialSetupListener
 
         // Attach role
         if ($user->roles()->count() < 1) {
-            if (Constants::USER_TYPE_COACH == $userType) {
+            if (RoleData::ROLE_KEY_COACH == $userType) {
                 $user->attachRole($userType);
             }
 
-            if (Constants::USER_TYPE_ATHLETE == $userType) {
+            if (RoleData::ROLE_KEY_ATHLETE == $userType) {
                 $user->attachRole($userType);
             }
         }
