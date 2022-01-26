@@ -60,7 +60,7 @@ class SocialAuthController extends Controller
         // When request comes form a specific page
         if (session(self::KEY_ACTION) == self::VALUE_IDENTIFY && session(self::KEY_USER_ID)) {
             // Store verification information according to provider
-            $user = User::find(self::KEY_USER_ID);
+            $user = User::find(session(self::KEY_USER_ID));
             if ($user) {
                 $userVerification = UserVerification::where('user_id', $user->id)->first();
                 if (!$userVerification) {
