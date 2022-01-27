@@ -22,7 +22,10 @@ class SocialAuthController extends Controller
     const KEY_ACTION = 'action';
     const KEY_USER_TYPE = 'user_type';
     const KEY_USER_ID = 'user_id';
+    const KEY_PWA = 'pwa';
+
     const VALUE_IDENTIFY = 'security_identify';
+    const VALUE_PWA_AUTH = 'pwa_auth';
 
     public function redirectToProvider(Request $request, $provider)
     {
@@ -31,7 +34,8 @@ class SocialAuthController extends Controller
         session([
             self::KEY_USER_TYPE => $request->query(self::KEY_USER_TYPE),
             self::KEY_ACTION => $request->query(self::KEY_ACTION),
-            self::KEY_USER_ID => $request->query(self::KEY_USER_ID)
+            self::KEY_USER_ID => $request->query(self::KEY_USER_ID),
+            self::KEY_PWA => $request->query(self::KEY_PWA)
         ]);
 
         // Redirect to provider
@@ -48,13 +52,54 @@ class SocialAuthController extends Controller
             } else {
                 $messageKey = 'google_error_cancel_message';
             }
+
+            if(session(self::KEY_PWA) == self::VALUE_PWA_AUTH){
+                return redirect(
+                    config('company.url.pwa')
+                    . '/login?status='
+                    . $status
+                    . '&'
+                    . 'message_key='
+                    . $messageKey);
+            } else {
+                return redirect(
+                    config('company.url.client')
+                    . '/login?status='
+                    . $status
+                    . '&'
+                    . 'message_key='
+                    . $messageKey);
+            }
+
+        }
+
+        // PWA auth
+        if (session(self::KEY_PWA) == self::VALUE_PWA_AUTH) {
+            $isExisting = false;
+            $tokenService = new TokenService();
+
+            $providerUser = Socialite::driver($provider)->user();
+            $providerEmail = $providerUser->getEmail();
+
+            $user = User::where('email', $providerEmail)->first();
+            if($user){
+                $isExisting = true;
+            } else {
+                $user = $this->findOrCreateUser(
+                    $providerUser,
+                    $provider
+                );
+            }
+
+            $accessToken = $tokenService->createUserAccessToken($user);
+
             return redirect(
-                config('company.url.client')
-                . '/login?status='
-                . $status
-                . '&'
-                . 'message_key='
-                . $messageKey);
+                config('company.url.pwa')
+                . '/redirect?access_token='
+                . $accessToken
+                .'&is_existing='
+                .$isExisting
+            );
         }
 
         // When request comes form a specific page
@@ -82,7 +127,7 @@ class SocialAuthController extends Controller
                 config('company.url.client')
                 . '/redirect?'
                 . self::KEY_ACTION
-                .'='
+                . '='
                 . session(self::KEY_ACTION)
             );
         }
