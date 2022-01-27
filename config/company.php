@@ -11,6 +11,7 @@ return [
     */
     'url' => [
         'client' => env('APP_CLIENT_DOMAIN'),
+        'pwa' => env('APP_PWA_DOMAIN'),
         'terms_page' => env('APP_CLIENT_DOMAIN_TERMS_PAGE'),
         'order_list_page' => env('APP_CLIENT_DOMAIN') . '/admin/orders',
         'home_page' => env('APP_CLIENT_DOMAIN'),
