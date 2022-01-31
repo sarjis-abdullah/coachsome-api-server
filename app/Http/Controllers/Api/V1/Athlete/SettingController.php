@@ -65,14 +65,14 @@ class SettingController extends Controller
             $authUser = Auth::user();
 
             $passwordChangedUser = User::where('email', $authUser->email)
-                ->where('password',  Hash::make($oldPassword))
+                ->where('password', Hash::make($oldPassword))
                 ->first();
 
             if (!$passwordChangedUser) {
                 throw new \Exception('Sorry! old password was not correct.');
             }
 
-            $authUser->password =  Hash::make($newPassword);
+            $authUser->password = Hash::make($newPassword);
             $authUser->save();
 
             return response()->json([
@@ -107,7 +107,7 @@ class SettingController extends Controller
             $authUser = Auth::user();
 
             $emailChangingUser = User::where('email', $authUser->email)
-                ->where('password',  Hash::make($password))
+                ->where('password', Hash::make($password))
                 ->first();
 
             if (!$emailChangingUser) {
@@ -138,7 +138,7 @@ class SettingController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -149,7 +149,7 @@ class SettingController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
@@ -160,8 +160,8 @@ class SettingController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
@@ -174,35 +174,13 @@ class SettingController extends Controller
             if (!$athleteSetting) {
                 throw new Exception("Setting is not found.");
             }
-
-            if($request['inboxMessage']){
-                $athleteSetting->inbox_message = $request['inboxMessage'];
-            }
-            
-            if($request['orderMessage']){
-                $athleteSetting->order_message = $request['orderMessage'];
-            }
-
-            if($request['orderUpdate']){
-                $athleteSetting->order_update = $request['orderUpdate'];
-            }
-
-            if($request['bookingRequest']){
-                $athleteSetting->booking_request = $request['bookingRequest'];
-            }
-
-            if($request['bookingChange']){
-                $athleteSetting->booking_change = $request['bookingChange'];
-            }
-
-            if($request['account']){
-                $athleteSetting->account = $request['account'];
-            }
-
-            if($request['marketting']){
-                $athleteSetting->marketting = $request['marketting'];
-            }
-            
+            $athleteSetting->inbox_message = $request['inboxMessage'];
+            $athleteSetting->order_message = $request['orderMessage'];
+            $athleteSetting->order_update = $request['orderUpdate'];
+            $athleteSetting->booking_request = $request['bookingRequest'];
+            $athleteSetting->booking_change = $request['bookingChange'];
+            $athleteSetting->account = $request['account'];
+            $athleteSetting->marketting = $request['marketting'];
             $athleteSetting->save();
 
             return response([
@@ -220,7 +198,7 @@ class SettingController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
