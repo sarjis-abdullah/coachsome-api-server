@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateAthleteSettingsTable extends Migration
+class CreateNotificationSettingsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateAthleteSettingsTable extends Migration
      */
     public function up()
     {
-        Schema::create('athlete_settings', function (Blueprint $table) {
+        Schema::create('notification_settings', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('user_id');
             $table->integer('inbox_message')->nullable();
@@ -34,6 +34,6 @@ class CreateAthleteSettingsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('athlete_settings');
+        Schema::dropIfExists('notification_settings');
     }
 }
