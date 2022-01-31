@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\MessageData;
+use App\Data\SettingValue;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\BookingLocation;
 use App\Entities\BookingTime;
 use App\Entities\Location;
 use App\Entities\Message;
+use App\Entities\NotificationSetting;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
 use App\Mail\AcceptedBookingRequest;
@@ -189,7 +191,12 @@ class BookingTimeController extends Controller
             // Send mail to requester to
             $requesterToUser = User::find($bookingTime->requester_to_user_id);
             if ($requesterToUser) {
-                Mail::to($requesterToUser)->send(new PendingBookingRequest($bookingTime));
+                // Before sending email notification you have to check setting
+                $requesterToUserNotificationSetting = NotificationSetting::where('user_id', $requesterToUser->id)->first();
+                if($requesterToUserNotificationSetting &&
+                    $requesterToUserNotificationSetting->booking_request == SettingValue::ID_EMAIL){
+                    Mail::to($requesterToUser)->send(new PendingBookingRequest($bookingTime));
+                }
             }
 
             $timeBookingMessage = new TimeBooking([
