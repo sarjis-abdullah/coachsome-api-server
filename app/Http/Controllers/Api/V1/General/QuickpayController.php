@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\CurrencyCode;
 use App\Data\OrderStatus;
+use App\Data\SettingValue;
 use App\Data\StatusCode;
 use App\Data\TransactionType;
+use App\Entities\NotificationSetting;
 use App\Entities\PromoUser;
 use App\Entities\Booking;
 use App\Entities\BookingSetting;
@@ -323,12 +325,28 @@ class QuickpayController extends Controller
                 $contactService->resetContactNewMessageCount($packageBuyerUser, $packageOwnerUser);
             }
 
+            $packageOwnerNotificationSetting = NotificationSetting::where('user_id', $packageOwnerUser->id)->first();
+            $packageBuyerNotificationSetting = NotificationSetting::where('user_id', $packageBuyerUser->id)->first();
+
             if ($booking->is_quick_booking) {
-                Mail::to($packageOwnerUser)->send(new CoachPackageConfirmation($booking));
-                Mail::to($packageBuyerUser)->send(new AthletePackageConfirmation($booking));
+                // Before sending email notification you have to check setting
+                if($packageOwnerNotificationSetting &&
+                    $packageOwnerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                    Mail::to($packageOwnerUser)->send(new CoachPackageConfirmation($booking));
+                }
+                if($packageBuyerNotificationSetting &&
+                    $packageBuyerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                    Mail::to($packageBuyerUser)->send(new AthletePackageConfirmation($booking));
+                }
             } else {
-                Mail::to($packageBuyerUser)->send(new AthletePendingPackageRequest($packageBuyerUser, $order));
-                Mail::to($packageOwnerUser)->send(new CoachPendingPackageRequest($packageOwnerUser, $packageBuyerUser, $order));
+                if($packageOwnerNotificationSetting &&
+                    $packageOwnerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                    Mail::to($packageOwnerUser)->send(new CoachPendingPackageRequest($packageOwnerUser, $packageBuyerUser, $order));
+                }
+                if($packageBuyerNotificationSetting &&
+                    $packageBuyerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                    Mail::to($packageBuyerUser)->send(new AthletePendingPackageRequest($packageBuyerUser, $order));
+                }
             }
         } catch (Exception $e) {
             return response()->json([

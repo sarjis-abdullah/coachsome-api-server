@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api\V1\Athlete;
 
 use App\Data\SettingValue;
 use App\Data\StatusCode;
-use App\Entities\AthleteSetting;
+use App\Entities\NotificationSetting;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Setting\AthleteSettingResource;
+use App\Http\Resources\Setting\NotificationSettingResource;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,9 +25,9 @@ class SettingController extends Controller
     {
         try {
             $authUser = Auth::user();
-            $settings = AthleteSetting::where('user_id', $authUser->id)->first();
+            $settings = NotificationSetting::where('user_id', $authUser->id)->first();
             if (!$settings) {
-                $settings = AthleteSetting::create([
+                $settings = NotificationSetting::create([
                     'user_id' => Auth::id(),
                     'inbox_message' => SettingValue::ID_EMAIL,
                     'order_message' => SettingValue::ID_EMAIL,
@@ -40,7 +40,7 @@ class SettingController extends Controller
             }
 
             return response([
-                'data' => new AthleteSettingResource($settings)
+                'data' => new NotificationSettingResource($settings)
             ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
         }
@@ -167,21 +167,21 @@ class SettingController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $athleteSetting = AthleteSetting::where('user_id', Auth::id())
+            $notificationSetting = NotificationSetting::where('user_id', Auth::id())
                 ->where('id', $id)
                 ->first();
 
-            if (!$athleteSetting) {
+            if (!$notificationSetting) {
                 throw new Exception("Setting is not found.");
             }
-            $athleteSetting->inbox_message = $request['inboxMessage'];
-            $athleteSetting->order_message = $request['orderMessage'];
-            $athleteSetting->order_update = $request['orderUpdate'];
-            $athleteSetting->booking_request = $request['bookingRequest'];
-            $athleteSetting->booking_change = $request['bookingChange'];
-            $athleteSetting->account = $request['account'];
-            $athleteSetting->marketting = $request['marketting'];
-            $athleteSetting->save();
+            $notificationSetting->inbox_message = $request['inboxMessage'];
+            $notificationSetting->order_message = $request['orderMessage'];
+            $notificationSetting->order_update = $request['orderUpdate'];
+            $notificationSetting->booking_request = $request['bookingRequest'];
+            $notificationSetting->booking_change = $request['bookingChange'];
+            $notificationSetting->account = $request['account'];
+            $notificationSetting->marketting = $request['marketting'];
+            $notificationSetting->save();
 
             return response([
                 'data' => []

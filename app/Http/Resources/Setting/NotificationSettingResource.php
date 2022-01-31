@@ -4,7 +4,7 @@ namespace App\Http\Resources\Setting;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class AthleteSettingResource extends JsonResource
+class NotificationSettingResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
