@@ -8,6 +8,7 @@ use Laravel\Passport\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Notifications\PasswordReset;
+use App\Notifications\PWA\PasswordReset as NotificationsPWAPasswordReset;
 use Laratrust\Traits\LaratrustUserTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rickycezar\Impersonate\Models\Impersonate;
@@ -75,6 +76,18 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new PasswordReset($token, $this));
+    }
+
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param string $token
+     * @return void
+     */
+    public function sendPasswordResetNotificationPWA($otp)
+    {
+        $this->notify(new NotificationsPWAPasswordReset($otp, $this));
     }
 
     /**
