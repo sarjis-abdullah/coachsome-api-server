@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Athlete;
 use App\Data\SettingValue;
 use App\Data\StatusCode;
 use App\Entities\NotificationSetting;
+use App\Entities\SocialAccount;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Setting\NotificationSettingResource;
@@ -39,8 +40,12 @@ class SettingController extends Controller
                 ]);
             }
 
+            $socialAuth = SocialAccount::where('user_id', $authUser->id)->first();
+
             return response([
-                'data' => new NotificationSettingResource($settings)
+                'data' => new NotificationSettingResource($settings),
+                'email' => $authUser->email,
+                'isSocialLogin' => $socialAuth ? true : false
             ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
         }
