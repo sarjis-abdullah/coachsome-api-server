@@ -90,9 +90,12 @@ class RegisterController extends Controller
             $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
 
             OTP::updateOrCreate(
-                ['email' => $request->email],
                 [
-                'otp' => $otp
+                    'email' => $request->email,
+                    'type'  => 'registration'
+                ],
+                [
+                    'otp'   => $otp,
                 ]
             );
 
@@ -133,11 +136,11 @@ class RegisterController extends Controller
                 throw new \Exception("Doesn't match!");
             }
 
-            $otp_exists = OTP::where('email', $request->email)->where('otp', $request->otp)->exists();
+            $otp_exists = OTP::where('email', $request->email)->where('otp', $request->otp)->where('type', 'registration')->exists();
 
             if($otp_exists){
 
-                OTP::where('email', $request->email)->where('otp', $request->otp)->delete();
+                OTP::where('email', $request->email)->where('otp', $request->otp)->where('type', 'registration')->delete();
 
                 $data['message'] = 'Your email has been verified successfully. you can register now!';
 
@@ -216,7 +219,7 @@ class RegisterController extends Controller
 
     public function newOtp(){
         $otp = rand(1000,9999);
-        $otp_exists = OTP::where('otp', $otp)->exists();
+        $otp_exists = OTP::where('otp', $otp)->where('type', 'registration')->exists();
         if($otp_exists){
             $otp = $this->newOtp();
         }
