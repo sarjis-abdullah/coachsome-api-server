@@ -5,6 +5,7 @@ namespace App\Services;
 
 
 use App\Entities\Impersonate;
+use App\Entities\SocialAccount;
 use App\Entities\User;
 use App\Services\Media\MediaService;
 use Illuminate\Support\Facades\Hash;
@@ -69,6 +70,7 @@ class UserService
             $mediaService = new MediaService();
 
             $images = $mediaService->getImages($user);
+            $socialAcc = SocialAccount::where('user_id', $user->id)->first();
 
             $data->id = $user->id;
             $data->user_name = $user->user_name ?? null;
@@ -79,6 +81,7 @@ class UserService
             $data->roles = $user->roles;
             $data->is_switched = $isSwitched;
             $data->is_active = $user->isActive();
+            $data->is_social_account = $socialAcc ? true : false;
         }
 
         return $data;

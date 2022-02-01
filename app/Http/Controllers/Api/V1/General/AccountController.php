@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\General;
 
 use App\Data\StatusCode;
+use App\Entities\SocialAccount;
 use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\Request;
@@ -16,18 +17,21 @@ class AccountController extends Controller
         try {
             $password = $request->query('password');
 
-            if(!$password){
-                throw new Exception('Password is required');
-            }
-            
             $authUser = Auth::user();
-            
-            if(!Hash::check($password, $authUser->password)){
-                throw new Exception("Password is not correct");
+
+            $socialAcc = SocialAccount::where('user_id', $authUser->id)->first();
+
+            if($socialAcc){
+                $authUser->delete();
+            } else {
+                if(!$password){
+                    throw new Exception('Password is required');
+                }
+                if(!Hash::check($password, $authUser->password)){
+                    throw new Exception("Password is not correct");
+                }
+                $authUser->delete();
             }
-
-            $authUser->delete();
-
             return response([
                 'data' => []
             ], StatusCode::HTTP_OK);
