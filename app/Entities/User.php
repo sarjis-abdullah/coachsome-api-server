@@ -9,7 +9,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Notifications\PasswordReset;
 use App\Notifications\PWA\PasswordReset as NotificationsPWAPasswordReset;
-use App\Notifications\PWA\PWAPasswordReset;
 use Laratrust\Traits\LaratrustUserTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Rickycezar\Impersonate\Models\Impersonate;
