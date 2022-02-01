@@ -310,6 +310,11 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('register', 'RegisterController@register');
             Route::post('post-register', 'RegisterController@postRegister');
             Route::post('attach-user-role', 'RegisterController@attachUserRole');
+            // Forgot password
+            Route::post('recovery', 'ForgotPasswordController@sendResetOTP');
+            Route::post('password/otp-validation', 'ForgotPasswordController@otpValidation');
+            Route::post('password/reset-request', 'ResetPasswordController@otpExist');
+            Route::post('password/reset', 'ResetPasswordController@reset');
         });
     });
 });
