@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 
-## [develop] - 31/01/2022
+## [develop,test,master] - 31/01/2022
 - php artisan update:db
 
 ## [develop,test,master] - 03/01/2022
@@ -30,7 +30,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [develop] - 12/12/2021
+## [develop,test,master] - 12/12/2021
 
 -   Add table athlete_settings, setting_values, user_verifications
 -   Remove column email_verified_at from users table
