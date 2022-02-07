@@ -12,5 +12,7 @@ All notable changes to this project will be documented in this file.
 ## [develop,test] - 03/01/2022
 
 - Add env APP_PWA_DOMAIN_EMAIL_VERIFICATION_URL=${APP_CLIENT_DOMAIN}/pwa/pages/post-registration
-- Add new translation for email like below
 - Add translation key pwa_email_verification_content
+
+## [develop,test,master] - 07/01/2022
+- Add translation key pwa_password_reset_email
