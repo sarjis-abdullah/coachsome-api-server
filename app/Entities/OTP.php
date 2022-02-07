@@ -13,5 +13,6 @@ class OTP extends Model
     protected $fillable = [
         'email',
         'otp',
+        'type'
     ];
 }

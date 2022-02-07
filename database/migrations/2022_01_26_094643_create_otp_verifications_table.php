@@ -15,8 +15,9 @@ class CreateOtpVerificationsTable extends Migration
     {
         Schema::create('otp_verifications', function (Blueprint $table) {
             $table->id();
-            $table->string('email')->unique();
+            $table->string('email');
             $table->integer('otp')->unique();
+            $table->string('type')->default('registration');
             $table->timestamps();
         });
     }
