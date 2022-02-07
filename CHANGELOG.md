@@ -34,4 +34,4 @@ All notable changes to this project will be documented in this file.
 
 - Add table athlete_settings, setting_values, user_verifications
 - Remove column email_verified_at from users table
-- change test
+- change test3
