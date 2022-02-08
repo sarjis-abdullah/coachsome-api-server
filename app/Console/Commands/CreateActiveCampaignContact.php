@@ -52,47 +52,77 @@ class CreateActiveCampaignContact extends Command
 //        ]]);
 
         $contacts = [];
-        User::with(['profile'])->get()->each(function ($user) use(&$contacts){
-          if($user->hasRole([RoleData::ROLE_KEY_ATHLETE, RoleData::ROLE_KEY_COACH])) {
-              $data = [
-                  "contact" => [
-                      "firstName" => "",
-                      "lastName" => "",
-                      "email" => "",
-                      "phone" => "",
-                  ]
-              ];
+        User::with(['profile', 'roles'])->get()->each(function ($user) use (&$contacts) {
+            if ($user->hasRole([RoleData::ROLE_KEY_ATHLETE, RoleData::ROLE_KEY_COACH])) {
+                $data = [
+                    'payload' => [
+                        "contact" => [
+                            "firstName" => "",
+                            "lastName" => "",
+                            "email" => "",
+                            "phone" => "",
+                        ]
+                    ],
+                    'roleName'=> ""
+                ];
 
-              $data["contact"]['firstName'] = $user->first_name;
-              $data["contact"]['lastName'] = $user->last_name;
-              $data["contact"]['email'] = $user->email;
+                if($user->hasRole([RoleData::ROLE_KEY_COACH])){
+                    $data['roleName'] = RoleData::ROLE_KEY_COACH;
+                }
 
-              $profile = Profile::where('user_id', $user->id)->first();
-              if ($profile) {
-                  $code = "";
-                  $number = "";
-                  if ($profile->mobile_code) {
-                      $code = config("dialingcode")[$profile->mobile_code];
-                  }
-                  if ($profile->mobile_no) {
-                      $number = join(explode(" ", $profile->mobile_no));
-                  }
+                if($user->hasRole([RoleData::ROLE_KEY_ATHLETE])){
+                    $data['roleName'] = RoleData::ROLE_KEY_ATHLETE;
+                }
 
-                  if ($number && $code) {
-                      $data["contact"]['phone'] = $code . $number;
-                  }
-              }
+                $data['payload']["contact"]['firstName'] = $user->first_name;
+                $data['payload']["contact"]['lastName'] = $user->last_name;
+                $data['payload']["contact"]['email'] = $user->email;
 
-              $contacts[] = $data;
+                $profile = Profile::where('user_id', $user->id)->first();
+                if ($profile) {
+                    $code = "";
+                    $number = "";
+                    if ($profile->mobile_code) {
+                        $code = config("dialingcode")[$profile->mobile_code];
+                    }
+                    if ($profile->mobile_no) {
+                        $number = join(explode(" ", $profile->mobile_no));
+                    }
 
-          }
+                    if ($number && $code) {
+                        $data['payload']["contact"]['phone'] = $code . $number;
+                    }
+                }
+
+                $contacts[] = $data;
+
+            }
         });
 
         $activeCampaignService = new ActiveCampaignService();
 
         foreach ($contacts as $contact) {
             try {
-                $activeCampaignService->post("/contact/sync", $contact);
+                $contactRes = $activeCampaignService->createOrUpdateContact($contact['payload']);
+                $data = json_decode($contactRes, true);
+                if ($contact['roleName'] == RoleData::ROLE_KEY_COACH){
+                    $activeCampaignService->addTagToContact( [
+                        'contactTag'=>[
+                            'contact' => $data['contact']['id'],
+                            'tag' => $activeCampaignService->getCoachTagId(),
+                        ]
+                    ]);
+                }
+
+                if ($contact['roleName'] == RoleData::ROLE_KEY_ATHLETE){
+                    $activeCampaignService->addTagToContact( [
+                        'contactTag'=>[
+                            'contact' => $data['contact']['id'],
+                            'tag' => $activeCampaignService->getAthleteTagId(),
+                        ]
+                    ]);
+                }
+                Log::info($data['contact']['id']);
             } catch (\Exception $e) {
                 Log::info($e->getMessage());
             }

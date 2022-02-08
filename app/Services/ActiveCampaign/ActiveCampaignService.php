@@ -16,4 +16,24 @@ class ActiveCampaignService
             'Accept' => 'application/json'
         ])->post(self::BASE_URL.$endpoint, $payload);
     }
+
+    function createOrUpdateContact($payload)
+    {
+        return $this->post("/contact/sync", $payload);
+    }
+
+    function addTagToContact($payload)
+    {
+        return $this->post("/contactTags", $payload);
+    }
+
+    public function getCoachTagId()
+    {
+        return 21;
+    }
+
+    public function getAthleteTagId()
+    {
+        return 22;
+    }
 }
