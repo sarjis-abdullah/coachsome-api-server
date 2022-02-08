@@ -2,8 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Data\RoleData;
+use App\Entities\Profile;
 use App\Entities\User;
+use App\Services\ActiveCampaign\ActiveCampaignService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use PHPUnit\Exception;
 
 class CreateActiveCampaignContact extends Command
 {
@@ -38,6 +43,60 @@ class CreateActiveCampaignContact extends Command
      */
     public function handle()
     {
-//        $users = User::
+        $activeCampaignService = new ActiveCampaignService();
+//        $activeCampaignService->create("/contacts", ['contact'=>[
+//            'firstName'=> 'Hafjur',
+//            'lastName'=> 'Hafjur',
+//            'email'=> 'testemail@gmail.com',
+//            'phone'=> '01928234292',
+//        ]]);
+
+        $contacts = [];
+        User::with(['profile'])->get()->each(function ($user) use(&$contacts){
+          if($user->hasRole([RoleData::ROLE_KEY_ATHLETE, RoleData::ROLE_KEY_COACH])) {
+              $data = [
+                  "contact" => [
+                      "firstName" => "",
+                      "lastName" => "",
+                      "email" => "",
+                      "phone" => "",
+                  ]
+              ];
+
+              $data["contact"]['firstName'] = $user->first_name;
+              $data["contact"]['lastName'] = $user->last_name;
+              $data["contact"]['email'] = $user->email;
+
+              $profile = Profile::where('user_id', $user->id)->first();
+              if ($profile) {
+                  $code = "";
+                  $number = "";
+                  if ($profile->mobile_code) {
+                      $code = config("dialingcode")[$profile->mobile_code];
+                  }
+                  if ($profile->mobile_no) {
+                      $number = join(explode(" ", $profile->mobile_no));
+                  }
+
+                  if ($number && $code) {
+                      $data["contact"]['phone'] = $code . $number;
+                  }
+              }
+
+              $contacts[] = $data;
+
+          }
+        });
+
+        $activeCampaignService = new ActiveCampaignService();
+
+        foreach ($contacts as $contact) {
+            try {
+                $activeCampaignService->post("/contact/sync", $contact);
+            } catch (\Exception $e) {
+                Log::info($e->getMessage());
+            }
+        }
+
     }
 }

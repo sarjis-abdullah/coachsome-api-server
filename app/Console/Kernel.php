@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\CreateActiveCampaignContact;
 use App\Console\Commands\CreateWeek;
 use App\Console\Commands\GenerateBalanceEarning;
 use App\Console\Commands\InsertBookingSetting;
@@ -24,7 +25,8 @@ class Kernel extends ConsoleKernel
         GenerateBalanceEarning::class,
         InsertBookingSetting::class,
         UpdateDB::class,
-        RunWorker::class
+        RunWorker::class,
+        CreateActiveCampaignContact::class
     ];
 
     /**
