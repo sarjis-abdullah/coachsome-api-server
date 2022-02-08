@@ -8,6 +8,7 @@ use App\Entities\Profile;
 use App\Entities\UserSetting;
 use App\Entities\VerifyUser;
 use App\Events\UserRegisteredEvent;
+use App\Services\ActiveCampaign\ActiveCampaignService;
 use App\Services\Locale\LocaleService;
 use App\Services\TranslationService;
 use App\Services\UserService;
@@ -24,6 +25,8 @@ class UserInitialSetupListener
     {
         $locale = App::currentLocale();
         $translationService = new TranslationService();
+        $activeCampaignService = new ActiveCampaignService();
+
 
         $user = $event->user;
         $userType = $event->userType;
@@ -45,6 +48,34 @@ class UserInitialSetupListener
                 $user->attachRole($userType);
             }
         }
+
+        // Configure active campaign
+        $contactRes = $activeCampaignService->createOrUpdateContact([
+            "contact" => [
+                "firstName" => $user->first_name,
+                "lastName" => $user->last_name,
+                "email" => $user->email,
+                "phone" => "",
+            ]
+        ]);
+        $data = json_decode($contactRes, true);
+        if (RoleData::ROLE_KEY_COACH == $userType) {
+            $activeCampaignService->addTagToContact( [
+                'contactTag'=>[
+                    'contact' => $data['contact']['id'],
+                    'tag' => $activeCampaignService->getCoachTagId(),
+                ]
+            ]);
+        }
+        if (RoleData::ROLE_KEY_ATHLETE == $userType) {
+            $activeCampaignService->addTagToContact( [
+                'contactTag'=>[
+                    'contact' => $data['contact']['id'],
+                    'tag' => $activeCampaignService->getAthleteTagId(),
+                ]
+            ]);
+        }
+
 
         // Setting setup
         $localeService = new LocaleService();
