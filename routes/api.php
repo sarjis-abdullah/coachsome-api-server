@@ -148,6 +148,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
             // user
             Route::post('user/{userName}', 'UserController@updateUserName');
+            Route::get('users/{id}', 'UserController@show');
             Route::get('authUserInformation', 'UserController@getAuthUserInformation');
 
             // setting

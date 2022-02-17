@@ -14,6 +14,32 @@ use Illuminate\Support\Facades\Log;
 
 class UserController
 {
+    public function show($id)
+    {
+        try {
+            $user = User::find($id);
+            if(!$user){
+                throw new \Exception("User not found");
+            }
+            return response([
+                'data' => [
+                    'fullName' => $user->first_name." ".$user->last_name,
+                    'email' => $user->email
+                ], StatusCode::HTTP_OK
+            ]);
+        } catch (\Exception $e) {
+            return response(
+                [
+                    'error'=>[
+                        'message' => $e->getMessage()
+                    ]
+                ], StatusCode::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+
+    }
+
     public function updateUserName($userName, Request $request)
     {
         $response = [];
