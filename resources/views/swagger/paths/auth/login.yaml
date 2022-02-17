@@ -1,0 +1,34 @@
+
+post:
+  get:
+  tags:
+    - Auth
+  summary: user login
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/json
+  description: >
+    User can login by his credentials
+  requestBody:
+    description: |
+      | Field | Description  |
+      | :--- | ---:|
+      | email  | User email address |
+      | password  | User password |
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+          required:
+            - email
+            - password
+        example:
+          email: hafij.to@gmail.com
+          password: 123456

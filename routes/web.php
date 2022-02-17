@@ -38,11 +38,28 @@ Route::get('images/{filename}', function ($filename) {
 })->name("images.gallery");
 
 
-// Currency conversion 
+// Currency conversion
 Route::get('/currency/{amount}/{from}/{to}/latest', function ($amount, $from, $to) {
     return CurrencyUtil::convert($amount, $from, $to);
 });
 
 Route::get('/currency/{amount}/{from}/{to}/{date}', function ($amount, $from, $to, $date) {
     return CurrencyUtil::convert($amount, $from, $to, $date);
+});
+
+// Swagger
+Route::get('/', function () {
+    return view('swagger.index');
+});
+
+Route::get('/openapi', function () {
+    return file_get_contents(base_path("resources/views/swagger/openapi.yaml"));
+})->name('openapi');
+
+Route::get('/swagger', function () {
+    return file_get_contents(base_path("resources/views/swagger/openapi.yaml"));
+});
+
+Route::get('/swagger/paths/{tag}/{filename}', function ($tag, $filename) {
+    return file_get_contents(base_path("resources/views/swagger/paths/${tag}/${filename}.yaml"));
 });
