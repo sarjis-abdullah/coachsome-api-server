@@ -1,0 +1,60 @@
+
+post:
+  get:
+  tags:
+    - Auth
+  summary: register a new user
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    User can register by the related data
+  requestBody:
+    description: |
+      | Field | Description  |
+      | :--- | ---:|
+      | first_name | This is the firstName |
+      | last_name  | User last name |
+      | email  | User email address |
+      | user_type  | user type ex: coach, athlete |
+      | password  | User password |
+      | agree_to_terms  | Agrement of terms and condition  |
+      | lang  | Language code ex: en, da, sv |
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            first_name:
+              type: string
+            last_name:
+              type: string
+            email:
+              type: string
+            user_type:
+              type: string
+            password:
+              type: string
+            agree_to_terms:
+              type: boolean
+            lang:
+              type: string
+
+          required:
+            - first_name
+            - last_name
+            - email
+            - user_type
+            - password
+            - agree_to_terms
+            - lang
+        example:
+          first_name: Hafijur
+          last_name: Rahaman
+          email: test@gmail.com
+          user_type: coach
+          password: 123456
+          agree_to_terms: 1
+          lang: "en"

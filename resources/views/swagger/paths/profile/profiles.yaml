@@ -1,0 +1,85 @@
+get:
+  tags:
+    - Profile
+  summary: Get user profile
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    User can get his profile
+  requestBody:
+
+post:
+  tags:
+    - Profile
+  summary: create user profile
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    User can store or update profile
+  requestBody:
+    description: |
+      | Field | Description  |
+      | :--- | ---:|
+      | about_me | About ther user |
+      | birth_day | Date of birth of the user |
+      | category_tag_list_id | List of interger value |
+      | language_tag_list_id | List of interger value |
+      | mobile_code | It needs country code thats point to mobile code ex: DK, SE |
+      | mobile_no | It nees number without code |
+      | profile_name | Any name |
+      | social_acc_fb_link | Contains facebook profile url |
+      | social_acc_instagram_link | Contains facebook profile url |
+      | social_acc_twitter_link | Contains twitter profile url |
+      | sport_tag_list_id | List of integer value |
+      | sport_tag_list_name | List of string value |
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            about_me:
+              type: string
+            birth_day:
+              type: string
+            category_tag_list_id:
+              type: array
+            language_tag_list_id:
+              type: array
+            mobile_code:
+              type: string
+            mobile_no:
+              type: boolean
+            personalized_url:
+              type: string
+            profile_name:
+              type: string
+            social_acc_fb_link:
+              type: string
+            social_acc_instagram_link:
+              type: string
+            social_acc_twitter_link:
+              type: string
+            sport_tag_list_id:
+              type: array
+            sport_tag_list_name:
+              type: array
+        example:
+          about_me: "About me"
+          birth_day: "1994-03-31"
+          category_tag_list_id: ["1","2","3"]
+          language_tag_list_id: ["1","2","3"]
+          mobile_code: "SE"
+          mobile_no: "50186028"
+          profile_name: "Peter Moller"
+          social_acc_fb_link: "https://www.facebook.com/petermoller.net"
+          social_acc_instagram_link: "https://www.instagram.com/petermoller12"
+          social_acc_twitter_link: "https://www.twitter.com/petermoller12"
+          sport_tag_list_id: ["1","2","3"]
+          sport_tag_list_name: ["tag_name" ,"another_tag"]
+
+
