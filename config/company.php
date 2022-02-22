@@ -1,5 +1,7 @@
 <?php
 
+use App\Data\CurrencyCode;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -9,6 +11,7 @@ return [
     | This configuration define company related information
     |
     */
+    'default_currency'=> CurrencyCode::DANISH_KRONER,
     'url' => [
         'client' => env('APP_CLIENT_DOMAIN'),
         'pwa' => env('APP_PWA_DOMAIN'),

@@ -42,6 +42,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Storage Video
         Route::get('storage/video/{name}', 'VideoController@getVideo');
 
+
+
         Route::group(['middleware' => ['auth:api']], function () {
 
             // bookings
@@ -187,6 +189,11 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
                 Route::get('gift-transactions', 'GiftTransactionController@index');
                 Route::post('gift-transactions', 'GiftTransactionController@store');
             });
+
+            //payment-cards
+            Route::get("payment-cards", "PaymentCardController@index");
+            Route::post("payment-cards", "PaymentCardController@store");
+            Route::post("payment-cards/cancel", "PaymentCardController@cancel");
         });
     });
 

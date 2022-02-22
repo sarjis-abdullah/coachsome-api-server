@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [develop] - 22/02/2023
+- add table payment_cards
 
 ## [develop,test,master] - 31/01/2022
 - php artisan update:db
