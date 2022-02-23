@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ## [develop] - 22/02/2023
 - add table payment_cards
-
+- composer require devghor/tik-cms-api
+- 
 ## [develop,test,master] - 31/01/2022
 - php artisan update:db
 
