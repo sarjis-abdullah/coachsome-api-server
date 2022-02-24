@@ -98,12 +98,15 @@ class BookingController extends Controller
 
             $authUser = Auth::user();
 
-            $paymentCard = null;
             $giftCardBalance = $giftCardService->balance($authUser);
+
+            // Payment card information
+            $paymentCard = null;
             $mPaymentCard = PaymentCard::where('user_id', $authUser->id)->first();
             if ($mPaymentCard) {
                 $quickpayCardService = new QuickpayCardService();
-                $paymentCard = $quickpayCardService->getQuickPayCard($mPaymentCard->card_id)->asObject();
+                $paymentCardObj = $quickpayCardService->getQuickPayCard($mPaymentCard->card_id)->asObject();
+                $paymentCard = $paymentCardObj ? $paymentCardObj->metadata : null;
             }
 
             // Package charge info

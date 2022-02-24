@@ -8,6 +8,7 @@ use App\Data\SettingValue;
 use App\Data\StatusCode;
 use App\Data\TransactionType;
 use App\Entities\NotificationSetting;
+use App\Entities\PaymentCard;
 use App\Entities\PromoUser;
 use App\Entities\Booking;
 use App\Entities\BookingSetting;
@@ -31,6 +32,7 @@ use App\Services\CurrencyService;
 use App\Services\Media\MediaService;
 use App\Services\PackageService;
 use App\Services\Promo\PromoService;
+use App\Services\QuickpayCardService;
 use App\Services\QuickpayClientService;
 use Carbon\Carbon;
 use Exception;
@@ -105,12 +107,13 @@ class QuickpayController extends Controller
             $currencyService = new CurrencyService();
 
             // Set fallback currency
-            if(!$localCurrency){
+            if (!$localCurrency) {
                 $localCurrency = $currencyService->getDefaultBasedCurrency()->code;
             }
 
             $packageOwnerPackageSetting = $packageOwnerUser->ownPackageSetting;
             $isQuickBooking = $packageOwnerPackageSetting->is_quick_booking ?? false;
+
 
             DB::beginTransaction();
 
@@ -228,7 +231,7 @@ class QuickpayController extends Controller
                 // Local currency is user currency
                 // Local total amount that paid by quickpay
                 $order->local_currency = $localCurrency;
-                $order->local_total_amount =  $chargeInfo['total'];
+                $order->local_total_amount = $chargeInfo['total'];
                 $order->save();
 
                 // Create payment
@@ -241,28 +244,54 @@ class QuickpayController extends Controller
 
                 // Determine if payment was created successfully
                 if ($status === 201) {
+                    $useSavedCard = false;
+                    $link = null;
                     $paymentObject = $payment->asObject();
-
-                    // Construct url to create payment link
-                    $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
-
-                    // Issue a put request to create payment link
+                    $requestStatus = null;
                     $modifiedContinueUrl = $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
-                    $linkRequest = $client->request->put($endpoint, [
+                    $payload = [
                         'amount' => $chargeInfo['total'] * 100,
                         'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
                         'cancel_url' => $cancelUrl,
                         'auto_capture' => $isQuickBooking ? true : false,
-                    ]);
+                    ];
+
+                    // If the user saved any card then he should pay as a default method
+                    // otherwise he has to generate a link to authorize
+                    $mPaymentCard = PaymentCard::where('user_id', $packageBuyerUser->id)->first();
+                    if ($mPaymentCard) {
+                        $quickpayCardService = new QuickpayCardService();
+                        $paymentCardObj = $quickpayCardService->getQuickPayCard($mPaymentCard->card_id)->asObject();
+                        if ($paymentCardObj) {
+                            $useSavedCard = true;
+                            $cardToken = $quickpayCardService->getCardToken($mPaymentCard->card_id);
+                            Log::info($cardToken);
+                            if ($cardToken) {
+                                $payload['card'] = [
+                                    'token' => $cardToken
+                                ];
+                                $authorizeRequest = $client->request->post(
+                                    sprintf("/payments/%s/authorize", $paymentObject->id),
+                                    $payload
+                                );
+                                $requestStatus = $authorizeRequest->httpStatus();
+                                Log::info($requestStatus);
+                            }
+
+                        }
+                    } else {
+                        // Issue a put request to create payment link
+                        $linkRequest = $client->request->put(sprintf("/payments/%s/link", $paymentObject->id), $payload);
+                        $requestStatus = $linkRequest->httpStatus();
+                        $link = $linkRequest->asObject()->url;
+                    }
 
                     //Determine if payment link was created succesfully
-                    if ($linkRequest->httpStatus() === 200) {
-
-                        // Store payment information
+                    if ($requestStatus == 200 || $requestStatus == 202) {
                         $payment = new Payment();
                         $payment->order_id = $order->id;
                         $payment->details = json_encode(['payment_id' => $paymentObject->id]);
-                        $payment->authorization_link = $linkRequest->asObject()->url;
+                        $payment->authorization_link = $link;
                         $payment->service_provider = 'QuickPay';
                         $payment->method = $paymentMethod;
                         $payment->save();
@@ -271,17 +300,20 @@ class QuickpayController extends Controller
 
                         DB::commit();
 
-                        // Mail to administrator
                         if ($isQuickBooking) {
+                            // Mail to administrator
                             Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
                         }
 
-                        return response(
-                            [
-                                'bookingId' => $booking->id,
-                                'link' => $linkRequest->asObject()->url
-                            ]
+                        return response([
+                            'useSavedCard' => $useSavedCard,
+                            'bookingId' => $booking->id,
+                            'link' => $link
+                        ],
+                            StatusCode::HTTP_OK
                         );
+                    } else {
+                        throw new \Exception("Request is not accepted successfully");
                     }
                 }
             }
@@ -330,21 +362,21 @@ class QuickpayController extends Controller
 
             if ($booking->is_quick_booking) {
                 // Before sending email notification you have to check setting
-                if($packageOwnerNotificationSetting &&
-                    $packageOwnerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                if ($packageOwnerNotificationSetting &&
+                    $packageOwnerNotificationSetting->order_message == SettingValue::ID_EMAIL) {
                     Mail::to($packageOwnerUser)->send(new CoachPackageConfirmation($booking));
                 }
-                if($packageBuyerNotificationSetting &&
-                    $packageBuyerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                if ($packageBuyerNotificationSetting &&
+                    $packageBuyerNotificationSetting->order_message == SettingValue::ID_EMAIL) {
                     Mail::to($packageBuyerUser)->send(new AthletePackageConfirmation($booking));
                 }
             } else {
-                if($packageOwnerNotificationSetting &&
-                    $packageOwnerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                if ($packageOwnerNotificationSetting &&
+                    $packageOwnerNotificationSetting->order_message == SettingValue::ID_EMAIL) {
                     Mail::to($packageOwnerUser)->send(new CoachPendingPackageRequest($packageOwnerUser, $packageBuyerUser, $order));
                 }
-                if($packageBuyerNotificationSetting &&
-                    $packageBuyerNotificationSetting->order_message == SettingValue::ID_EMAIL){
+                if ($packageBuyerNotificationSetting &&
+                    $packageBuyerNotificationSetting->order_message == SettingValue::ID_EMAIL) {
                     Mail::to($packageBuyerUser)->send(new AthletePendingPackageRequest($packageBuyerUser, $order));
                 }
             }
