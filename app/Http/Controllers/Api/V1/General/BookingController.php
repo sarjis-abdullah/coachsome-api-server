@@ -14,6 +14,7 @@ use App\Entities\Currency;
 use App\Entities\GiftTransaction;
 use App\Entities\Message;
 use App\Entities\Package;
+use App\Entities\PaymentCard;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
@@ -31,6 +32,7 @@ use App\Services\Media\MediaService;
 use App\Services\MessageFormatterService;
 use App\Services\PackageService;
 use App\Services\Promo\PromoService;
+use App\Services\QuickpayCardService;
 use App\Services\QuickpayClientService;
 use App\ValueObjects\Message\AcceptedPackageBooking;
 use App\ValueObjects\Message\DeclinedPackageBooking;
@@ -98,6 +100,14 @@ class BookingController extends Controller
 
             $giftCardBalance = $giftCardService->balance($authUser);
 
+            // Payment card information
+            $paymentCard = null;
+            $mPaymentCard = PaymentCard::where('user_id', $authUser->id)->first();
+            if ($mPaymentCard) {
+                $quickpayCardService = new QuickpayCardService();
+                $paymentCardObj = $quickpayCardService->getQuickPayCard($mPaymentCard->card_id)->asObject();
+                $paymentCard = $paymentCardObj ? $paymentCardObj->metadata : null;
+            }
 
             // Package charge info
             $chargeInfo = $packageService->chargeInformation($package, $toCurrencyCode, [
@@ -152,7 +162,8 @@ class BookingController extends Controller
                 'chargeBox' => $chargeBox,
                 'giftCardBalance' => $giftCardBalance,
                 'availabilities' => $availabilities,
-                'promoCode' => $promoCodeInfo
+                'promoCode' => $promoCodeInfo,
+                'paymentCard' => $paymentCard
             ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             if ($e instanceof ValidationException) {
@@ -548,7 +559,7 @@ class BookingController extends Controller
                 'message' => $responseMessage,
                 'messages' => $messages,
                 'newMessage' => $messageFormatterService->doFormat($newMessage)
-            ], StatusCode::HTTP_OK );
+            ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             return response(
                 [
