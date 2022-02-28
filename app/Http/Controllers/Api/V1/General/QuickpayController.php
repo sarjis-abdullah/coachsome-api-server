@@ -258,14 +258,15 @@ class QuickpayController extends Controller
 
                     // If the user saved any card then he should pay as a default method
                     // otherwise he has to generate a link to authorize
-                    $mPaymentCard = PaymentCard::where('user_id', $packageBuyerUser->id)->first();
+                    $mPaymentCard = PaymentCard::where('user_id', $packageBuyerUser->id)
+                        ->where("brand", $paymentMethod)
+                        ->first();
                     if ($mPaymentCard) {
                         $quickpayCardService = new QuickpayCardService();
                         $paymentCardObj = $quickpayCardService->getQuickPayCard($mPaymentCard->card_id)->asObject();
                         if ($paymentCardObj) {
                             $useSavedCard = true;
                             $cardToken = $quickpayCardService->getCardToken($mPaymentCard->card_id);
-                            Log::info($cardToken);
                             if ($cardToken) {
                                 $payload['card'] = [
                                     'token' => $cardToken
@@ -275,7 +276,6 @@ class QuickpayController extends Controller
                                     $payload
                                 );
                                 $requestStatus = $authorizeRequest->httpStatus();
-                                Log::info($requestStatus);
                             }
 
                         }
