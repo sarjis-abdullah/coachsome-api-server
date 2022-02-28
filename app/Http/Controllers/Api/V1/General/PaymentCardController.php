@@ -35,6 +35,8 @@ class PaymentCardController extends Controller
                             PaymentCard::where('user_id', Auth::id())->delete();
                         } else {
                             $card = $response->asObject();
+                            $paymentCard->brand = $card ? $card->metadata->brand : null;
+                            $paymentCard->save();
                         }
 
                     }
