@@ -133,6 +133,11 @@ class SettingsController extends Controller
             $setting->notification_category = json_encode($notificatonCategories);
             $setting->save();
 
+            User::where('email', $authUser->email)->update([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+            ]);
+
             return response()->json([
                 'message'=> __('settings.success_update'),
             ], StatusCode::HTTP_OK);
