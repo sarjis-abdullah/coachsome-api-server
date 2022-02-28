@@ -50,10 +50,23 @@ security:
 paths:
   /login:
     $ref: "/swagger/paths/auth/login"
+
   /register:
     $ref: "/swagger/paths/auth/register"
 
   /profiles:
     $ref: "/swagger/paths/profile/profiles"
+
+  /pages/packages:
+    $ref: "/swagger/paths/packages/pages" 
+
+  /packages:
+    $ref: "/swagger/paths/packages/packages"
+
+  /packages/{id}:
+    $ref: "/swagger/paths/packages/id"
+
+  /packages/remove/{id}:
+    $ref: "/swagger/paths/packages/remove"
 
 

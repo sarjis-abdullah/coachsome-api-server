@@ -1,0 +1,11 @@
+
+delete:
+  tags:
+    - Packages
+  summary: delete specific package
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    Coach user can delete a package
