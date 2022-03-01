@@ -16,3 +16,6 @@ All notable changes to this project will be documented in this file.
 
 ## [develop,test,master] - 07/01/2022
 - Add translation key pwa_password_reset_email
+
+## [develop,test,master] - 28/02/2022
+- change APP_PWA_DOMAIN to -  APP_PWA_DOMAIN=pwa.${APP_CLIENT_DOMAIN}
