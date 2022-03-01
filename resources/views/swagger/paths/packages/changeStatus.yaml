@@ -1,0 +1,28 @@
+post:
+  tags:
+    - Packages
+  summary: change change the status of a package
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    Coach user can store package
+  requestBody:
+    description: |
+      | Field | Description  |
+      | :--- | ---:|
+      | id | package id |
+      | status | Status of the item. ex: active, inactive |
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            status:
+              type: boolean
+        example:
+          id: 134
+          status: true
