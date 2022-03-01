@@ -1,0 +1,11 @@
+get:
+  tags:
+    - Galleries
+  summary: Get gallery items of a coach
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    Gallery items will fetched.
+  requestBody:

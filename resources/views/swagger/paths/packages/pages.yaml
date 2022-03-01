@@ -1,0 +1,11 @@
+get:
+  tags:
+    - Packages
+  summary: Get packages offered by a coach
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    User can get packages from a coach
+  requestBody:

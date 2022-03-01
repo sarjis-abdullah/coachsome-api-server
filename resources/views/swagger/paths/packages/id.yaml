@@ -1,0 +1,63 @@
+put:
+  tags:
+    - Packages
+  summary: update coach package
+  parameters:
+    - $ref: '/swagger#/components/parameters/locale'
+  consumes:
+    - application/x-www-form-urlencoded
+  description: >
+    Coach user can update package
+  requestBody:
+    description: |
+      | Field | Description  |
+      | :--- | ---:|
+      | categoryId | Category id to determine individual or group package. ex: 1, 2 |
+      | title | Title of the package |
+      | description | Description of the package |
+      | discount | Discount (in %) on package price |
+      | isSpecialPrice | Special price for the package is applicable or not. (true or false) |
+      | price | Price of the package |
+      | session | Total sessions in the package |
+      | timePerSession | Time per each session |
+      | transportFee | May applicable for offline package |
+      | attendeesMin | mimimum attendees per session (for group package) |
+      | attendeesMax | maximum attendees per session (for group package) |
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            categoryId:
+              type: number
+            title:
+              type: string
+            description:
+              type: string
+            session:
+              type: number
+            timePerSession:
+              type: number
+            isSpecialPrice:
+              type: boolean
+            price:
+              type: float
+            transportFee:
+              type: number
+            attendeesMin:
+              type: number
+            attendeesMax:
+              type: number
+        example:
+          categoryId: 1
+          title: "Test Title"
+          description: "Test Description"
+          session: "12"
+          timePerSession: "21"
+          price: "42.00"
+          discount: "12"
+          isSpecialPrice: true
+          transportFee: null
+          attendeesMin: "10"
+          attendeesMax: "20"
