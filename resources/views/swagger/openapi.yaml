@@ -69,4 +69,9 @@ paths:
   /packages/remove/{id}:
     $ref: "/swagger/paths/packages/remove"
 
+  /packages/changeStatus:
+    $ref: "/swagger/paths/packages/changeStatus"
+
+  /galleries:
+    $ref: "/swagger/paths/galleries/galleries"
 
