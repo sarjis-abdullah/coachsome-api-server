@@ -26,6 +26,7 @@ class SocialAuthController extends Controller
 
     const VALUE_IDENTIFY = 'security_identify';
     const VALUE_PWA_AUTH = 'pwa_auth';
+    const VALUE_PWA_IDENTIFY = 'pwa_identify';
 
     public function redirectToProvider(Request $request, $provider)
     {
@@ -123,13 +124,29 @@ class SocialAuthController extends Controller
 
                 $userVerification->save();
             }
-            return redirect(
-                config('company.url.client')
-                . '/redirect?'
-                . self::KEY_ACTION
-                . '='
-                . session(self::KEY_ACTION)
-            );
+
+            
+            if (session(self::KEY_PWA) == self::VALUE_PWA_IDENTIFY) {
+                // redirect to pwa after security verification
+                return redirect(
+                    config('company.url.pwa')
+                    . '/redirect?'
+                    . self::KEY_ACTION
+                    . '='
+                    . session(self::KEY_ACTION)
+                );
+
+            }else{
+                // redirect to main site after security verification
+                return redirect(
+                    config('company.url.client')
+                    . '/redirect?'
+                    . self::KEY_ACTION
+                    . '='
+                    . session(self::KEY_ACTION)
+                );
+
+            }
         }
 
         // When login or register as a user
