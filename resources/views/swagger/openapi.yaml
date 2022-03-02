@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   version: 1.0.0
-  title: Coachsome Api
+  title: Coachsome API Documentation
   description: This documentaion describes all the public and protected resources.
 
 servers:
@@ -58,7 +58,7 @@ paths:
     $ref: "/swagger/paths/profile/profiles"
 
   /pages/packages:
-    $ref: "/swagger/paths/packages/pages" 
+    $ref: "/swagger/paths/packages/pages"
 
   /packages:
     $ref: "/swagger/paths/packages/packages"
