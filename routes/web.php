@@ -52,11 +52,11 @@ Route::get('/', function () {
     return view('swagger.index');
 });
 
-Route::get('/openapi', function () {
+Route::get('/docs/api-docs.yml', function () {
     return file_get_contents(base_path("resources/views/swagger/openapi.yaml"));
 })->name('openapi');
 
-Route::get('/swagger', function () {
+Route::get('/swagger-api', function () {
     return file_get_contents(base_path("resources/views/swagger/openapi.yaml"));
 });
 
