@@ -1,14 +1,11 @@
+<!-- HTML for static distribution bundle build -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta
-        name="description"
-        content="SwaggerIU"
-    />
-    <title>SwaggerUI</title>
-    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui.css"/>
+    <meta charset="UTF-8">
+    <title>Coachsome API</title>
+    <link rel="stylesheet" type="text/css" href="{{ asset('swagger/swagger-ui.css') }}" />
+    <link rel="icon" href="{{ asset('swagger/favicon.ico') }}"  />
     <style>
         html
         {
@@ -27,23 +24,38 @@
             margin:0;
             background: #fafafa;
         }
+        .swagger-ui img {
+            content: url("{{ asset('assets/images/logos/logo-light.png') }}");
+            width: 134px; /* width of your logo */
+            height: 19px;
+            /*height: 40px; !* height of your logo *!*/
+        }
     </style>
 </head>
+
 <body>
 <div id="swagger-ui"></div>
-<script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-bundle.js" crossorigin></script>
-<script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-standalone-preset.js" crossorigin></script>
+
+<script src="{{ asset('swagger/swagger-ui-bundle.js') }}" charset="UTF-8"> </script>
+<script src="{{ asset('swagger/swagger-ui-standalone-preset.js') }}" charset="UTF-8"> </script>
 <script>
-    window.onload = () => {
-        window.ui = SwaggerUIBundle({
-            url: '{{ route('openapi') }}',
+    window.onload = function() {
+        // Begin Swagger UI call region
+        const ui = SwaggerUIBundle({
+            url: "{{ route('openapi') }}",
             dom_id: '#swagger-ui',
+            deepLinking: true,
             presets: [
                 SwaggerUIBundle.presets.apis,
                 SwaggerUIStandalonePreset
             ],
-            layout: "StandaloneLayout",
+            plugins: [
+                SwaggerUIBundle.plugins.DownloadUrl
+            ],
+            layout: "StandaloneLayout"
         });
+        // End Swagger UI call region
+        window.ui = ui;
     };
 </script>
 </body>

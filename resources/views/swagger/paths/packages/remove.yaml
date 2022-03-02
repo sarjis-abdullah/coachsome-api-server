@@ -4,7 +4,7 @@ delete:
     - Packages
   summary: delete specific package
   parameters:
-    - $ref: '/swagger#/components/parameters/locale'
+    - $ref: '/swagger-api#/components/parameters/locale'
   consumes:
     - application/x-www-form-urlencoded
   description: >

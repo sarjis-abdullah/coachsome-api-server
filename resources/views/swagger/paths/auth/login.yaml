@@ -5,7 +5,7 @@ post:
     - Auth
   summary: user login
   parameters:
-    - $ref: '/swagger#/components/parameters/locale'
+    - $ref: '/swagger-api/#components/parameters/locale'
   consumes:
     - application/json
   description: >

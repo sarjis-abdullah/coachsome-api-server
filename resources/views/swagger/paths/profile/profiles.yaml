@@ -3,7 +3,7 @@ get:
     - Profile
   summary: Get user profile
   parameters:
-    - $ref: '/swagger#/components/parameters/locale'
+    - $ref: '/swagger-api#/components/parameters/locale'
   consumes:
     - application/x-www-form-urlencoded
   description: >
@@ -15,7 +15,7 @@ post:
     - Profile
   summary: create user profile
   parameters:
-    - $ref: '/swagger#/components/parameters/locale'
+    - $ref: '/swagger-api#/components/parameters/locale'
   consumes:
     - application/x-www-form-urlencoded
   description: >
