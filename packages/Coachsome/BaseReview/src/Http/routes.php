@@ -9,5 +9,6 @@ Route::group(['prefix' => 'api/baseReviews'], function () {
         Route::post('/', [BaseReviewController::class, 'store']);
         Route::get('/profileInfo', [BaseReviewController::class, 'getProfileInformation']);
         Route::post('/request', [BaseReviewController::class, 'makeRequest']);
+        Route::post('/request/pwa', [BaseReviewController::class, 'makeRequestPWA']);
     });
 });

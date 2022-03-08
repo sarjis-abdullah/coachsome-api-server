@@ -11,6 +11,7 @@ use Coachsome\BaseReview\Models\BaseReview;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
 use App\Services\Media\MediaService;
+use Coachsome\BaseReview\Mail\InvitationPWA;
 use Coachsome\BaseReview\Repositories\BaseReviewRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -275,5 +276,19 @@ class BaseReviewController extends Controller
             return response()->json(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
+    public function makeRequestPWA(Request $request)
+    {
+        $recipients = $request->all();
+
+        try {
+            foreach ($recipients as $recipient) {
+                Mail::to($recipient)->send(new InvitationPWA());
+            }
+            return response()->json(['message' => 'Email was send successfully.'], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+    
 
 }
