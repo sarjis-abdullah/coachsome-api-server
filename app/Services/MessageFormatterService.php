@@ -106,6 +106,12 @@ class MessageFormatterService
                     $structureContent->amount = $amount;
                     $structureContent->currencyCode = $currency;
                 }
+
+                // Attachment
+
+                if ($structureContent->key == 'attachment') {
+                    $structureContent->url = env('MINIO_ENDPOINT').'/'.env('MINIO_BUCKET').'/'.$structureContent->url;
+                }
             }
 
             if ($messageType == 'text') {

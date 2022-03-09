@@ -20,6 +20,7 @@ class MessageData
     const CATEGORY_ID_DECLINED_PACKAGE_BOOKING = 8;
     const CATEGORY_ID_BOOKING_PACKAGE = 9;
     const CATEGORY_ID_BOOKING_TIME = 10;
+    const CATEGORY_ID_ATTACHMENT = 11;
 
     const CATEGORY_KEY_TEXT = 'text';
     const CATEGORY_KEY_ACCEPTED_BOOKING_TIME = 'accepted_booking_time';
@@ -31,4 +32,5 @@ class MessageData
     const CATEGORY_KEY_DECLINED_PACKAGE_BOOKING = 'declined_package_booking';
     const CATEGORY_KEY_BOOKING_PACKAGE = 'booking_package';
     const CATEGORY_KEY_BOOKING_TIME = 'booking_time';
+    const CATEGORY_KEY_ATTACHMENT = 'attachment';
 }

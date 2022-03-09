@@ -80,6 +80,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             // messages
             Route::get('messages', "MessageController@index");
             Route::post('messages', "MessageController@store");
+            Route::post('messages/attachment', "MessageController@storeAttachment");
             Route::get('messages/newCount', "MessageController@getNewCount");
 
             // bookings
