@@ -11,6 +11,7 @@ use App\Entities\GroupMessage;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Group\GroupMessageCollection;
 use App\Http\Resources\Group\GroupMessageResource;
+use App\ValueObjects\Message\Attachment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -82,6 +83,65 @@ class GroupMessageController extends Controller
                 $contact->last_message = $groupMessage->toJson();
                 $contact->save();
             }
+            return response([
+                'data' => new GroupMessageResource($groupMessage),
+                'message' => 'Successfully send a message'
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response([
+                'error' => [
+                    'message' => $e->getMessage(),
+                    'code' => StatusCode::HTTP_UNPROCESSABLE_ENTITY
+                ]
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+
+    public function storeAttachment(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'type' => 'required',
+                'file' => 'required|mimes:jpg,png,gif,svg|max:2048',
+                'groupId' => 'required',
+                'createdAt' => 'required',
+            ]);
+
+            $name = $request->file('file')->store(
+                '', 'minio'
+            );
+
+            $attachment = $name;
+
+            $messageContent = new Attachment([
+                'url' => $attachment
+            ]);
+
+            $group = Group::find($request['groupId']);
+            if(!$group){
+                throw new \Exception('Group is not found');
+            }
+            $groupMessage = new GroupMessage();
+            $groupMessage->type = $request['type'];
+            $groupMessage->message_category_id = $request['type'] == 'structure' ? MessageData::CATEGORY_ID_ATTACHMENT : null;
+            $groupMessage->group_id = $group->id;
+            $groupMessage->sender_user_id = Auth::id();
+            $groupMessage->content = $messageContent->toJson();
+            $groupMessage->date_time = Carbon::now();
+            $groupMessage->date_time_iso = $request['createdAt'];
+            $groupMessage->save();
+
+            $contacts = Contact::where('group_id', $group->id)->get();
+            foreach ($contacts as $contact) {
+                $contact->last_message_time = Carbon::now();
+                $contact->last_message = $groupMessage->toJson();
+                $contact->save();
+            }
+
+            // $messageFormatService = new MessageFormatterService();
+            // $messageData = $messageFormatService->doFormat($message);
+
             return response([
                 'data' => new GroupMessageResource($groupMessage),
                 'message' => 'Successfully send a message'
