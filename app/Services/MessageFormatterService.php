@@ -110,7 +110,8 @@ class MessageFormatterService
                 // Attachment
 
                 if ($structureContent->key == 'attachment') {
-                    $structureContent->url = env('MINIO_ENDPOINT').'/'.env('MINIO_BUCKET').'/'.$structureContent->url;
+                    $minioService = new MinioService(); 
+                    $structureContent->url = $minioService->getAttachmentUrl($structureContent->url);
                 }
             }
 

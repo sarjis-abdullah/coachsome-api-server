@@ -65,6 +65,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::put('groups/{id}/change-topic', "GroupController@changeTopic");
             Route::post('groups/{id}/save-image', "GroupController@saveImage");
             Route::apiResource('group-messages', "GroupMessageController");
+            Route::post('group-messages/attachment', "GroupMessageController@storeAttachment");
             Route::post('group-invitations/groups/{id}', "GroupInvitationController@invite");
             Route::post('group-invitations/verify', "GroupInvitationController@verify");
             Route::get('group-invitations/private-users', "GroupInvitationController@getPrivateUser");

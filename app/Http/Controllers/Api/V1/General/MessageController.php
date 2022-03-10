@@ -198,12 +198,9 @@ class MessageController extends Controller
                 'file' => 'required|mimes:jpg,png,gif,svg|max:2048'
 
             ]);
-               
-
-            // return response()->json(['hewkr' => $request->all()]);
         
             $name = $request->file('file')->store(
-                'upload', 'minio'
+                '', 'minio'
             );
 
             $attachment = $name;
