@@ -23,6 +23,7 @@
         "laravel/tinker": "^2.0",
         "laravel/ui": "^3.0",
         "lcobucci/jwt": "3.3.3",
+        "league/flysystem-aws-s3-v3": "~1.0",
         "league/fractal": "^0.19.2",
         "mixpanel/mixpanel-php": "^2.8",
         "moneyphp/money": "^3.3",

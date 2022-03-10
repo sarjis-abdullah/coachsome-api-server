@@ -17,12 +17,14 @@ use App\Notifications\NewTextMessage;
 use App\Services\BookingService;
 use App\Services\ContactService;
 use App\Services\MessageFormatterService;
+use App\ValueObjects\Message\Attachment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use MessageFormatter;
 
 class MessageController extends Controller
 {
@@ -184,6 +186,100 @@ class MessageController extends Controller
         return response()->json([
             'totalNewMessageCount' => $totalNewMessageCount
         ], StatusCode::HTTP_OK);
+
+    }
+
+    public function storeAttachment(Request $request){
+        try {
+            $request->validate([
+                'receiverUserId' => 'required',
+                'type' => 'nullable',
+                'categoryId' => 'nullable',
+                'file' => 'required|mimes:jpg,png,gif,svg|max:2048'
+
+            ]);
+        
+            $name = $request->file('file')->store(
+                '', 'minio'
+            );
+
+            $attachment = $name;
+
+            $messageContent = new Attachment([
+                'url' => $attachment
+            ]);
+
+
+            $receiverUserId = $request['receiverUserId'];
+            $createdAt = $request['createdAt'];
+            $type = $request['type'];
+            $categoryId = $request['categoryId'];
+
+            if($categoryId){
+                $messageCategory = MessageCategory::find($categoryId);
+                if(!$messageCategory){
+                    throw new \Exception('Message category do not found');
+                }
+            } else {
+                $categoryId = MessageData::CATEGORY_ID_TEXT;
+            }
+
+
+            $receiverUser = User::find($receiverUserId);
+            if (!$receiverUser) {
+                throw new \Exception('Receiver user not found');
+            }
+            $senderUser = Auth::user();
+            $contactService = new ContactService();
+
+            // Create contact
+            if ($senderUser->id != $receiverUser->id) {
+                $contactService->create($senderUser, $receiverUser);
+            }
+
+            $message = new Message();
+            $message->sender_user_id = $senderUser->id;
+            $message->message_category_id = $categoryId;
+            $message->receiver_user_id = $receiverUser->id;
+            $message->type = $type;
+            $message->structure_content = $type == 'structure' ? $messageContent->toJson() : null;
+            $message->date_time = Carbon::now();
+            $message->date_time_iso = $createdAt;
+            $message->save();
+
+            // Disconnected user pending for a mail notification
+            if (!$receiverUser->is_online) {
+                $job = (new NewMessageInformer($receiverUser,$message))->delay(now()->addMinutes(5));
+                $jobId = $this->dispatch(
+                    $job
+                );
+                $pendingNotification = new PendingNotification();
+                $pendingNotification->user_id = $receiverUser->id;
+                $pendingNotification->job_id = $jobId;
+                $pendingNotification->save();
+            }
+
+
+            $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
+            $messageFormatService = new MessageFormatterService();
+            $messageData = $messageFormatService->doFormat($message);
+
+            return response()->json([
+                'message' => $messageData
+            ], StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                return response()->json(
+                    $e->validator->errors()->first(),
+                    StatusCode::HTTP_UNPROCESSABLE_ENTITY
+                );
+            }
+
+            return response()->json([
+                'message' => $e->getMessage()
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
     }
 }
