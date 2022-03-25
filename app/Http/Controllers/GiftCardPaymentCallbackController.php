@@ -71,7 +71,7 @@ class GiftCardPaymentCallbackController extends Controller
             $promoCode = PromoCode::find($giftOrder->promo_code_id);
             $promoCode->delete();
         }
-        if($request->query('redirectToPWA') == true){
+        if($request->query('redirectToPWA') == 1){
             return redirect(config('company.url.pwa_gift_page'));
         }
         return redirect(config('company.url.gift_page'));
