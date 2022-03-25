@@ -50,8 +50,14 @@ class GiftCardPaymentCallbackController extends Controller
                         ->attachData($pdf->output(), "gift-card.pdf");
                 });
             }
+            if($request->query('redirectToPWA') == 1){
+                return Redirect::to(config('company.url.pwa_gift_checkout_page')."?id=".$id."&status=success");
+            }
             return Redirect::to(config('company.url.gift_checkout_page')."?id=".$id."&status=success");
         } else {
+            if($request->query('redirectToPWA') == 1){
+                return Redirect::to(config('company.url.pwa_gift_page'));
+            }
             return Redirect::to(config('company.url.gift_page'));
         }
     }
@@ -64,6 +70,9 @@ class GiftCardPaymentCallbackController extends Controller
         if($giftOrder){
             $promoCode = PromoCode::find($giftOrder->promo_code_id);
             $promoCode->delete();
+        }
+        if($request->query('redirectToPWA') == 1){
+            return redirect(config('company.url.pwa_gift_page'));
         }
         return redirect(config('company.url.gift_page'));
     }

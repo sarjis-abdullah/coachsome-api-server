@@ -20,6 +20,8 @@ return [
         'home_page' => env('APP_CLIENT_DOMAIN'),
         'gift_checkout_page' => env('APP_CLIENT_DOMAIN').'/gift/checkout',
         'gift_page' => env('APP_CLIENT_DOMAIN').'/gift',
+        'pwa_gift_checkout_page' => env('APP_PWA_DOMAIN').'/gift/checkout',
+        'pwa_gift_page' => env('APP_PWA_DOMAIN').'/gift',
         'email_verification_page' => env('APP_CLIENT_DOMAIN').'/email-verification',
         'linkedin' => "https://www.linkedin.com/company/coachsome/",
         'facebook' => "https://www.facebook.com/coachsome/app/212104595551052/?ref=page_internal",

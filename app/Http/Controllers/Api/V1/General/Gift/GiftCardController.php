@@ -130,12 +130,22 @@ class GiftCardController extends Controller
             if ($status === 201) {
                 $paymentObject = $payment->asObject();
                 $endpoint = sprintf("/payments/%s/link", $paymentObject->id);
-                $linkRequest = $client->request->put($endpoint, [
-                    'amount' => $request['totalAmount'] * 100,
-                    'continue_url' => $continueUrl . '?id=' . $order->id,
-                    'cancel_url' => $cancelUrl . '?id=' . $order->id,
-                    'auto_capture' => true
-                ]);
+                if($request->has("redirectToPWA")){
+                    $linkRequest = $client->request->put($endpoint, [
+                        'amount' => $request['totalAmount'] * 100,
+                        'continue_url' => $continueUrl . '?id=' . $order->id.'&redirectToPWA='.true,
+                        'cancel_url' => $cancelUrl . '?id=' . $order->id.'&redirectToPWA='.true,
+                        'auto_capture' => true,
+                    ]);
+                }else{
+                    $linkRequest = $client->request->put($endpoint, [
+                        'amount' => $request['totalAmount'] * 100,
+                        'continue_url' => $continueUrl . '?id=' . $order->id,
+                        'cancel_url' => $cancelUrl . '?id=' . $order->id,
+                        'auto_capture' => true
+                    ]);
+                }
+                
 
                 if ($linkRequest->httpStatus() === 200) {
                     // Store payment information
