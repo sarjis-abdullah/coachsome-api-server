@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Profile;
 
+use App\Entities\Badge;
 use App\Http\Resources\Category\SportCategoryResource;
 use App\Http\Resources\Review\ReviewResource;
 use App\Http\Resources\Tag\SportTagResource;
