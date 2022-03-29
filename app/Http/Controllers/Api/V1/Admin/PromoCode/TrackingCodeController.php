@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1\Admin\PromoCode;
 
 use App\Data\StatusCode;
-use App\Entites\PromoUser;
 use App\Entities\Order;
+use App\Entities\PromoUser;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
