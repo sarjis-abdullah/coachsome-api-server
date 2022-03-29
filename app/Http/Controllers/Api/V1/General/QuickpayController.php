@@ -65,7 +65,7 @@ class QuickpayController extends Controller
             $paymentMethod = $request->paymentMethod;
             $promoCodeValue = $request->promoCode;
             $useGiftCard = $request->useGiftCard;
-            $continueUrl = $request->packageUrl . "?payment_status=paid";
+            $continueUrl = $request->packageUrl . "?payment_status=paid&promo=".$promoCodeValue;
             $cancelUrl = $request->packageUrl . "?payment_status=cancel";
 
             $package = Package::with(['category', 'details', 'user'])
@@ -225,28 +225,6 @@ class QuickpayController extends Controller
 
                 // Determine if payment was created successfully
                 if ($status === 201) {
-
-
-                    // Promo code value is a discount amount
-                    $promoCode = PromoCode::where('code', $promoCodeValue)->first();
-                    
-                    if ($promoCode) {
-                        // Save the promo user
-                        $promoUser = new PromoUser();
-                        $promoUser->user_id = $packageBuyerUser->id;
-                        $promoUser->order_id = $order->id;
-                        $promoUser->promo_code_id = $promoCode->id;
-                        $promoUser->code = $promoCode->code;
-                        $promoUser->promo_code_data = $promoCode->toJson();
-                        $promoUser->save();
-
-                        // Cut down discount from order
-                        // Save order information after change
-                        $order->promo_discount = $chargeInfo['promoDiscount'];
-                        $order->save();
-                    }
-
-
                     $useSavedCard = false;
                     $link = null;
                     $paymentObject = $payment->asObject();
@@ -308,6 +286,25 @@ class QuickpayController extends Controller
                             Mail::to([config('mail.from.address')])->queue(new NewOrderCapture($order));
                         }
 
+                        // Promo code value is a discount amount
+                        $promoCode = PromoCode::where('code', $promoCodeValue)->first();
+                        
+                        if ($promoCode) {
+                        //     // Save the promo user
+                        //     $promoUser = new PromoUser();
+                        //     $promoUser->user_id = $packageBuyerUser->id;
+                        //     $promoUser->order_id = $order->id;
+                        //     $promoUser->promo_code_id = $promoCode->id;
+                        //     $promoUser->code = $promoCode->code;
+                        //     $promoUser->promo_code_data = $promoCode->toJson();
+                        //     $promoUser->save();
+
+                        //     // Cut down discount from order
+                        //     // Save order information after change
+                            $order->promo_discount = $chargeInfo['promoDiscount'];
+                            $order->save();
+                        }
+
                         return response([
                             'useSavedCard' => $useSavedCard,
                             'bookingId' => $booking->id,
@@ -362,6 +359,24 @@ class QuickpayController extends Controller
 
             $packageOwnerNotificationSetting = NotificationSetting::where('user_id', $packageOwnerUser->id)->first();
             $packageBuyerNotificationSetting = NotificationSetting::where('user_id', $packageBuyerUser->id)->first();
+
+
+            // Promo code value is a discount amount
+            if($request->promoCodeValue != ""){
+                $promoCode = PromoCode::where('code', $request->promoCodeValue)->first();
+                // $packageBuyerUser = Auth::user();
+                if ($promoCode) {
+                    // Save the promo user
+                    $promoUser = new PromoUser();
+                    $promoUser->user_id = $packageBuyerUser->id;
+                    $promoUser->order_id = $order->id;
+                    $promoUser->promo_code_id = $promoCode->id;
+                    $promoUser->code = $promoCode->code;
+                    $promoUser->promo_code_data = $promoCode->toJson();
+                    $promoUser->save();
+                }
+            }
+            
 
             if ($booking->is_quick_booking) {
                 // Before sending email notification you have to check setting
