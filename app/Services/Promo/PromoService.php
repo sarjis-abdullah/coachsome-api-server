@@ -39,14 +39,14 @@ class PromoService
         $isExpired = false;
         if($promoCode){
             if($promoCode->promo_duration_id == Promo::DURATION_ID_ONCE){
-                $promoUser = PromoUser::where('code', $promoCode->code)->first();
+                $promoUser = PromoUser::where('code', $promoCode->code)->exists();
                 if($promoUser){
                     $isExpired = true;
                 }
             } else {
                 $promoUser = PromoUser::where('code', $promoCode->code)
                     ->where('user_id', $user->id)
-                    ->first();
+                    ->exists();
                 if($promoUser){
                     $isExpired = true;
                 }
