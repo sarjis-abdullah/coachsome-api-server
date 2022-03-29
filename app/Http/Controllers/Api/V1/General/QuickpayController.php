@@ -404,8 +404,4 @@ class QuickpayController extends Controller
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
-
-    public function storePromoUser(Request $request){
-        
-    }
 }
