@@ -182,25 +182,6 @@ class QuickpayController extends Controller
             $order->key = $orderKey;
             $order->save();
 
-            // Promo code value is a discount amount
-            $promoCode = PromoCode::where('code', $promoCodeValue)->first();
-            if ($promoCode) {
-                // Save the promo user
-                $promoUser = new PromoUser();
-                $promoUser->user_id = $packageBuyerUser->id;
-                $promoUser->order_id = $order->id;
-                $promoUser->promo_code_id = $promoCode->id;
-                $promoUser->code = $promoCode->code;
-                $promoUser->promo_code_data = $promoCode->toJson();
-                $promoUser->save();
-
-                // Cut down discount from order
-                // Save order information after change
-                $order->promo_discount = $chargeInfo['promoDiscount'];
-                $order->save();
-            }
-
-
             // If order total amount is equal to 0 then it is not required to pay by quickpay
             if ($order->total_amount < 1) {
                 $contactService->create($packageOwnerUser, $packageBuyerUser);
@@ -244,13 +225,35 @@ class QuickpayController extends Controller
 
                 // Determine if payment was created successfully
                 if ($status === 201) {
+
+
+                    // Promo code value is a discount amount
+                    $promoCode = PromoCode::where('code', $promoCodeValue)->first();
+                    
+                    if ($promoCode) {
+                        // Save the promo user
+                        $promoUser = new PromoUser();
+                        $promoUser->user_id = $packageBuyerUser->id;
+                        $promoUser->order_id = $order->id;
+                        $promoUser->promo_code_id = $promoCode->id;
+                        $promoUser->code = $promoCode->code;
+                        $promoUser->promo_code_data = $promoCode->toJson();
+                        $promoUser->save();
+
+                        // Cut down discount from order
+                        // Save order information after change
+                        $order->promo_discount = $chargeInfo['promoDiscount'];
+                        $order->save();
+                    }
+
+
                     $useSavedCard = false;
                     $link = null;
                     $paymentObject = $payment->asObject();
                     $requestStatus = null;
                     $modifiedContinueUrl = $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
                     $payload = [
-                        'amount' => $chargeInfo['total'] * 100,
+                        'amount' => ($request['numberOfAttendees'] * $chargeInfo['total']) * 100, //$chargeInfo['total'] * 100,
                         'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
                         'cancel_url' => $cancelUrl,
                         'auto_capture' => $isQuickBooking ? true : false,
