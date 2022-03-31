@@ -13,17 +13,18 @@ use Illuminate\Support\Facades\App;
 class JoinConversation extends Mailable
 {
     use Queueable, SerializesModels;
-    private $user, $token;
+    private $user, $token, $pwa;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($user, $token)
+    public function __construct($user, $token , $pwa)
     {
         $this->user = $user;
         $this->token = $token;
+        $this->pwa = $pwa;
     }
 
     /**
@@ -48,10 +49,16 @@ class JoinConversation extends Mailable
             $subject = $translations['email_template_join_conversation_subject'];
         }
 
+        if($this->pwa){
+            $joinUrl = config("company.url.pwa").'/group-invitations/verify?token='.$this->token;
+        }else{
+            $joinUrl = config("company.url.client").'/group-invitations/verify?token='.$this->token;
+        }
+
         $emailData = [
             'translations' => $translations,
             'inviterName' => $inviterName,
-            'joinUrl' => config("company.url.client").'/group-invitations/verify?token='.$this->token,
+            'joinUrl' => $joinUrl,
             'coachsomeEmailAddress' => config('mail.from.address'),
             'termsUrl' => config("company.url.terms_page"),
             'clientHomeUrl' => config("company.url.home_page"),
