@@ -54,6 +54,12 @@ class GroupController extends Controller
                 'description' => 'required'
             ]);
 
+            $pwa = false;
+
+            if($request->has('pwa')){
+                $pwa = true;
+            }
+
             foreach ($request['emails'] as $email) {
                 if (!$this->validateEmail($email)) {
                     throw new \Exception('All emails should have to valid');
@@ -106,7 +112,7 @@ class GroupController extends Controller
                 $groupInvitation->token = $token;
                 $groupInvitation->status = GroupInvitationData::STATUS_PENDING;
                 $groupInvitation->save();
-                Mail::to([$email])->send(new JoinConversation($authUser, $token));
+                Mail::to([$email])->send(new JoinConversation($authUser, $token, $pwa));
             }
 
             return response(['data' => []], StatusCode::HTTP_OK);
