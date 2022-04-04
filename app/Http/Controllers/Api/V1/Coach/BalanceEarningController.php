@@ -89,6 +89,7 @@ class BalanceEarningController extends Controller
                     $dashboardInfo['totalPackageSold']++;
                     $dashboardInfo['totalSessionCompleted'] += $item->bookingTimes->where('status', 'Accepted')->count();
                     $order = $item->order;
+                    
                     $bookingSetting = json_decode($item->booking_settings_snapshot);
 
                     if ($bookingSetting) {
@@ -132,7 +133,7 @@ class BalanceEarningController extends Controller
 
             $dashboardInfo['startDate'] = $startDate;
             $dashboardInfo['endDate'] = $endDate;
-            $dashboardInfo['averageRevenuePerCustomer'] = round($dashboardInfo['totalIncome'] / $totalCustomers, 2);
+            $dashboardInfo['averageRevenuePerCustomer'] = $totalCustomers == 0 ? 0.00 : round($dashboardInfo['totalIncome'] / $totalCustomers, 2);
 
             return response()->json([
                 'balanceEarnings' => $overviews,
