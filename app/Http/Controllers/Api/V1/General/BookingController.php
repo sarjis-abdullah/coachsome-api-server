@@ -473,6 +473,7 @@ class BookingController extends Controller
                     $newMessage->type = 'structure';
                     $newMessage->structure_content = $acceptedPackageBookingMessage->toJson();
                     $newMessage->date_time = Carbon::now();
+                    $newMessage->date_time_iso = Carbon::now()->toISOString();
                     $newMessage->save();
 
                     $responseMessage = 'This request was successfully accepted.';
@@ -535,6 +536,7 @@ class BookingController extends Controller
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $declinedPackageBookingMessage->toJson();
                 $newMessage->date_time = Carbon::now();
+                $newMessage->date_time_iso = Carbon::now()->toISOString();
                 $newMessage->save();
 
                 $responseMessage = 'This request was declined.';

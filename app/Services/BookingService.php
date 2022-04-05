@@ -105,6 +105,7 @@ class BookingService
                 $newMessage->receiver_user_id = $packageOwnerUser->id;
                 $newMessage->structure_content = $buyPackageMessage->toJson();
                 $newMessage->date_time = Carbon::now();
+                $newMessage->date_time_iso = Carbon::now()->toISOString();
                 $newMessage->save();
             }
 
@@ -128,6 +129,7 @@ class BookingService
                 $newMessage->receiver_user_id = $packageOwnerUser->id;
                 $newMessage->structure_content = $packageBookingMessage->toJson();
                 $newMessage->date_time = Carbon::now();
+                $newMessage->date_time_iso = Carbon::now()->toISOString();
                 $newMessage->save();
             }
 

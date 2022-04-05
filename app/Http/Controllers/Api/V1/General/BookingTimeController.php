@@ -218,7 +218,11 @@ class BookingTimeController extends Controller
             $message->structure_content = $timeBookingMessage->toJson();
             $message->booking_time_id = $bookingTime->id;
             $message->date_time = Carbon::now();
+            $message->date_time_iso = Carbon::now()->toISOString();
             $message->save();
+
+            $contactService = new ContactService();
+            $contactService->updateLastMessageAndTime($authUser, $packageOwnerUser, $message);
 
             // if successfully created a request
             if(!$t_key){
@@ -323,7 +327,9 @@ class BookingTimeController extends Controller
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $acceptedBookingTime->toJson();
                 $newMessage->date_time = Carbon::now();
+                $newMessage->date_time_iso = Carbon::now()->toISOString();
                 $newMessage->save();
+
                 $contactService->updateLastMessageAndTime($authUser, $requestedUser, $newMessage);
 
 
@@ -359,6 +365,7 @@ class BookingTimeController extends Controller
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $declinedBookingTime->toJson();
                 $newMessage->date_time = Carbon::now();
+                $newMessage->date_time_iso = Carbon::now()->toISOString();
                 $newMessage->save();
 
                 $contactService->updateLastMessageAndTime($authUser, $requestedUser, $newMessage);
