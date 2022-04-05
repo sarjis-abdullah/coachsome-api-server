@@ -59,14 +59,19 @@ class BalanceEarningController extends Controller
             }
 
             $results = $balanceEarningService->getUserBalanceEarningInfo($authUser, $userCurrency);
-            $overviews = collect($results['overviews'])->filter(function ($item) use ($startDate, $endDate) {
-                if (date('Y-m-d', strtotime($item->date)) >= date('Y-m-d', strtotime($startDate)) &&
-                    date('Y-m-d', strtotime($item->date)) <= date('Y-m-d', strtotime($endDate))) {
-                    return true;
-                } else {
-                    return false;
-                }
-            })->values()->toArray();
+            if (array_key_exists("overviews",$results)){
+                $overviews = collect($results['overviews'])->filter(function ($item) use ($startDate, $endDate) {
+                    if (date('Y-m-d', strtotime($item->date)) >= date('Y-m-d', strtotime($startDate)) &&
+                        date('Y-m-d', strtotime($item->date)) <= date('Y-m-d', strtotime($endDate))) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                })->values()->toArray();
+            }else{
+                $overviews = null;
+            }
+            
 
 
             $periods = CarbonPeriod::create($startDate, '1 month', $endDate);
