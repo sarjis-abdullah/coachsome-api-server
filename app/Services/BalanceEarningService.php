@@ -137,7 +137,7 @@ class BalanceEarningService
                 $currency = $order ? $order->currency : 'DKK';
                 $income = 0.00;
 
-                $bookingSetting = BookingSetting::first();
+                $bookingSetting = json_decode($item->booking_settings_snapshot);
                 
                 if ($bookingSetting) {
                     $rate = $bookingSetting->package_owner_gnr_service_fee / 100;
