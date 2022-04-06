@@ -5,6 +5,7 @@ namespace App\Services;
 
 
 use App\Entities\Booking;
+use App\Entities\BookingSetting;
 use App\Entities\PayoutRequest;
 use App\Services\Mixpanel\MixpanelService;
 use Carbon\Carbon;
@@ -136,9 +137,12 @@ class BalanceEarningService
                 $currency = $order ? $order->currency : 'DKK';
                 $income = 0.00;
 
-                $bookingSetting = json_decode($item->booking_settings_snapshot);
+                $bookingSetting = BookingSetting::first();
                 
                 if ($bookingSetting) {
+                    $rate = $bookingSetting->package_owner_gnr_service_fee / 100;
+                }else{
+                    $bookingSetting = BookingSetting::first();
                     $rate = $bookingSetting->package_owner_gnr_service_fee / 100;
                 }
 
