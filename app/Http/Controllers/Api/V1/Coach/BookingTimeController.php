@@ -6,6 +6,7 @@ use App\Data\Constants;
 use App\Data\StatusCode;
 use App\Entities\BookingTime;
 use App\Http\Controllers\Controller;
+use App\Services\Media\MediaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -66,6 +67,9 @@ class BookingTimeController extends Controller
 
                     if ($connectedUserProfile) {
                         $profileName = $connectedUserProfile->profile_name;
+                        $mediaService = new MediaService();
+                        $profileImage = $mediaService->getImages($requesterToUser);
+                        $profileAvatarName = $connectedUserProfile->avatarName();
                     }
 
                     if ($requesterUserRole->name == Constants::ROLE_KEY_COACH && $requesterToUserRole->name == Constants::ROLE_KEY_COACH) {
@@ -78,6 +82,8 @@ class BookingTimeController extends Controller
                         'date' => $date,
                         'time' => $time,
                         'profileName' => $profileName,
+                        'profileImage' => $profileImage,
+                        'profileAvatarName' => $profileAvatarName,
                         'status' => $item->status,
                         'address' => $address,
                         'isCoachToCoach' => $isCoachToCoach,
