@@ -23,6 +23,7 @@ class BookingTimeController extends Controller
             $date = date('Y-m-d H:i:s',strtotime($request->date));
 
             $authUser = Auth::user();
+
             if (!$authUser) {
                 throw new \Exception('User not found');
             }
@@ -32,7 +33,7 @@ class BookingTimeController extends Controller
                 $q->orWhere('requester_to_user_id', $authUser->id);
             })
                 ->where('calender_date','>=', $date)
-                ->get()->map(function($item){
+                ->get()->map(function($item)  use($authUser){
                 $address = '';
                 $profileName = '';
                 $date = '';
@@ -57,11 +58,23 @@ class BookingTimeController extends Controller
                     $zip = $location->zip;
                 }
 
-                if($requesterUserProfile){
+                if($authUser->id == $requesterUser->id){
+                    $connectedUserProfile = $requesterToUser ? $requesterToUser->profile : null;
+                    $connectedUser = $requesterToUser ? $requesterToUser : null;
+                }
+
+                if($authUser->id == $requesterToUser->id){
+                    $connectedUserProfile = $requesterUser ? $requesterUser->profile : null;
+                    $connectedUser = $requesterUser ? $requesterUser : null;
+                }
+
+
+
+                if($connectedUserProfile){
                     $profileName = $requesterUserProfile->profile_name;
                     $mediaService = new MediaService();
-                    $profileImage = $mediaService->getImages($requesterToUser);
-                    $profileAvatarName = $requesterUserProfile->avatarName();
+                    $profileImage = $mediaService->getImages($connectedUser);
+                    $profileAvatarName = $connectedUserProfile->avatarName();
                 }
 
                 if($requesterUserRole->name == Constants::ROLE_KEY_COACH && $requesterToUserRole->name == Constants::ROLE_KEY_COACH){
