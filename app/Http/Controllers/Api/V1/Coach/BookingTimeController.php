@@ -52,10 +52,12 @@ class BookingTimeController extends Controller
 
                     if($authUser->id == $requesterUser->id){
                         $connectedUserProfile = $requesterToUser ? $requesterToUser->profile : null;
+                        $connectedUser = $requesterToUser ? $requesterToUser : null;
                     }
 
                     if($authUser->id == $requesterToUser->id){
                         $connectedUserProfile = $requesterUser ? $requesterUser->profile : null;
+                        $connectedUser = $requesterUser ? $requesterUser : null;
                     }
 
 
@@ -68,7 +70,7 @@ class BookingTimeController extends Controller
                     if ($connectedUserProfile) {
                         $profileName = $connectedUserProfile->profile_name;
                         $mediaService = new MediaService();
-                        $profileImage = $mediaService->getImages($requesterToUser);
+                        $profileImage = $mediaService->getImages($connectedUser);
                         $profileAvatarName = $connectedUserProfile->avatarName();
                     }
 
