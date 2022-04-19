@@ -234,6 +234,7 @@ class QuickpayController extends Controller
                         'amount' => ($request['numberOfAttendees'] * $chargeInfo['total']) * 100, //$chargeInfo['total'] * 100,
                         'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
                         'cancel_url' => $cancelUrl,
+                        'payment_methods' => $paymentMethod,
                         'auto_capture' => $isQuickBooking ? true : false,
                     ];
 
