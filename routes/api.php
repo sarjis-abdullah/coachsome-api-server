@@ -42,7 +42,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Storage Video
         Route::get('storage/video/{name}', 'VideoController@getVideo');
 
-
+        // Storage Video
+        Route::get('invite-friend', 'InviteFriendController@inviteFriends');
 
         Route::group(['middleware' => ['auth:api']], function () {
 
