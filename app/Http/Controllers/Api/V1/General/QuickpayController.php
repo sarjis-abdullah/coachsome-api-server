@@ -31,6 +31,7 @@ use App\Services\ContactService;
 use App\Services\CurrencyService;
 use App\Services\Media\MediaService;
 use App\Services\PackageService;
+use App\Services\ProfileService;
 use App\Services\Promo\PromoService;
 use App\Services\QuickpayCardService;
 use App\Services\QuickpayClientService;
@@ -230,13 +231,27 @@ class QuickpayController extends Controller
                     $paymentObject = $payment->asObject();
                     $requestStatus = null;
                     $modifiedContinueUrl = $continueUrl . "&quick_booking=${isQuickBooking}&order_key=${orderKey}&sale_price=${salePrice}";
+                    // $profile = $packageBuyerUser->profile;
                     $payload = [
                         'amount' => ($request['numberOfAttendees'] * $chargeInfo['total']) * 100, //$chargeInfo['total'] * 100,
                         'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
                         'cancel_url' => $cancelUrl,
                         'payment_methods' => $paymentMethod,
+                        // 'invoice_address[mobile_number]' = $profile = $user->profile;
                         'auto_capture' => $isQuickBooking ? true : false,
                     ];
+
+                    // if($paymentMethod == 'mpobilepay' || $paymentMethod == 'mobile_pay'){
+                    //     $profileService = new ProfileService();
+                    //     $payload = [
+                    //         'amount' => ($request['numberOfAttendees'] * $chargeInfo['total']) * 100, //$chargeInfo['total'] * 100,
+                    //         'continue_url' => $isQuickBooking ? $modifiedContinueUrl : $continueUrl,
+                    //         'cancel_url' => $cancelUrl,
+                    //         'payment_methods' => $paymentMethod,
+                    //         'invoice_address[mobile_number]' =>$profileService->getPhoneNumber($profile),
+                    //         'auto_capture' => $isQuickBooking ? true : false,
+                    //     ];
+                    // }
 
                     // If the user saved any card then he should pay as a default method
                     // otherwise he has to generate a link to authorize
