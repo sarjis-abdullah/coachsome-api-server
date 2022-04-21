@@ -106,7 +106,7 @@ class BookingController extends Controller
             if ($mPaymentCard) {
                 $quickpayCardService = new QuickpayCardService();
                 $paymentCardObj = $quickpayCardService->getQuickPayCard($mPaymentCard->card_id)->asObject();
-                $paymentCard = null; //$paymentCardObj ? $paymentCardObj->metadata : null;
+                $paymentCard = $paymentCardObj  && isset($paymentCardObj->metadata) ? $paymentCardObj->metadata : null;
             }
 
             // Package charge info
