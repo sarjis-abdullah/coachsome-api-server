@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests\InviteFriend;
 
+use App\Entities\InviteFriend;
 use Illuminate\Foundation\Http\FormRequest;
 
-class InviteFriendsRequest extends FormRequest
+class IndexRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +25,7 @@ class InviteFriendsRequest extends FormRequest
     public function rules()
     {
         return [
-            "email" => "required|email"
+            'status' => 'required|in:' . implode(',', InviteFriend::getConstantsByPrefix('STATUS_TYPE_'))
         ];
     }
 }

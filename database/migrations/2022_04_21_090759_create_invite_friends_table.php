@@ -15,6 +15,11 @@ class CreateInviteFriendsTable extends Migration
     {
         Schema::create('invite_friends', function (Blueprint $table) {
             $table->id();
+            $table->string('token')->unique();
+            $table->string('email');
+            $table->string('status');
+            $table->foreignId('invitedByUserId')->constrained('users');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

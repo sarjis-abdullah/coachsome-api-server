@@ -2,49 +2,47 @@
 
 namespace App\Http\Controllers\Api\V1\General;
 
+use App\Entities\InviteFriend;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreInviteFriendRequest;
-use App\Http\Requests\UpdateInviteFriendRequest;
-use App\InviteFriend;
+use App\Http\Requests\InviteFriend\IndexRequest;
+use App\Http\Requests\InviteFriend\InviteFriendsRequest;
+use App\Http\Resources\InviteFriend\InviteFriendResource;
+use App\Http\Resources\InviteFriend\InviteFriendResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class InviteFriendController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return Response
+     * @return InviteFriendResourceCollection
      */
-    public function inviteFriends()
+    public function index(IndexRequest $request)
     {
-        //
+        $items = InviteFriend::where('status', '=', $request->status)->get();
+        return new InviteFriendResourceCollection($items);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a listing of the resource.
      *
-     * @return Response
+     * @param InviteFriendsRequest $request
+     * @return InviteFriendResource
      */
-    public function create()
+    public function inviteFriends(InviteFriendsRequest $request): InviteFriendResource
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \App\Http\Requests\StoreInviteFriendRequest  $request
-     * @return Response
-     */
-    public function store(StoreInviteFriendRequest $request)
-    {
-        //
+        $request['status'] = InviteFriend::STATUS_TYPE_REQUESTED;
+        $request['invitedByUserId'] = Auth::user()->id;
+        $request['token'] = time().'-'.mt_rand();
+        $result = InviteFriend::create($request->all());
+        return new InviteFriendResource($result);
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\InviteFriend  $inviteFriend
+     * @param  \App\Entities\InviteFriend  $inviteFriend
      * @return Response
      */
     public function show(InviteFriend $inviteFriend)
@@ -53,32 +51,9 @@ class InviteFriendController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\InviteFriend  $inviteFriend
-     * @return Response
-     */
-    public function edit(InviteFriend $inviteFriend)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \App\Http\Requests\UpdateInviteFriendRequest  $request
-     * @param  \App\InviteFriend  $inviteFriend
-     * @return Response
-     */
-    public function update(UpdateInviteFriendRequest $request, InviteFriend $inviteFriend)
-    {
-        //
-    }
-
-    /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\InviteFriend  $inviteFriend
+     * @param  \App\Entities\InviteFriend  $inviteFriend
      * @return Response
      */
     public function destroy(InviteFriend $inviteFriend)
