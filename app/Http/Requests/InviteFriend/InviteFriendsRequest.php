@@ -24,7 +24,8 @@ class InviteFriendsRequest extends FormRequest
     public function rules()
     {
         return [
-            "email" => "required|email"
+            'emails' => 'required|array',
+            'emails.*' => 'required|email',
         ];
     }
 }

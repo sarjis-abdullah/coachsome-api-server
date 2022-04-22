@@ -28,15 +28,20 @@ class InviteFriendController extends Controller
      * Display a listing of the resource.
      *
      * @param InviteFriendsRequest $request
-     * @return InviteFriendResource
+     * @return InviteFriendResourceCollection
      */
-    public function inviteFriends(InviteFriendsRequest $request): InviteFriendResource
+    public function inviteFriends(InviteFriendsRequest $request): InviteFriendResourceCollection
     {
-        $request['status'] = InviteFriend::STATUS_TYPE_REQUESTED;
-        $request['invitedByUserId'] = Auth::user()->id;
-        $request['token'] = time().'-'.mt_rand();
-        $result = InviteFriend::create($request->all());
-        return new InviteFriendResource($result);
+        $emails = [];
+        foreach ($request['emails'] as $key => $item){
+            $request['email'] = $item;
+            $request['status'] = InviteFriend::STATUS_TYPE_REQUESTED;
+            $request['invitedByUserId'] = Auth::user()->id;
+            $request['token'] = time().'-'.mt_rand();
+            $result = InviteFriend::create($request->all());
+            $emails[$key] = $result;
+        }
+        return new InviteFriendResourceCollection($emails);
     }
 
     /**
