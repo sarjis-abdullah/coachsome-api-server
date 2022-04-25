@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Api\V1\General;
 use App\Entities\InviteFriend;
 use App\Events\InviteFriendEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\InviteFriend\AcceptFriendInvitationRequest;
 use App\Http\Requests\InviteFriend\IndexRequest;
 use App\Http\Requests\InviteFriend\InviteFriendsRequest;
 use App\Http\Resources\InviteFriend\InviteFriendResource;
 use App\Http\Resources\InviteFriend\InviteFriendResourceCollection;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
 
 class InviteFriendController extends Controller
@@ -49,22 +53,14 @@ class InviteFriendController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Entities\InviteFriend  $inviteFriend
-     * @return Response
+     * @param AcceptFriendInvitationRequest $request
+     * @return Application|Redirector|RedirectResponse
      */
-    public function acceptFriendInvitation(InviteFriend $inviteFriend)
+    public function acceptFriendInvitation(AcceptFriendInvitationRequest $request)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Entities\InviteFriend  $inviteFriend
-     * @return Response
-     */
-    public function destroy(InviteFriend $inviteFriend)
-    {
-        //
+        $status = InviteFriend::STATUS_TYPE_ACCEPTED;
+        $result = InviteFriend::where('token', '=', $request['token'])->first();
+        $result->update(["status" => $status]);
+        return redirect(env('APP_CLIENT_DOMAIN')."/home");
     }
 }
