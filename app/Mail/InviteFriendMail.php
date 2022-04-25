@@ -35,7 +35,8 @@ class InviteFriendMail extends Mailable
     {
         $translationService = new TranslationService();
         $translations = $translationService->getKeyByLanguageCode(App::getLocale());
-         return $this->markdown('emails.inviteFriend')->subject("hello")->with([
+        $subject = "Invite Friends to Join Coachsome";
+         return $this->markdown('emails.inviteFriend')->subject($subject)->with([
              'inviteFriend' => $this->inviteFriend,
              'translations' => $translations,
          ]);
