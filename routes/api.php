@@ -42,7 +42,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Storage Video
         Route::get('storage/video/{name}', 'VideoController@getVideo');
 
-
+        // Invite-friends
+        Route::get('accept-friend-invitation', 'InviteFriendController@acceptFriendInvitation');
 
         Route::group(['middleware' => ['auth:api']], function () {
 
@@ -177,6 +178,10 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post('verifications/facbook-verify', 'VerificationController@verifyFacebook');
             Route::post('verifications/google-verify', 'VerificationController@verifyGoogle');
             Route::post('verifications/twitter-verify', 'VerificationController@verifyTwitter');
+
+            // Invite-friends
+            Route::post('invite-friend', 'InviteFriendController@inviteFriends');
+            Route::get('invite-friend', 'InviteFriendController@index');
 
             Route::group(['namespace' => 'Gift'], function () {
                 // gift-cards
