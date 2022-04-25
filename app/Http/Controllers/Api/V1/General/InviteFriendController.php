@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\General;
 
 use App\Entities\InviteFriend;
+use App\Events\InviteFriendEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InviteFriend\IndexRequest;
 use App\Http\Requests\InviteFriend\InviteFriendsRequest;
@@ -39,6 +40,7 @@ class InviteFriendController extends Controller
             $request['invitedByUserId'] = Auth::user()->id;
             $request['token'] = time().'-'.mt_rand();
             $result = InviteFriend::create($request->all());
+            event(new InviteFriendEvent($result));
             $emails[$key] = $result;
         }
         return new InviteFriendResourceCollection($emails);
@@ -50,7 +52,7 @@ class InviteFriendController extends Controller
      * @param  \App\Entities\InviteFriend  $inviteFriend
      * @return Response
      */
-    public function show(InviteFriend $inviteFriend)
+    public function acceptFriendInvitation(InviteFriend $inviteFriend)
     {
         //
     }
