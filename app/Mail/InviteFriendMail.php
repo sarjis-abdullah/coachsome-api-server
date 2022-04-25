@@ -2,10 +2,13 @@
 
 namespace App\Mail;
 
+use App\Services\TranslationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 
 class InviteFriendMail extends Mailable
 {
@@ -30,8 +33,11 @@ class InviteFriendMail extends Mailable
      */
     public function build()
     {
+        $translationService = new TranslationService();
+        $translations = $translationService->getKeyByLanguageCode(App::getLocale());
          return $this->markdown('emails.inviteFriend')->subject("hello")->with([
-             'inviteFriend' => $this->inviteFriend
+             'inviteFriend' => $this->inviteFriend,
+             'translations' => $translations,
          ]);
     }
 }
