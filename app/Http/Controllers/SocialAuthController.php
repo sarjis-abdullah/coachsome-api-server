@@ -151,6 +151,7 @@ class SocialAuthController extends Controller
 
         // When login or register as a user
         if (session(self::KEY_USER_TYPE)) {
+            $isExisting = false;
             $providerUser = Socialite::driver($provider)->user();
             $user = $this->findOrCreateUser(
                 $providerUser,
@@ -158,6 +159,7 @@ class SocialAuthController extends Controller
             );
 
             if ($user) {
+                $isExisting = true;
                 UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                 $tokenService = new TokenService();
                 $accessToken = $tokenService->createUserAccessToken($user);
@@ -165,6 +167,8 @@ class SocialAuthController extends Controller
                     config('company.url.client')
                     . '/redirect?access_token='
                     . $accessToken
+                    .'&is_existing='
+                    .$isExisting
                 );
             } else {
                 $status = 'error';
