@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\InviteFriendEvent;
 use App\Events\UserRegisteredEvent;
+use App\Listeners\InviteFriendListener;
 use App\Listeners\UserInitialSetupListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -22,7 +24,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         UserRegisteredEvent::class=>[
             UserInitialSetupListener::class
-        ]
+        ],
+        InviteFriendEvent::class=>[
+            InviteFriendListener::class
+        ],
     ];
 
     /**
