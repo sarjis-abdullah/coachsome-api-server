@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
-
+use App\Data\StatusCode;
+use App\Entities\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 
 class ResetPasswordController extends Controller
 {
@@ -73,6 +76,7 @@ class ResetPasswordController extends Controller
             ? $this->sendResetResponse($request, $response)
             : $this->sendResetFailedResponse($request, $response);
     }
+    
 
     /**
      * Get the response for a successful password reset.
@@ -104,5 +108,29 @@ class ResetPasswordController extends Controller
             'message' => 'Something wrong, try again.',
             'data' => $response
         ]);
+    }
+
+    public function addNew(Request $request){
+
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            throw new \Exception("Please provide valid data.");
+        }
+
+        $password = Hash::make($request->password);
+        $user = User::where('email', $request->email)->first();
+        $user->password = $password;
+        if($user->save()){
+            $data['message'] = "Password has been added successfully. You can now login with your new password";
+            return response($data, StatusCode::HTTP_OK);
+        }else{
+            $data['message'] = "Password add failed";
+            return response($data, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
     }
 }

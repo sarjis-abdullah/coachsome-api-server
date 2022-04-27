@@ -69,6 +69,7 @@ class SettingsController extends Controller
                 $userSettings['zipCode'] = $settings->zip;
                 $userSettings['city'] = $settings->city;
                 $userSettings['timezone'] = $settings->timezone;
+                $userSettings['has_password'] = $authUser->has_password;
 
 
                 $activeNotificationCategories = !empty($settings->notification_category)

@@ -52,6 +52,7 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+
     /**
      * @param array $attributes
      * @return \Illuminate\Database\Eloquent\Model
@@ -252,5 +253,11 @@ class User extends Authenticatable
     {
         return $this->activity_status_id == Constants::ACTIVITY_STATUS_ID_ACTIVE;
     }
+
+    public function getHasPasswordAttribute()
+    {
+        return ! empty($this->attributes['password']);
+    }
+
 
 }
