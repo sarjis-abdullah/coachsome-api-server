@@ -69,6 +69,7 @@ class LoginController extends Controller
         $isSwitched = false;
         $response['email_exist'] = false;
         $response['is_social_register'] = false;
+        $response['has_password'] = false;
 
 
         try {
@@ -77,6 +78,7 @@ class LoginController extends Controller
             ]);
 
             $user = User::with('socialAccount')->where('email', $request->email)->first();
+
             $roles = $user ? $user->roles : null;
 
             if (!$user) {
@@ -89,6 +91,9 @@ class LoginController extends Controller
                 
             }else{
                 $response['email_exist'] = true;
+
+                $response['has_password'] = $user->has_password;
+
                 if($request->has('email') && $request->missing('password')){ 
 
                     // If user registered using social media

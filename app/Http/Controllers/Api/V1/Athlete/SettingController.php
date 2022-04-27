@@ -45,6 +45,7 @@ class SettingController extends Controller
             return response([
                 'data' => new NotificationSettingResource($settings),
                 'email' => $authUser->email,
+                'has_password' => $authUser->has_password,
                 'isSocialLogin' => $socialAuth ? true : false
             ], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
