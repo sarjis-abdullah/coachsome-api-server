@@ -307,6 +307,9 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::post('recovery', 'ForgotPasswordController@sendResetLinkEmail');
         Route::post('password/reset', 'ResetPasswordController@reset');
 
+         // Add password
+         Route::post('password/add', 'ResetPasswordController@addNew');
+
 
         // Impersonate
         Route::group(['middleware' => ['sessions']], function () {
