@@ -61,6 +61,6 @@ class InviteFriendController extends Controller
         $status = InviteFriend::STATUS_TYPE_ACCEPTED;
         $result = InviteFriend::where('token', '=', $request['token'])->first();
         $result->update(["status" => $status]);
-        return redirect(env('APP_CLIENT_DOMAIN')."/home");
+        return redirect(env('APP_CLIENT_DOMAIN')."/login");
     }
 }
