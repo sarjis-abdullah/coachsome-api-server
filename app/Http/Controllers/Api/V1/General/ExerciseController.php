@@ -12,11 +12,10 @@ use App\Entities\Gallery;
 use App\Entities\Image;
 use App\Entities\Video;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Exercise\ExerciseResource;
 use App\Services\Media\MediaService;
 use App\Services\ProgressService;
-use App\Services\StepService;
 use App\Services\StorageService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -123,6 +122,57 @@ class ExerciseController extends Controller
     }
 
     /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+
+        // dd($request->all());
+
+        try {
+            $data = [];
+
+            $request->validate([
+                'name' => 'required',
+                'instructions' => 'required',
+                'category' => 'required',
+                'sport' => 'required',
+                'lavel' => 'required',
+                'tags' => 'required',
+            ]);
+
+
+            $asset_ids = implode(',', array_column($request->assets, 'id'));
+            $category_id = $request->category['id'];
+            $sport_id = $request->sport['id'];
+            $lavel_id = $request->lavel['id'];
+            $exercise = new Exercise();
+            $exercise->user_id = Auth::user()->id;
+            $exercise->exercise_asset_ids = $asset_ids;
+            $exercise->name = $request->name;
+            $exercise->instructions = $request->instructions;
+            $exercise->category_id = $category_id;
+            $exercise->sport_id = $sport_id;
+            $exercise->lavel_id = $lavel_id;
+            $exercise->tags = implode(',', $request->tags);
+            $exercise->type = $request->type;
+
+            $exercise->save();
+
+            $data['exercise'] = new ExerciseResource($exercise);
+            return response($data, StatusCode::HTTP_OK);
+
+            
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    /**
      * Display the specified resource.
      *
      * @param int $id
@@ -186,7 +236,7 @@ class ExerciseController extends Controller
         if ($file_data != "") {
             $extension = explode("/", $type)[1];
             $prefix = 'id_' . Auth::id() . '_';
-            $fileName = $prefix . time() . '.' . $extension;
+            $fileName = "exercise/".$prefix . time() . '.' . $extension;
             Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->put($fileName, base64_decode($file_data));
         }
 
@@ -209,4 +259,22 @@ class ExerciseController extends Controller
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
+
+    public function getLavels(Request $request)
+    {
+        try {
+            $lavels = [];
+
+            $lavels = Config::get('exercise.exercise_lavels');
+
+            return response()->json([
+                'lavels' => $lavels
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+    
 }

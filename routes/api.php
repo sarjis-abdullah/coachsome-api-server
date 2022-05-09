@@ -19,6 +19,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
         // Sport Categories
         Route::get('sportCategories', 'SportCategoryController@index');
+        Route::get('exercise-categories', 'ExerciseController@getCategory');
+        Route::get('exercise-lavels', 'ExerciseController@getLavels');
 
         // Company Ratings
         Route::get('companyRatings', 'CompanyRatingController@index');
@@ -46,6 +48,11 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::get('accept-friend-invitation', 'InviteFriendController@acceptFriendInvitation');
 
         Route::group(['middleware' => ['auth:api']], function () {
+
+            // Exercise
+            Route::resource('exercises', 'ExerciseController');
+            Route::post('exercise-assets', 'ExerciseController@storeAssets');
+            Route::delete('exercise-assets/{id}', 'ExerciseController@destroyAssets');
 
             // bookings
             Route::get('bookings', 'BookingController@index');
@@ -115,13 +122,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::resource('images', 'ImageController');
             Route::resource('videos', 'VideoController');
             Route::resource('galleries', 'GalleryController');
-
-            // Exercise
-            Route::get('exercise-categories', 'ExerciseController@getCategory');
-
-            Route::resource('exercises', 'ExerciseController');
-            Route::post('exercise-assets', 'ExerciseController@storeAssets');
-            Route::delete('exercise-assets/{id}', 'ExerciseController@destroyAssets');
 
             // geography
             Route::resource('locations', 'LocationController');
@@ -209,6 +209,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::post("payment-cards", "PaymentCardController@store");
             Route::post("payment-cards/cancel", "PaymentCardController@cancel");
         });
+
     });
 
     /*
