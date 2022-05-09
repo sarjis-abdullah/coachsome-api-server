@@ -116,6 +116,13 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             Route::resource('videos', 'VideoController');
             Route::resource('galleries', 'GalleryController');
 
+            // Exercise
+            Route::get('exercise-categories', 'ExerciseController@getCategory');
+
+            Route::resource('exercises', 'ExerciseController');
+            Route::post('exercise-assets', 'ExerciseController@storeAssets');
+            Route::delete('exercise-assets/{id}', 'ExerciseController@destroyAssets');
+
             // geography
             Route::resource('locations', 'LocationController');
             Route::resource('distances', 'DistanceController');
@@ -306,9 +313,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Forgot password
         Route::post('recovery', 'ForgotPasswordController@sendResetLinkEmail');
         Route::post('password/reset', 'ResetPasswordController@reset');
-
-         // Add password
-         Route::post('password/add', 'ResetPasswordController@addNew');
 
 
         // Impersonate
