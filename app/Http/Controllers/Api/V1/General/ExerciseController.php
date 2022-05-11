@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExerciseController extends Controller
 {
@@ -185,7 +187,60 @@ class ExerciseController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+
+        $data = [];
+
+        try {
+
+
+            $request->validate([
+                'name'          => 'required',
+                'instructions'  => 'required',
+                'category'      => 'required',
+                'sport'         => 'required',
+                'lavel'         => 'required',
+                'tags'          => 'required',
+            ]);
+
+
+            $asset_ids      = implode(',', array_column($request->assets, 'id'));
+            $category_id    = implode(',', array_column($request->category, 'id'));
+            $sport_id    = implode(',', array_column($request->sport, 'id'));
+            $lavel_id    = implode(',', array_column($request->lavel, 'id'));
+
+            $exercise                       = Exercise::where('id', $request->id)->firstOrFail();
+            $exercise->user_id              = Auth::user()->id;
+            $exercise->exercise_asset_ids   = $asset_ids;
+            $exercise->name                 = $request->name;
+            $exercise->instructions         = $request->instructions;
+            $exercise->category_id          = $category_id;
+            $exercise->sport_id             = $sport_id;
+            $exercise->lavel_id             = $lavel_id;
+            $exercise->tags                 = implode(',', $request->tags);
+            $exercise->type                 = $request->type;
+
+            $exercise->save();
+
+            $data['exercise'] = new ExerciseResource($exercise);
+            return response($data, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                $response['status'] = 'error';
+                $response['message'] = $e->validator->errors()->first();
+                return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            if ($e instanceof ModelNotFoundException) {
+                $response['status'] = 'error';
+                $response['message'] = 'Exercise not found';
+                return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $response['status'] = 'error';
+            $response['message'] = $e->getMessage();
+            return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
     /**

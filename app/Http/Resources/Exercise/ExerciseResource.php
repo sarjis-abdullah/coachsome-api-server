@@ -4,6 +4,7 @@ namespace App\Http\Resources\Exercise;
 
 use App\Data\ExerciseData;
 use App\Entities\ExerciseAsset;
+use App\Entities\ExerciseSportCategory;
 use App\Entities\SportCategory;
 use App\Services\Media\MediaService;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -51,12 +52,12 @@ class ExerciseResource extends JsonResource
         $filteredCategoryData = $CategoryData->where('id',$this->category_id);
         $category = $filteredCategoryData->all();
 
+        $SportData = collect(ExerciseSportCategory::orderBy('id', 'asc')->get());
+        $filteredSportData = $SportData->where('id',$this->sport_id);
+        $sport = $filteredSportData->all();
 
 
-        $sport = SportCategory::where('id', $this->sport_id)->first();
-
-
-        $LavelData= collect(Config::get('exercise.exercise_categories'));
+        $LavelData= collect(Config::get('exercise.exercise_lavels'));
         $filteredLavelData = $LavelData->where('id',$this->lavel_id);
         $lavel = $filteredLavelData->all();
 
