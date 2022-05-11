@@ -194,6 +194,41 @@ class ExerciseController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
+
+    public function destroy($id)
+    {
+
+        try {
+            $exercise = Exercise::find($id);
+            if (!$exercise) {
+                throw new \Exception('Exercise not found');
+            }
+
+            if($exercise->exercise_asset_ids != null){
+
+                $exerciseAssets = ExerciseAsset::whereIn('id', explode(',',$exercise->exercise_asset_ids))->orderBy('sort', 'asc')->get();
+
+                foreach($exerciseAssets as $exerciseAsset){
+
+                    if ($exerciseAsset) {
+                        if ($exerciseAsset->file_name && Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->has($exerciseAsset->file_name)) {
+                            Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->delete($exerciseAsset->file_name);
+                        }
+                        $exerciseAsset->delete();
+                    } 
+                }
+
+            }
+
+            $exercise->delete();
+            return response([], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        
+    }
+
+
     public function destroyAssets($id)
     {
         $response = [];

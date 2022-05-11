@@ -20,18 +20,29 @@ class ExerciseResource extends JsonResource
     public function toArray($request)
     {
         $mediaService = new MediaService();
-        $assets = ExerciseAsset::whereIn('id', explode(',',$this->exercise_asset_ids))->orderBy('sort', 'asc')->get()->map(function ($item) use ($mediaService) {
-            $url = $item->url ?? '';
-            if ($item->type == 'image') {
-                $url = $mediaService->getGalleryImageUrl($item->file_name);
-            }
-            return [
-                'id' => $item->id,
-                'type' => $item->type,
-                'url' => $url,
-            ];
-        })->values();
-        // dd( $assets);
+
+        if($this->exercise_asset_ids != null){
+
+            $assets = ExerciseAsset::whereIn('id', explode(',',$this->exercise_asset_ids))->orderBy('sort', 'asc')->get()->map(function ($item) use ($mediaService) {
+                $url = $item->url ?? '';
+                if ($item->type == 'image') {
+                    $url = $mediaService->getGalleryImageUrl($item->file_name);
+                }
+                return [
+                    'id' => $item->id,
+                    'type' => $item->type,
+                    'url' => $url,
+                ];
+            })->values();
+
+        }else{
+            
+            $assets[] = array(
+                'id' => 1,
+                'type' => "image",
+                'url' => env('APP_SERVER_DOMAIN_STORAGE_PATH') . '/assets/images/exercise_default.jpg',
+            );
+        }
 
         $name = $this->name;
         $instructions = $this->instructions;
