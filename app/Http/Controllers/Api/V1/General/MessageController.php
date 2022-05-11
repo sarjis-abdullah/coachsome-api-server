@@ -11,6 +11,7 @@ use App\Entities\Message;
 use App\Entities\MessageCategory;
 use App\Entities\PendingNotification;
 use App\Entities\User;
+use App\Events\CreateNewContactUserEvent;
 use App\Http\Controllers\Controller;
 use App\Jobs\NewMessageInformer;
 use App\Notifications\NewTextMessage;
@@ -158,6 +159,11 @@ class MessageController extends Controller
 
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
 
+            event(new CreateNewContactUserEvent([
+                'contactToUserId' => $receiverUserId,
+                'email' => Auth::user()->email,
+                'comment' => "Created while sending message",
+            ]));
             return response()->json([
                 'message' => 'Successfully receive a message'
             ], StatusCode::HTTP_OK);
@@ -198,7 +204,7 @@ class MessageController extends Controller
                 'file' => 'required|mimes:jpg,png,gif,svg|max:5000'
 
             ]);
-        
+
             $name = $request->file('file')->store(
                 '', 'minio'
             );

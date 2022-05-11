@@ -235,6 +235,9 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // payout information
         Route::get('payoutInformation', 'PayoutInformationController@index');
         Route::post('payoutInformation', 'PayoutInformationController@save');
+
+        // Contact User
+        Route::apiResource('contact-user', 'ContactUserController');
     });
 
     /*

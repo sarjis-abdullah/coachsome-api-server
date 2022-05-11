@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Events\CreateNewContactUserEvent;
 use App\Events\InviteFriendEvent;
 use App\Events\UserRegisteredEvent;
+use App\Listeners\CreateNewContactUserListener;
 use App\Listeners\InviteFriendListener;
 use App\Listeners\UserInitialSetupListener;
 use Illuminate\Auth\Events\Registered;
@@ -27,6 +29,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         InviteFriendEvent::class=>[
             InviteFriendListener::class
+        ],
+        CreateNewContactUserEvent::class=>[
+            CreateNewContactUserListener::class
         ],
     ];
 
