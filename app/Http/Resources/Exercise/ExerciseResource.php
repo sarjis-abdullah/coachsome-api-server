@@ -49,16 +49,16 @@ class ExerciseResource extends JsonResource
         $instructions = $this->instructions;
 
         $CategoryData= collect(Config::get('exercise.exercise_categories'));
-        $filteredCategoryData = $CategoryData->where('id',$this->category_id);
+        $filteredCategoryData = $CategoryData->whereIn('id', explode(',', $this->category_id));
         $category = $filteredCategoryData->all();
 
         $SportData = collect(ExerciseSportCategory::orderBy('id', 'asc')->get());
-        $filteredSportData = $SportData->where('id',$this->sport_id);
+        $filteredSportData = $SportData->whereIn('id',  explode(',', $this->sport_id));
         $sport = $filteredSportData->all();
 
 
         $LavelData= collect(Config::get('exercise.exercise_lavels'));
-        $filteredLavelData = $LavelData->where('id',$this->lavel_id);
+        $filteredLavelData = $LavelData->whereIn('id', explode(',', $this->lavel_id));
         $lavel = $filteredLavelData->all();
 
         $tags = explode(',', $this->tags);

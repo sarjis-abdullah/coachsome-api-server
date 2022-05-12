@@ -128,9 +128,9 @@ class ExerciseController extends Controller
             ]);
 
             $asset_ids      = implode(',', array_column($request->assets, 'id'));
-            $category_id    = $request->category['id'];
-            $sport_id       = $request->sport['id'];
-            $lavel_id       = $request->lavel['id'];
+            $category_id    = implode(',', array_column($request->category, 'id'));
+            $sport_id    = implode(',', array_column($request->sport, 'id'));
+            $lavel_id    = implode(',', array_column($request->lavel, 'id'));
 
             $exercise                       = new Exercise();
             $exercise->user_id              = Auth::user()->id;
