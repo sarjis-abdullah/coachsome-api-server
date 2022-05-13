@@ -17,8 +17,8 @@ class CreateNewContactUserListener
      */
     public function handle(object $event)
     {
-        $hasRole = Auth::user()->hasRole([Constants::ROLE_KEY_ATHLETE, Constants::ROLE_KEY_SUPER_ADMIN]);
-        if ($hasRole) {
+        $isAthlete = Auth::user()->hasRole([Constants::ROLE_KEY_ATHLETE, Constants::ROLE_KEY_SUPER_ADMIN]);
+        if ($isAthlete) {
             $hasItem = ContactUser::where('email', '=', $event->contactUserRequest['email'])->first();
             if (!$hasItem)
                 ContactUser::create($event->contactUserRequest);

@@ -1,9 +1,9 @@
 @php
     $user = \Illuminate\Support\Facades\Auth::user();
-    $emailContent = __($translations['email_template_invite_friends'], [
+    $emailContent = __($translations['email_template_send_email_to_contact_user'], [
          'coachName'=> $user->first_name . " ".$user->last_name,
-         'athleteName'=> $user->first_name . " ".$user->last_name,
-         'acceptFriendUrl'=> env('APP_SERVER_DOMAIN')."/api/accept-friend-invitation?token=".$contactUser['token'],
+         'athleteName'=> $athleteName,
+         'activateContactUserAccountUrl'=> env('APP_SERVER_DOMAIN')."/api/activate-account?email=".$contactUser['email'],
          'termsUrl' => env('APP_CLIENT_DOMAIN_TERMS_PAGE'),
          'clientHomeUrl' => env('APP_CLIENT_DOMAIN'),
          'coachsomeLinkedinUrl' => "https://www.linkedin.com/company/coachsome/",

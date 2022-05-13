@@ -4,9 +4,11 @@ namespace App\Providers;
 
 use App\Events\CreateNewContactUserEvent;
 use App\Events\InviteFriendEvent;
+use App\Events\SendEmailToContactUserEvent;
 use App\Events\UserRegisteredEvent;
 use App\Listeners\CreateNewContactUserListener;
 use App\Listeners\InviteFriendListener;
+use App\Listeners\SendEmailToContactUserListener;
 use App\Listeners\UserInitialSetupListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -32,6 +34,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         CreateNewContactUserEvent::class=>[
             CreateNewContactUserListener::class
+        ],
+        SendEmailToContactUserEvent::class=>[
+            SendEmailToContactUserListener::class
         ],
     ];
 

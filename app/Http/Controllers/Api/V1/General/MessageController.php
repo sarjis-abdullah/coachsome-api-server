@@ -29,7 +29,6 @@ use MessageFormatter;
 
 class MessageController extends Controller
 {
-
     public function index(Request $request)
     {
         try {
@@ -161,7 +160,10 @@ class MessageController extends Controller
 
             event(new CreateNewContactUserEvent([
                 'contactToUserId' => $receiverUserId,
+                'contactByUserId' => Auth::user()->id,
                 'email' => Auth::user()->email,
+//                'firstName' => "Test",
+//                'lastName' => "Test",
                 'comment' => "Created while sending message",
             ]));
             return response()->json([

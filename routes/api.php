@@ -238,6 +238,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
         // Contact User
         Route::apiResource('contact-user', 'ContactUserController');
+        Route::get('contact-user-resend-invitation', 'ContactUserController@resendInvitation');
     });
 
     /*

@@ -18,5 +18,6 @@ class ContactUser extends Model
         "status",
         "comment",
         "contactToUserId",
+        "contactByUserId",
     ];
 }
