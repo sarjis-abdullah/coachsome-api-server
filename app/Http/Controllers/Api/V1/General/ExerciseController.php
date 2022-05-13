@@ -49,6 +49,86 @@ class ExerciseController extends Controller
         }
     }
 
+
+    public function filter(Request $request){
+
+        try {
+
+            $response = [];
+
+            $query = Exercise::orderBy('id', 'asc');
+
+            if($request->withVideo){
+
+                $exercises = ExerciseAsset::where('type', 'video')->get();
+
+                foreach($exercises as $exercise){
+
+                    $query->whereRaw("find_in_set('".$exercise."',exercise_asset_ids)");
+                }
+                
+            }
+
+            if($request->typeSytem == 1){
+
+                $query->where('type', 1);
+
+            }
+
+            if($request->typeCustom == 1){
+
+                $query->Where('type', 2);
+
+            }
+
+            if($request->categoriesSelected != null){
+
+                $category_ids    = array_column($request->categoriesSelected, 'id');
+
+                foreach($category_ids as $category_id){
+
+                    $query->whereRaw("find_in_set('".$category_id."',category_id)");
+                }
+                
+
+            }
+
+            if($request->lavelsSelected != null){
+                
+
+                $lavel_ids   = array_column($request->lavelsSelected, 'id');
+
+                foreach($lavel_ids as $lavel_id){
+
+                    $query->whereRaw("find_in_set('".$lavel_id."',lavel_id)");
+                }
+
+
+            }
+
+            if($request->sportsSelected != null){
+
+                $sport_ids   = array_column($request->sportsSelected, 'id');
+
+                foreach($sport_ids as $sport_id){
+
+                    $query->whereRaw("find_in_set('".$sport_id."',sport_id)");
+                }
+            }
+            
+            $exercises = $query->get();
+
+            $response['exercises'] = new ExerciseCollection($exercises);
+
+            return response($response, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+     }
+
+
     /**
      * Store a newly created resource in storage.
      *
