@@ -52,6 +52,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
             // Exercise
             Route::resource('exercises', 'ExerciseController');
             Route::post('exercise-assets', 'ExerciseController@storeAssets');
+            Route::post('filter-exercises', 'ExerciseController@filter');
             Route::delete('exercise-assets/{id}', 'ExerciseController@destroyAssets');
 
             // bookings
