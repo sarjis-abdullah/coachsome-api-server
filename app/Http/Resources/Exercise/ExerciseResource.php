@@ -22,6 +22,8 @@ class ExerciseResource extends JsonResource
     {
         $mediaService = new MediaService();
 
+        $assets = [];
+
         if($this->exercise_asset_ids != null){
 
             $assets = ExerciseAsset::whereIn('id', explode(',',$this->exercise_asset_ids))->orderBy('sort', 'asc')->get()->map(function ($item) use ($mediaService) {
@@ -33,15 +35,17 @@ class ExerciseResource extends JsonResource
                     'id' => $item->id,
                     'type' => $item->type,
                     'url' => $url,
+                    'url_type' => 'stored'
                 ];
             })->values();
 
-        }else{
-            
+        }else if(!isset($this->show_default_image)){
+
             $assets[] = array(
                 'id' => 1,
                 'type' => "image",
                 'url' => env('APP_SERVER_DOMAIN_STORAGE_PATH') . '/assets/images/exercise_default.jpg',
+                'url_type' => 'default'
             );
         }
 
@@ -61,7 +65,7 @@ class ExerciseResource extends JsonResource
         $filteredLavelData = $LavelData->whereIn('id', explode(',', $this->lavel_id));
         $lavel = $filteredLavelData->all();
 
-        $tags = explode(',', $this->tags);
+        $tags =  $this->tags == "" ? [] : explode(',', $this->tags);
 
         $id = $this->id;
         
