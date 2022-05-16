@@ -279,6 +279,59 @@ class ExerciseController extends Controller
             return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
+    public function duplicate($id)
+    {
+        
+        try {
+
+            $response = [];
+
+            $exercise = Exercise::where('id', $id)->first();
+
+
+            if($exercise->exercise_asset_ids != ""){
+
+
+                $assets = ExerciseAsset::whereIn('id', explode(',', $exercise->exercise_asset_ids))->get();
+
+                foreach($assets as $asset){
+
+                    if($asset->type == 'image'){
+                        $extension = \File::extension($asset->file_name);
+                        $prefix = 'id_' . Auth::id() . '_';
+                        $fileName = "exercise/".$prefix .$asset->id. time() . '.' . $extension;
+                        Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->copy($asset->file_name, $fileName);
+                        $asset->file_name = $fileName;
+                    }
+
+                    $asset->status = 6;
+                    $newAsset = $asset->replicate();
+                    $newAsset->push();
+
+                    $newAssetsData[] = array(
+                        'id' => $newAsset->id,
+                        'type' => $newAsset->type,
+                        'url' => env('APP_SERVER_DOMAIN_STORAGE_PATH') .  $newAsset->file_name,
+                        'url_type' => 'stored'
+                    );
+                    
+                }
+
+                $exercise->exercise_asset_ids = implode(',', array_column($newAssetsData, 'id'));
+  
+                
+            }else{
+                $exercise->setAttribute('show_default_image', false);
+            }
+
+            $response['exercise'] = new ExerciseResource($exercise);
+
+            return response($response, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
 
 
     
