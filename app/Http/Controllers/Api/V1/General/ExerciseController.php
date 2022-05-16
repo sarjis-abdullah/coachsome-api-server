@@ -258,6 +258,31 @@ class ExerciseController extends Controller
     }
 
 
+    public function edit($id)
+    {
+        
+        try {
+
+            $response = [];
+
+
+
+            $exercise = Exercise::where('id', $id)->first();
+
+            $exercise->setAttribute('show_default_image', false);
+
+            $response['exercise'] = new ExerciseResource($exercise);
+
+            return response($response, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+
+    
+
     /**
      * Update the specified resource in storage.
      *
@@ -356,7 +381,8 @@ class ExerciseController extends Controller
             }
 
             $exercise->delete();
-            return response([], StatusCode::HTTP_OK);
+            $response['exercise'] = $exercise;
+            return response($response, StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
