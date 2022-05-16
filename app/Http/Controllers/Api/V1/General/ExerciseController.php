@@ -198,14 +198,14 @@ class ExerciseController extends Controller
         try {
             $data = [];
 
-            $request->validate([
+            $validator = Validator::make($request->all(), [
                 'name'          => 'required',
                 'instructions'  => 'required',
-                'category'      => 'required',
-                'sport'         => 'required',
-                'lavel'         => 'required',
-                'tags'          => 'required',
             ]);
+
+            if ($validator->fails()) {
+                throw new \Exception($validator->getMessageBag()->first());
+            }
 
             $asset_ids      = implode(',', array_column($request->assets, 'id'));
             $category_id    = implode(',', array_column($request->category, 'id'));
@@ -273,14 +273,14 @@ class ExerciseController extends Controller
         try {
 
 
-            $request->validate([
+            $validator = Validator::make($request->all(), [
                 'name'          => 'required',
                 'instructions'  => 'required',
-                'category'      => 'required',
-                'sport'         => 'required',
-                'lavel'         => 'required',
-                'tags'          => 'required',
             ]);
+
+            if ($validator->fails()) {
+                throw new \Exception($validator->getMessageBag()->first());
+            }
 
 
             $asset_ids      = implode(',', array_column($request->assets, 'id'));
