@@ -7,6 +7,7 @@ use App\Data\OrderStatus;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\Contact;
+use App\Entities\ContactUser;
 use App\Entities\Message;
 use App\Entities\MessageCategory;
 use App\Entities\PendingNotification;
@@ -159,11 +160,12 @@ class MessageController extends Controller
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
 
             event(new CreateNewContactUserEvent([
-                'contactToUserId' => $receiverUserId,
-                'contactByUserId' => Auth::user()->id,
+                'receiverUserId' => $receiverUserId,
+                'contactAbleUserId' => Auth::user()->id,
                 'email' => Auth::user()->email,
-//                'firstName' => "Test",
-//                'lastName' => "Test",
+                'firstName' => $receiverUser['first_name'],
+                'lastName' => $receiverUser['last_name'],
+                'status' => ContactUser::STATUS_ACTIVE,
                 'comment' => "Created while sending message",
             ]));
             return response()->json([

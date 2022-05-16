@@ -30,8 +30,8 @@ class StoreRequest extends FormRequest
             'firstName' => "sometimes|required",
             'lastName' => "sometimes|required",
             'email' => "required|email|unique:contact_users,email",
-            'contactToUserId' => "sometimes|required|exists:users,id",
-            'contactByUserId' => "required|exists:users,id",
+            'receiverUserId' => "sometimes|required|exists:users,id",
+            'contactAbleUserId' => "required|exists:users,id",
         ];
     }
 }

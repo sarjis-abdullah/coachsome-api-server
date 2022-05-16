@@ -30,7 +30,7 @@ class ContactUserController extends Controller
         $limit = !empty($request['per_page']) ? $request['per_page'] : 50; // it's needed for pagination
         $orderBy = !empty($request['order_by']) ? $request['order_by'] : 'id';
         $orderDirection = !empty($request['order_direction']) ? $request['order_direction'] : 'desc';
-        $queryBuilder = ContactUser::where('contactByUserId', '=', Auth::user()->id);
+        $queryBuilder = ContactUser::where('receiverUserId', '=', Auth::user()->id);
 
         if (!empty($request['lazyQuery'])){
             $input = $request['lazyQuery'];

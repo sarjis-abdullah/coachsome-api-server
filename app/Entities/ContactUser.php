@@ -10,6 +10,8 @@ class ContactUser extends Model
 {
     use HasFactory, SoftDeletes;
 
+    const STATUS_ACTIVE = "active";
+
     protected $fillable = [
         "categoryName",
         "firstName",
@@ -17,7 +19,7 @@ class ContactUser extends Model
         "email",
         "status",
         "comment",
-        "contactToUserId",
-        "contactByUserId",
+        "receiverUserId",
+        "contactAbleUserId",
     ];
 }

@@ -22,9 +22,9 @@ class CreateContactUsersTable extends Migration
             $table->string('status')->nullable();
             $table->text('comment')->nullable();
             $table->dateTime('lastActiveAt')->nullable();
-            $table->foreignId('contactToUserId')->nullable()
+            $table->foreignId('receiverUserId')->nullable()
                 ->constrained('users');
-            $table->foreignId('contactByUserId')->nullable()
+            $table->foreignId('contactAbleUserId')->nullable()
                 ->constrained('users');
             $table->softDeletes();
             $table->timestamps();
