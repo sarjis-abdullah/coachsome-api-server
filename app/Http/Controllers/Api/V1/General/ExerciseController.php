@@ -166,6 +166,24 @@ class ExerciseController extends Controller
                 $exerciseAsset->url = $url;
                 $exerciseAsset->sort = 1;
             }
+
+            if($type == 'custom-video'){
+                
+                if($request->hasFile('file')){
+                    $file = $request->file('file');
+
+                    $prefix = 'id_' . Auth::id() . '_';
+                    $fileName = "exercise/".$prefix . time() . '.' .$request->file->getClientOriginalExtension();
+    
+                    Storage::putFileAs('public/images/', $file, $fileName);
+    
+                    $exerciseAsset->file_name = $fileName;
+                    $exerciseAsset->sort = 1;
+                    $url = $mediaService->getExerciseVideoUrl($exerciseAsset->file_name);
+                }
+            }
+
+
             $exerciseAsset->save();
 
             $data['item'] = [
@@ -304,7 +322,6 @@ class ExerciseController extends Controller
                         $asset->file_name = $fileName;
                     }
 
-                    $asset->status = 6;
                     $newAsset = $asset->replicate();
                     $newAsset->push();
 

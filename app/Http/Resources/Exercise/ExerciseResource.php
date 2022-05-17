@@ -31,6 +31,9 @@ class ExerciseResource extends JsonResource
                 if ($item->type == 'image') {
                     $url = $mediaService->getGalleryImageUrl($item->file_name);
                 }
+                if ($item->type == 'custom-video') {
+                    $url = $mediaService->getExerciseVideoUrl($item->file_name);
+                }
                 return [
                     'id' => $item->id,
                     'type' => $item->type,
