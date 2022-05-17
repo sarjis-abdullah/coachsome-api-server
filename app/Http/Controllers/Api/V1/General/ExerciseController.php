@@ -12,6 +12,7 @@ use App\Entities\Gallery;
 use App\Entities\Image;
 use App\Entities\Video;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Exercise\ExerciseCollection;
 use App\Http\Resources\Exercise\ExerciseResource;
 use App\Services\Media\MediaService;
 use App\Services\ProgressService;
@@ -21,6 +22,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ExerciseController extends Controller
 {
@@ -32,38 +35,99 @@ class ExerciseController extends Controller
     public function index()
     {
         try {
-            $data = [];
-            $user = Auth::user();
-            if (!$user) {
-                throw new \Exception('User not found');
-            }
-            $mediaService = new MediaService();
-            $storageService = new StorageService();
 
-            $data['items'] = Gallery::where('user_id', $user->id)->get()->filter(function($item) use($storageService){
-                if ($item->type == 'image') {
-                   return $storageService->hasImage($item->file_name);
-                } else {
-                    return true;
-                }
-            })->map(function ($item) use ($mediaService) {
-                $url = $item->url ?? '';
-                if ($item->type == 'image') {
-                    $url = $mediaService->getGalleryImageUrl($item->file_name);
-                }
-                return [
-                    'id' => $item->id,
-                    'type' => $item->type,
-                    'url' => $url,
-                ];
-            })->values();
+            $response = [];
 
-            return response($data, StatusCode::HTTP_OK);
+            $exercises = Exercise::orderBy('id', 'DESC')->get();
+
+            $response['exercises'] = new ExerciseCollection($exercises);
+
+            return response($response, StatusCode::HTTP_OK);
 
         } catch (\Exception $e) {
             return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
+
+
+    public function filter(Request $request){
+
+        try {
+
+            $response = [];
+
+            $query = Exercise::orderBy('id', 'asc');
+
+            if($request->withVideo){
+
+                $exercises = ExerciseAsset::where('type', 'video')->get();
+
+                foreach($exercises as $exercise){
+
+                    $query->whereRaw("find_in_set('".$exercise."',exercise_asset_ids)");
+                }
+                
+            }
+
+            if($request->typeSytem == 1){
+
+                $query->where('type', 1);
+
+            }
+
+            if($request->typeCustom == 1){
+
+                $query->Where('type', 2);
+
+            }
+
+            if($request->categoriesSelected != null){
+
+                $category_ids    = array_column($request->categoriesSelected, 'id');
+
+                foreach($category_ids as $category_id){
+
+                    $query->whereRaw("find_in_set('".$category_id."',category_id)");
+                }
+                
+
+            }
+
+            if($request->lavelsSelected != null){
+                
+
+                $lavel_ids   = array_column($request->lavelsSelected, 'id');
+
+                foreach($lavel_ids as $lavel_id){
+
+                    $query->whereRaw("find_in_set('".$lavel_id."',lavel_id)");
+                }
+
+
+            }
+
+            if($request->sportsSelected != null){
+
+                $sport_ids   = array_column($request->sportsSelected, 'id');
+
+                foreach($sport_ids as $sport_id){
+
+                    $query->whereRaw("find_in_set('".$sport_id."',sport_id)");
+                }
+            }
+            
+            $exercises = $query->get();
+
+            $response['exercises'] = new ExerciseCollection($exercises);
+
+            return response($response, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -95,11 +159,31 @@ class ExerciseController extends Controller
             if ($type == ExerciseData::ASSET_TYPE_IMAGE && $image) {
                 $exerciseAsset->file_name = $this->uploadImage($image);
                 $exerciseAsset->url = null;
+                $exerciseAsset->sort = 2;
                 $url = $mediaService->getGalleryImageUrl($exerciseAsset->file_name);
             }
             if ($type == ExerciseData::ASSET_TYPE_VIDEO) {
                 $exerciseAsset->url = $url;
+                $exerciseAsset->sort = 1;
             }
+
+            if($type == 'custom-video'){
+                
+                if($request->hasFile('file')){
+                    $file = $request->file('file');
+
+                    $prefix = 'id_' . Auth::id() . '_';
+                    $fileName = "exercise/".$prefix . time() . '.' .$request->file->getClientOriginalExtension();
+    
+                    Storage::putFileAs('public/images/', $file, $fileName);
+    
+                    $exerciseAsset->file_name = $fileName;
+                    $exerciseAsset->sort = 1;
+                    $url = $mediaService->getExerciseVideoUrl($exerciseAsset->file_name);
+                }
+            }
+
+
             $exerciseAsset->save();
 
             $data['item'] = [
@@ -129,43 +213,38 @@ class ExerciseController extends Controller
      */
     public function store(Request $request)
     {
-
-        // dd($request->all());
-
         try {
             $data = [];
 
-            $request->validate([
-                'name' => 'required',
-                'instructions' => 'required',
-                'category' => 'required',
-                'sport' => 'required',
-                'lavel' => 'required',
-                'tags' => 'required',
+            $validator = Validator::make($request->all(), [
+                'name'          => 'required',
+                'instructions'  => 'required',
             ]);
 
+            if ($validator->fails()) {
+                throw new \Exception($validator->getMessageBag()->first());
+            }
 
-            $asset_ids = implode(',', array_column($request->assets, 'id'));
-            $category_id = $request->category['id'];
-            $sport_id = $request->sport['id'];
-            $lavel_id = $request->lavel['id'];
-            $exercise = new Exercise();
-            $exercise->user_id = Auth::user()->id;
-            $exercise->exercise_asset_ids = $asset_ids;
-            $exercise->name = $request->name;
-            $exercise->instructions = $request->instructions;
-            $exercise->category_id = $category_id;
-            $exercise->sport_id = $sport_id;
-            $exercise->lavel_id = $lavel_id;
-            $exercise->tags = implode(',', $request->tags);
-            $exercise->type = $request->type;
+            $asset_ids      = implode(',', array_column($request->assets, 'id'));
+            $category_id    = implode(',', array_column($request->category, 'id'));
+            $sport_id    = implode(',', array_column($request->sport, 'id'));
+            $lavel_id    = implode(',', array_column($request->lavel, 'id'));
+
+            $exercise                       = new Exercise();
+            $exercise->user_id              = Auth::user()->id;
+            $exercise->exercise_asset_ids   = $asset_ids;
+            $exercise->name                 = $request->name;
+            $exercise->instructions         = $request->instructions;
+            $exercise->category_id          = $category_id;
+            $exercise->sport_id             = $sport_id;
+            $exercise->lavel_id             = $lavel_id;
+            $exercise->tags                 = implode(',', $request->tags);
+            $exercise->type                 = $request->type;
 
             $exercise->save();
 
             $data['exercise'] = new ExerciseResource($exercise);
             return response($data, StatusCode::HTTP_OK);
-
-            
 
         } catch (\Exception $e) {
             return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
@@ -180,7 +259,95 @@ class ExerciseController extends Controller
      */
     public function show($id)
     {
-        //
+        
+        try {
+
+            $response = [];
+
+            $exercise = Exercise::where('id', $id)->first();
+
+            $response['exercise'] = new ExerciseResource($exercise);
+
+            return response($response, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+
+    public function edit($id)
+    {
+        
+        try {
+
+            $response = [];
+
+
+
+            $exercise = Exercise::where('id', $id)->first();
+
+            $exercise->setAttribute('show_default_image', false);
+
+            $response['exercise'] = new ExerciseResource($exercise);
+
+            return response($response, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+    public function duplicate($id)
+    {
+        
+        try {
+
+            $response = [];
+
+            $exercise = Exercise::where('id', $id)->first();
+
+
+            if($exercise->exercise_asset_ids != ""){
+
+
+                $assets = ExerciseAsset::whereIn('id', explode(',', $exercise->exercise_asset_ids))->get();
+
+                foreach($assets as $asset){
+
+                    if($asset->type == 'image' || $asset->type == 'custom-video'){
+                        $extension = \File::extension($asset->file_name);
+                        $prefix = 'id_' . Auth::id() . '_';
+                        $fileName = "exercise/".$prefix .$asset->id. time() . '.' . $extension;
+                        Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->copy($asset->file_name, $fileName);
+                        $asset->file_name = $fileName;
+                    }
+
+                    $newAsset = $asset->replicate();
+                    $newAsset->push();
+
+                    $newAssetsData[] = array(
+                        'id' => $newAsset->id,
+                        'type' => $newAsset->type,
+                        'url' => env('APP_SERVER_DOMAIN_STORAGE_PATH') .  $newAsset->file_name,
+                        'url_type' => 'stored'
+                    );
+                    
+                }
+
+                $exercise->exercise_asset_ids = implode(',', array_column($newAssetsData, 'id'));
+  
+                
+            }else{
+                $exercise->setAttribute('show_default_image', false);
+            }
+
+            $response['exercise'] = new ExerciseResource($exercise);
+
+            return response($response, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
 
@@ -193,7 +360,60 @@ class ExerciseController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+
+        $data = [];
+
+        try {
+
+
+            $validator = Validator::make($request->all(), [
+                'name'          => 'required',
+                'instructions'  => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                throw new \Exception($validator->getMessageBag()->first());
+            }
+
+
+            $asset_ids      = implode(',', array_column($request->assets, 'id'));
+            $category_id    = implode(',', array_column($request->category, 'id'));
+            $sport_id    = implode(',', array_column($request->sport, 'id'));
+            $lavel_id    = implode(',', array_column($request->lavel, 'id'));
+
+            $exercise                       = Exercise::where('id', $request->id)->firstOrFail();
+            $exercise->user_id              = Auth::user()->id;
+            $exercise->exercise_asset_ids   = $asset_ids;
+            $exercise->name                 = $request->name;
+            $exercise->instructions         = $request->instructions;
+            $exercise->category_id          = $category_id;
+            $exercise->sport_id             = $sport_id;
+            $exercise->lavel_id             = $lavel_id;
+            $exercise->tags                 = implode(',', $request->tags);
+            $exercise->type                 = $request->type;
+
+            $exercise->save();
+
+            $data['exercise'] = new ExerciseResource($exercise);
+            return response($data, StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                $response['status'] = 'error';
+                $response['message'] = $e->validator->errors()->first();
+                return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            if ($e instanceof ModelNotFoundException) {
+                $response['status'] = 'error';
+                $response['message'] = 'Exercise not found';
+                return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $response['status'] = 'error';
+            $response['message'] = $e->getMessage();
+            return response()->json($response, StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
     /**
@@ -202,6 +422,42 @@ class ExerciseController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
+
+    public function destroy($id)
+    {
+
+        try {
+            $exercise = Exercise::find($id);
+            if (!$exercise) {
+                throw new \Exception('Exercise not found');
+            }
+
+            if($exercise->exercise_asset_ids != null){
+
+                $exerciseAssets = ExerciseAsset::whereIn('id', explode(',',$exercise->exercise_asset_ids))->orderBy('sort', 'asc')->get();
+
+                foreach($exerciseAssets as $exerciseAsset){
+
+                    if ($exerciseAsset) {
+                        if ($exerciseAsset->file_name && Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->has($exerciseAsset->file_name)) {
+                            Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->delete($exerciseAsset->file_name);
+                        }
+                        $exerciseAsset->delete();
+                    } 
+                }
+
+            }
+
+            $exercise->delete();
+            $response['exercise'] = $exercise;
+            return response($response, StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        
+    }
+
+
     public function destroyAssets($id)
     {
         $response = [];
