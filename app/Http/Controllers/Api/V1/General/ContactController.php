@@ -51,10 +51,9 @@ class ContactController extends Controller
                 })
                 ->orderBy('contacts.last_message_time', 'DESC')
                 ->get();
-
             return response(['data' => new ContactCollection($contacts)], StatusCode::HTTP_OK);
         } catch (\Exception $e) {
-
+            return response(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
