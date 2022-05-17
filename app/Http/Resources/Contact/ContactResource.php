@@ -30,7 +30,8 @@ class ContactResource extends JsonResource
         if (ContactData::CATEGORY_ID_PRIVATE == $this->contact_category_id) {
             $user = User::find($this->connection_user_id);
             $users = [new UserResource($user)];
-            $contactName = $user->first_name . ' ' . $user->last_name;
+            if ($user && $user['first_name'] && $user['last_name'])
+                $contactName = $user->first_name . ' ' . $user->last_name;
             if ($this->last_message) {
                 $message = json_decode($this->last_message);
                 $lastMessage = $message->text_content ?? '';
