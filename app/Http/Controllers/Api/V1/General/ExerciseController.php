@@ -314,7 +314,7 @@ class ExerciseController extends Controller
 
                 foreach($assets as $asset){
 
-                    if($asset->type == 'image'){
+                    if($asset->type == 'image' || $asset->type == 'custom-video'){
                         $extension = \File::extension($asset->file_name);
                         $prefix = 'id_' . Auth::id() . '_';
                         $fileName = "exercise/".$prefix .$asset->id. time() . '.' . $extension;
