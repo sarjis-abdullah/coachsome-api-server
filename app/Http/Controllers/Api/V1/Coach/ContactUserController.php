@@ -134,9 +134,6 @@ class ContactUserController extends Controller
     {
         $contactUser = ContactUser::find($request->id);
         $user = User::where('email', '=', $request->email)->first();
-
-
-
         $contactUser->update([
             'status' => ContactUser::STATUS_ACTIVE,
             'contactAbleUserId' => $user['id'],

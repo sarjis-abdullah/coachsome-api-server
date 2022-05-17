@@ -158,7 +158,6 @@ class MessageController extends Controller
 
 
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
-
             event(new CreateNewContactUserEvent([
                 'receiverUserId' => $receiverUserId,
                 'contactAbleUserId' => Auth::user()->id,
