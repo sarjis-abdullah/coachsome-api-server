@@ -7,10 +7,12 @@ use App\Data\OrderStatus;
 use App\Data\StatusCode;
 use App\Entities\Booking;
 use App\Entities\Contact;
+use App\Entities\ContactUser;
 use App\Entities\Message;
 use App\Entities\MessageCategory;
 use App\Entities\PendingNotification;
 use App\Entities\User;
+use App\Events\CreateNewContactUserEvent;
 use App\Http\Controllers\Controller;
 use App\Jobs\NewMessageInformer;
 use App\Notifications\NewTextMessage;
@@ -28,7 +30,6 @@ use MessageFormatter;
 
 class MessageController extends Controller
 {
-
     public function index(Request $request)
     {
         try {
@@ -157,7 +158,15 @@ class MessageController extends Controller
 
 
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
-
+            event(new CreateNewContactUserEvent([
+                'receiverUserId' => $receiverUserId,
+                'contactAbleUserId' => Auth::user()->id,
+                'email' => Auth::user()->email,
+                'firstName' => $receiverUser['first_name'],
+                'lastName' => $receiverUser['last_name'],
+                'status' => ContactUser::STATUS_ACTIVE,
+                'comment' => "Created while sending message",
+            ]));
             return response()->json([
                 'message' => 'Successfully receive a message'
             ], StatusCode::HTTP_OK);
@@ -198,7 +207,7 @@ class MessageController extends Controller
                 'file' => 'required|mimes:jpg,png,gif,svg|max:5000'
 
             ]);
-        
+
             $name = $request->file('file')->store(
                 '', 'minio'
             );

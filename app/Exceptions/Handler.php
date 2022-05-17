@@ -95,7 +95,11 @@ class Handler extends ExceptionHandler
                 403);
         }
         elseif ($exception instanceof ValidationException) {
-            return response()->json((['status' => 422, 'message' => $exception->getMessage()]),
+            return response()->json(([
+                'status' => 422,
+                'message' => $exception->getMessage(),
+                'errors' => $exception->errors(),
+                ]),
                 403);
         }
         elseif ($exception instanceof ThrottleRequestsException) {
