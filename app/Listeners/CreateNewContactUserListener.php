@@ -20,8 +20,10 @@ class CreateNewContactUserListener
         $isAthlete = Auth::user()->hasRole([Constants::ROLE_KEY_ATHLETE, Constants::ROLE_KEY_SUPER_ADMIN]);
         if ($isAthlete) {
             $hasItem = ContactUser::where('email', '=', $event->contactUserRequest['email'])->first();
-            if (!$hasItem)
+            if (!$hasItem){
+                $event->contactUserRequest['token'] = time().'-'.mt_rand();
                 ContactUser::create($event->contactUserRequest);
+            }
         }
     }
 }

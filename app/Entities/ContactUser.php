@@ -11,6 +11,7 @@ class ContactUser extends Model
     use HasFactory, SoftDeletes;
 
     const STATUS_ACTIVE = "active";
+    const STATUS_PENDING = "pending";
 
     protected $fillable = [
         "categoryName",
@@ -21,5 +22,6 @@ class ContactUser extends Model
         "comment",
         "receiverUserId",
         "contactAbleUserId",
+        "token",
     ];
 }

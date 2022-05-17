@@ -3,7 +3,7 @@
     $emailContent = __($translations['email_template_send_email_to_contact_user'], [
          'coachName'=> $user->first_name . " ".$user->last_name,
          'athleteName'=> $athleteName,
-         'activateContactUserAccountUrl'=> env('APP_SERVER_DOMAIN')."/api/activate-account?email=".$contactUser['email'],
+         'activateContactUserAccountUrl'=> env('APP_SERVER_DOMAIN')."/api/navigate-contact-user?email=".$contactUser['email']."&token=".$contactUser['token'],
          'termsUrl' => env('APP_CLIENT_DOMAIN_TERMS_PAGE'),
          'clientHomeUrl' => env('APP_CLIENT_DOMAIN'),
          'coachsomeLinkedinUrl' => "https://www.linkedin.com/company/coachsome/",

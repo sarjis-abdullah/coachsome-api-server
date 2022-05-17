@@ -240,6 +240,12 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::apiResource('contact-user', 'ContactUserController');
         Route::get('contact-user-resend-invitation', 'ContactUserController@resendInvitation');
     });
+    Route::group(['prefix' => '', 'namespace' => 'Coach'], function () {
+        //activate-contact-user-account
+        Route::post('coach/activate-contact-user', 'ContactUserController@activateContactUser');
+        // navigate
+        Route::get('navigate-contact-user', 'ContactUserController@navigateContactUserToLogin');
+    });
 
     /*
     * Athlete

@@ -20,12 +20,11 @@ class CreateContactUsersTable extends Migration
             $table->string('lastName')->nullable();
             $table->string('email');
             $table->string('status')->nullable();
+            $table->string('token')->nullable();
             $table->text('comment')->nullable();
             $table->dateTime('lastActiveAt')->nullable();
-            $table->foreignId('receiverUserId')->nullable()
-                ->constrained('users');
-            $table->foreignId('contactAbleUserId')->nullable()
-                ->constrained('users');
+            $table->bigInteger('receiverUserId')->nullable();
+            $table->bigInteger('contactAbleUserId')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
