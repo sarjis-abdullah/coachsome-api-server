@@ -5,7 +5,7 @@ namespace App\Http\Resources\ContactUser;
 use App\Entities\Booking;
 use App\Entities\User;
 use App\Services\Media\MediaService;
-use Illuminate\Contracts\Support\Arrayable;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
@@ -41,6 +41,8 @@ class ContactUserResource extends JsonResource
             "receiverUserId" => $this->receiverUserId,
             "contactAbleUserId" => $this->contactAbleUserId,
             "contactAbleUser" => $this->contactAbleUserId,
+            "lastActiveAt" => $this->lastActiveAt ?? "",
+            "created_at" => $this->created_at->diffForHumans(),
         ];
         if ($this->contactAbleUserId){
             $contactAbleUser = User::find($this->contactAbleUserId);

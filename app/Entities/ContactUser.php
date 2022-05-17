@@ -23,5 +23,6 @@ class ContactUser extends Model
         "receiverUserId",
         "contactAbleUserId",
         "token",
+        "lastActiveAt",
     ];
 }
