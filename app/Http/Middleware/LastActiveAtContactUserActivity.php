@@ -33,7 +33,6 @@ class LastActiveAtContactUserActivity
                 $cu->update([
                     'lastActiveAt' => Carbon::now()
                 ]);
-                dd($cu);
             }
         }
         return $next($request);
