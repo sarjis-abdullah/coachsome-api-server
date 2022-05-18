@@ -40,6 +40,14 @@ class ExerciseController extends Controller
 
             $exercises = Exercise::orderBy('id', 'DESC')->get();
 
+            $empty_assets = ExerciseAsset::where('exercise_id', null)->get();
+
+            if(!empty($empty_assets)){
+                foreach($empty_assets as $empty_asset){
+                    $this->destroyAssets($empty_asset->id);
+                }
+            }
+
             $response['exercises'] = new ExerciseCollection($exercises);
 
             return response($response, StatusCode::HTTP_OK);
@@ -60,26 +68,28 @@ class ExerciseController extends Controller
 
             if($request->withVideo){
 
-                $exercises = ExerciseAsset::where('type', 'video')->get();
+                $exercise_assets_with_video_ids = Exercise::leftJoin('exercise_assets', 'exercises.id', 'exercise_assets.exercise_id')
+                ->where('exercise_assets.type', 'video')
+                ->orWhere('exercise_assets.type', 'custom-video')
+                ->select('exercises.id')->groupBy('exercises.id')->get()->pluck('id')->toArray();
 
-                foreach($exercises as $exercise){
+                $query->whereIn('id', $exercise_assets_with_video_ids);
 
-                    $query->whereRaw("find_in_set('".$exercise."',exercise_asset_ids)");
-                }
-                
             }
 
-            if($request->typeSytem == 1){
+            if($request->typeSytem == 1 && $request->typeCustom == 1){
 
                 $query->where('type', 1);
 
+            }else if($request->typeCustom == 1 && $request->typeSytem != 1){
+
+                $query->where('type', 2);
+
+            }else if($request->typeCustom == 1 && $request->typeSytem == 1){
+                $query->where('type', 1)->orWhere('type', 2);
             }
 
-            if($request->typeCustom == 1){
 
-                $query->Where('type', 2);
-
-            }
 
             if($request->categoriesSelected != null){
 
@@ -88,8 +98,8 @@ class ExerciseController extends Controller
                 foreach($category_ids as $category_id){
 
                     $query->whereRaw("find_in_set('".$category_id."',category_id)");
+                   
                 }
-                
 
             }
 
@@ -241,7 +251,16 @@ class ExerciseController extends Controller
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 
-            $exercise->save();
+            if($exercise->save()){
+
+                $ex_assets = array_column($request->assets, 'id');
+
+                foreach($ex_assets as $asset){
+                    $newExAsset =ExerciseAsset::where('id', $asset)->update([
+                        'exercise_id' => $exercise->id
+                    ]);
+                }
+            }
 
             $data['exercise'] = new ExerciseResource($exercise);
             return response($data, StatusCode::HTTP_OK);
@@ -392,7 +411,16 @@ class ExerciseController extends Controller
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 
-            $exercise->save();
+            if($exercise->save()){
+
+                $ex_assets = array_column($request->assets, 'id');
+
+                foreach($ex_assets as $asset){
+                    $newExAsset =ExerciseAsset::where('id', $asset)->update([
+                        'exercise_id' => $exercise->id
+                    ]);
+                }
+            }
 
             $data['exercise'] = new ExerciseResource($exercise);
             return response($data, StatusCode::HTTP_OK);
@@ -461,9 +489,7 @@ class ExerciseController extends Controller
     public function destroyAssets($id)
     {
         $response = [];
-        $exerciseAsset = ExerciseAsset::where('id', $id)
-            ->where('user_id', Auth::id())
-            ->first();
+        $exerciseAsset = ExerciseAsset::where('id', $id)->first();
         if ($exerciseAsset) {
             if ($exerciseAsset->file_name && Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->has($exerciseAsset->file_name)) {
                 Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->delete($exerciseAsset->file_name);
