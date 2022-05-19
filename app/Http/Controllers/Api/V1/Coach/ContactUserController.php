@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1\Coach;
 use App\Data\StatusCode;
 use App\Entities\ContactUser;
 use App\Entities\User;
-use App\Events\CreateNewContactUserEvent;
 use App\Events\SendEmailToContactUserEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ContactUser\ActivateUserRequest;

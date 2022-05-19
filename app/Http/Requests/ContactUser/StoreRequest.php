@@ -5,6 +5,7 @@ namespace App\Http\Requests\ContactUser;
 use App\Data\Constants;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class StoreRequest extends FormRequest
 {
@@ -26,12 +27,27 @@ class StoreRequest extends FormRequest
     public function rules() : array
     {
         return [
-            'categoryName' => "sometimes|required",
-            'firstName' => "sometimes|required",
-            'lastName' => "sometimes|required",
-            'email' => "required|email|unique:contact_users,email",
             'receiverUserId' => "required|exists:users,id",
+            'email' => [
+                'required',
+                Rule::unique('contact_users')->where(function ($query) {
+                    $query->where('email', $this->email)
+                        ->where('receiverUserId', $this->receiverUserId);
+                })
+            ],
+            'categoryName' => "sometimes|required",
+            'firstName' => "required",
+            'lastName' => "required",
             'contactAbleUserId' => "sometimes|required|exists:users,id",
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'email.unique' => 'Combination of Email & receiver user id is not unique',
+        ];
+    }
 }
+
+
