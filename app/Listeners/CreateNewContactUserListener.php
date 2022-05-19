@@ -2,7 +2,6 @@
 
 namespace App\Listeners;
 
-use App\Data\Constants;
 use App\Entities\ContactUser;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,13 +16,12 @@ class CreateNewContactUserListener
      */
     public function handle(object $event)
     {
-        $isAthlete = Auth::user()->hasRole([Constants::ROLE_KEY_ATHLETE, Constants::ROLE_KEY_SUPER_ADMIN]);
-        if ($isAthlete) {
-            $hasItem = ContactUser::where('email', '=', $event->contactUserRequest['email'])->first();
-            if (!$hasItem){
-                $event->contactUserRequest['token'] = time().'-'.mt_rand();
-                ContactUser::create($event->contactUserRequest);
-            }
+        $hasItem = ContactUser::where('email', '=', $event->contactUserRequest['email'])
+            ->where('receiverUserId', '=', Auth::user()->id)
+            ->first();
+        if (!$hasItem){
+            $event->contactUserRequest['token'] = time().'-'.mt_rand();
+            ContactUser::create($event->contactUserRequest);
         }
     }
 }

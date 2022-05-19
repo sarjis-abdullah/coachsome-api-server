@@ -26,6 +26,7 @@ class ContactUserResource extends JsonResource
 
             $bookedItems = Booking::with('order')->where('package_buyer_user_id', '=', $this->contactAbleUserId)
                 ->where('package_owner_user_id', '=', Auth::user()->id)
+                ->where('status', '=', "Accepted")
                 ->orderBy('updated_at', 'desc')
                 ->get();
         }

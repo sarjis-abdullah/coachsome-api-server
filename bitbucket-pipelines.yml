@@ -1,0 +1,6 @@
+pipelines: 
+  branches:
+   staging:
+    - step: 
+        script:  
+          - ssh apitestcoachscom@api.test.coachsome.com 'cd /srv/www/api.test.coachsome.com/www/; git pull origin staging; echo "Changes deployed!"'
