@@ -60,7 +60,6 @@ class ContactUserController extends Controller
     public function store(StoreRequest $request): ContactUserResource
     {
         $request['comment'] = "Created while coach added new contact from UI";
-        $request['status'] = ContactUser::STATUS_PENDING;
         $request['token'] = time().'-'.mt_rand();
         $item = ContactUser::create($request->all());
         event(new SendEmailToContactUserEvent($item));
