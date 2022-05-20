@@ -26,7 +26,7 @@ class ContactUserResource extends JsonResource
 
             $bookedItems = Booking::with('order')->where('package_buyer_user_id', '=', $this->contactAbleUserId)
                 ->where('package_owner_user_id', '=', Auth::user()->id)
-                ->where('status', '=', "Accepted")
+//                ->where('status', '=', "Accepted")
                 ->orderBy('updated_at', 'desc')
                 ->get();
         }
@@ -54,10 +54,8 @@ class ContactUserResource extends JsonResource
         foreach ($bookedItems as $item){
             if ($this->contactAbleUserId == $item['package_buyer_user_id']){
                 $allData['bookedItems'] = $bookedItems;
-                $allData['status'] = "active";
-            }else{
-                $allData['status'] = "inactive";
             }
+            $allData['status'] = $item['status'];
         }
         return $allData;
     }

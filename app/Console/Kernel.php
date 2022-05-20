@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\CreateActiveCampaignContact;
+use App\Console\Commands\CreateContactUserFromExistingUser;
 use App\Console\Commands\CreateWeek;
 use App\Console\Commands\GenerateBalanceEarning;
 use App\Console\Commands\InsertBookingSetting;
@@ -26,7 +27,8 @@ class Kernel extends ConsoleKernel
         InsertBookingSetting::class,
         UpdateDB::class,
         RunWorker::class,
-        CreateActiveCampaignContact::class
+        CreateActiveCampaignContact::class,
+        CreateContactUserFromExistingUser::class,
     ];
 
     /**
@@ -48,6 +50,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
+        $this->load(__DIR__.'/Commands/CreateContactUserFromExistingUser.php');
         require base_path('routes/console.php');
     }
 }

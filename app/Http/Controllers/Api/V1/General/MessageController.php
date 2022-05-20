@@ -160,10 +160,10 @@ class MessageController extends Controller
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
             event(new CreateNewContactUserEvent([
                 'receiverUserId' => $receiverUserId,
-                'contactAbleUserId' => Auth::user()->id,
-                'email' => Auth::user()->email,
-                'firstName' => $receiverUser['first_name'],
-                'lastName' => $receiverUser['last_name'],
+                'contactAbleUserId' => $senderUser->id,
+                'email' => $senderUser->email,
+                'firstName' => $senderUser['first_name'],
+                'lastName' => $senderUser['last_name'],
                 'status' => ContactUser::STATUS_ACTIVE,
                 'comment' => "Created while sending message",
             ]));
