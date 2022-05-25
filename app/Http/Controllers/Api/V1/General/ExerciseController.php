@@ -318,7 +318,6 @@ class ExerciseController extends Controller
     }
     public function duplicate($id)
     {
-        
         try {
 
             $response = [];
@@ -490,11 +489,35 @@ class ExerciseController extends Controller
     {
         $response = [];
         $exerciseAsset = ExerciseAsset::where('id', $id)->first();
+
         if ($exerciseAsset) {
+
+            $exercise = Exercise::leftJoin('exercise_assets', 'exercises.id', 'exercise_assets.exercise_id')
+                ->where('exercise_assets.id', $id)
+                ->select('exercises.id', 'exercises.exercise_asset_ids')
+                ->first();
+
+            
+
+            
+
             if ($exerciseAsset->file_name && Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->has($exerciseAsset->file_name)) {
                 Storage::disk(Constants::DISK_NAME_PUBLIC_IMAGE)->delete($exerciseAsset->file_name);
             }
             if ($exerciseAsset->delete()) {
+                if($exercise){
+                    $asset_ids = explode(',', $exercise->exercise_asset_ids);
+                    if (($key = array_search($id, $asset_ids)) !== false) {
+                        unset($asset_ids[$key]);
+                    }
+    
+                    $newExercise = Exercise::where('id',$exercise->id)->first();
+                    $newExercise->exercise_asset_ids = implode(',', $asset_ids);
+                    $newExercise->save();
+
+                    $response['exercise'] = new ExerciseResource($newExercise);
+                }
+
                 $response['status'] = 'success';
                 $response['message'] = 'Successfully removed';
             } else {
