@@ -199,6 +199,9 @@ return [
         Coachsome\BaseReview\Providers\BaseReviewServiceProvider::class,
         Coachsome\ChatServer\Providers\ChatServerServiceProvider::class,
 
+        // apple sign-in
+        \SocialiteProviders\Manager\ServiceProvider::class,
+
     ],
 
     /*
