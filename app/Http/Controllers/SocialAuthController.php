@@ -50,7 +50,9 @@ class SocialAuthController extends Controller
             $status = 'error';
             if ($provider == 'facebook') {
                 $messageKey = 'facebook_error_cancel_message';
-            } else {
+            }else if($provider == 'apple'){
+                $messageKey = 'apple_error_cancel_message';
+            }else {
                 $messageKey = 'google_error_cancel_message';
             }
 
@@ -115,6 +117,10 @@ class SocialAuthController extends Controller
                 }
 
                 if ($provider == 'facebook') {
+                    $userVerification->facebook_connected_at = Carbon::now();
+                }
+
+                if ($provider == 'apple') {
                     $userVerification->facebook_connected_at = Carbon::now();
                 }
 

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 // Social Auth
 Route::get('auth/login/{provider}', 'SocialAuthController@redirectToProvider');
 Route::get('auth/login/{provider}/callback', 'SocialAuthController@handleProviderCallback');
+Route::post('auth/login/{provider}/callback', 'SocialAuthController@handleProviderCallback');
 
 
 // Gift card payment
