@@ -38,6 +38,9 @@ class EventServiceProvider extends ServiceProvider
         SendEmailToContactUserEvent::class=>[
             SendEmailToContactUserListener::class
         ],
+        \SocialiteProviders\Manager\SocialiteWasCalled::class => [
+            'SocialiteProviders\\Apple\\AppleExtendSocialite@handle',
+        ],
     ];
 
     /**

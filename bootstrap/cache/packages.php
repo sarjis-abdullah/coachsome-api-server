@@ -157,6 +157,13 @@
       0 => 'Snowfire\\Beautymail\\BeautymailServiceProvider',
     ),
   ),
+  'socialiteproviders/manager' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'SocialiteProviders\\Manager\\ServiceProvider',
+    ),
+  ),
   'tymon/jwt-auth' => 
   array (
     'aliases' => 

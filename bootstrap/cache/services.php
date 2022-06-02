@@ -41,17 +41,19 @@
     37 => 'Prettus\\Repository\\Providers\\RepositoryServiceProvider',
     38 => 'Laratrust\\LaratrustServiceProvider',
     39 => 'Snowfire\\Beautymail\\BeautymailServiceProvider',
-    40 => 'Tymon\\JWTAuth\\Providers\\LaravelServiceProvider',
-    41 => 'Webpatser\\Uuid\\UuidServiceProvider',
-    42 => 'Snowfire\\Beautymail\\BeautymailServiceProvider',
-    43 => 'Rickycezar\\Impersonate\\ImpersonateServiceProvider',
-    44 => 'Barryvdh\\DomPDF\\ServiceProvider',
-    45 => 'App\\Providers\\AppServiceProvider',
-    46 => 'App\\Providers\\AuthServiceProvider',
-    47 => 'App\\Providers\\EventServiceProvider',
-    48 => 'App\\Providers\\RouteServiceProvider',
-    49 => 'Coachsome\\BaseReview\\Providers\\BaseReviewServiceProvider',
-    50 => 'Coachsome\\ChatServer\\Providers\\ChatServerServiceProvider',
+    40 => 'SocialiteProviders\\Manager\\ServiceProvider',
+    41 => 'Tymon\\JWTAuth\\Providers\\LaravelServiceProvider',
+    42 => 'Webpatser\\Uuid\\UuidServiceProvider',
+    43 => 'Snowfire\\Beautymail\\BeautymailServiceProvider',
+    44 => 'Rickycezar\\Impersonate\\ImpersonateServiceProvider',
+    45 => 'Barryvdh\\DomPDF\\ServiceProvider',
+    46 => 'App\\Providers\\AppServiceProvider',
+    47 => 'App\\Providers\\AuthServiceProvider',
+    48 => 'App\\Providers\\EventServiceProvider',
+    49 => 'App\\Providers\\RouteServiceProvider',
+    50 => 'Coachsome\\BaseReview\\Providers\\BaseReviewServiceProvider',
+    51 => 'Coachsome\\ChatServer\\Providers\\ChatServerServiceProvider',
+    52 => 'SocialiteProviders\\Manager\\ServiceProvider',
   ),
   'eager' => 
   array (
@@ -215,7 +217,7 @@
     'translation.loader' => 'Illuminate\\Translation\\TranslationServiceProvider',
     'validator' => 'Illuminate\\Validation\\ValidationServiceProvider',
     'validation.presence' => 'Illuminate\\Validation\\ValidationServiceProvider',
-    'Laravel\\Socialite\\Contracts\\Factory' => 'Laravel\\Socialite\\SocialiteServiceProvider',
+    'Laravel\\Socialite\\Contracts\\Factory' => 'SocialiteProviders\\Manager\\ServiceProvider',
     'command.tinker' => 'Laravel\\Tinker\\TinkerServiceProvider',
   ),
   'when' => 
@@ -260,6 +262,9 @@
     array (
     ),
     'Laravel\\Tinker\\TinkerServiceProvider' => 
+    array (
+    ),
+    'SocialiteProviders\\Manager\\ServiceProvider' => 
     array (
     ),
   ),

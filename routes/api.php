@@ -8,6 +8,12 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     * General
     */
     Route::group(['namespace' => 'General'], function () {
+
+        // Apple
+
+        // Route::post('apple/login','SocialAuthController@login');
+
+        
         // Booting
         Route::get('booting', 'BootingController@index')->name("booting");
 
