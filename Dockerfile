@@ -8,14 +8,22 @@ RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
 # Install system dependencies
+
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
+    build-essential \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    locales \
+    libzip-dev \
     zip \
-    unzip
+    jpegoptim optipng pngquant gifsicle \
+    vim \
+    unzip \
+    git \
+    curl
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -25,7 +33,9 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 RUN apt-get -y update \
 && apt-get install -y libicu-dev\
 && docker-php-ext-configure intl \
-&& docker-php-ext-install intl
+&& docker-php-ext-install intl 
+
+RUN docker-php-ext-install xml
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

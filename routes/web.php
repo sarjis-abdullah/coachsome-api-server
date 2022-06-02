@@ -4,6 +4,7 @@ use App\Utils\CurrencyUtil;
 use Illuminate\Support\Facades\Route;
 
 // Social Auth
+Route::post('apple/login','SocialAuthController@appleLogin');
 Route::get('auth/login/{provider}', 'SocialAuthController@redirectToProvider');
 Route::get('auth/login/{provider}/callback', 'SocialAuthController@handleProviderCallback');
 
