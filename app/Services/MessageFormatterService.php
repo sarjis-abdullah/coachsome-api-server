@@ -42,10 +42,10 @@ class MessageFormatterService
 
                 // Normal booking
                 if ($structureContent->key == 'booking_package') {
-                    
+
                     $booking = Booking::find($structureContent->bookingId);
-                    $order = $booking->order;                    
-                    
+                    $order = $booking->order ?? null;
+
                     if ($booking) {
                         $structureContent->status = $booking->status;
                     }
@@ -110,7 +110,7 @@ class MessageFormatterService
                 // Attachment
 
                 if ($structureContent->key == 'attachment') {
-                    $minioService = new MinioService(); 
+                    $minioService = new MinioService();
                     $structureContent->url = $minioService->getAttachmentUrl($structureContent->url);
                 }
             }
