@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use PeterColes\Countries\CountriesFacade;
 use PragmaRX\Countries\Package\Countries;
+use App\Entities\NotificationSetting;
+use Exception;
+use App\Data\SettingValue;
+use App\Entities\SocialAccount;
+use App\Http\Resources\Setting\NotificationSettingResource;
 
 class SettingsController extends Controller
 {
@@ -145,6 +150,67 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message'=>$e->getLine().$e->getMessage()
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    public function getNotification()
+    {
+        try {
+            $authUser = Auth::user();
+            $settings = NotificationSetting::where('user_id', $authUser->id)->first();
+            if (!$settings) {
+                $settings = NotificationSetting::create([
+                    'user_id' => Auth::id(),
+                    'inbox_message' => SettingValue::ID_EMAIL,
+                    'order_message' => SettingValue::ID_EMAIL,
+                    'order_update' => SettingValue::ID_EMAIL,
+                    'booking_request' => SettingValue::ID_EMAIL,
+                    'booking_change' => SettingValue::ID_EMAIL,
+                    'account' => SettingValue::ID_EMAIL,
+                    'marketting' => SettingValue::ID_EMAIL,
+                ]);
+            }
+
+            $socialAuth = SocialAccount::where('user_id', $authUser->id)->first();
+
+            return response([
+                'data' => new NotificationSettingResource($settings),
+                'email' => $authUser->email,
+                'has_password' => $authUser->has_password,
+                'isSocialLogin' => $socialAuth ? true : false
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+        }
+    }
+
+    public function updateNotification(Request $request, $id)
+    {
+        try {
+            $notificationSetting = NotificationSetting::where('user_id', Auth::id())
+                ->where('id', $id)
+                ->first();
+
+            if (!$notificationSetting) {
+                throw new Exception("Setting is not found.");
+            }
+            $notificationSetting->inbox_message = $request['inboxMessage'];
+            $notificationSetting->order_message = $request['orderMessage'];
+            $notificationSetting->order_update = $request['orderUpdate'];
+            $notificationSetting->booking_request = $request['bookingRequest'];
+            $notificationSetting->booking_change = $request['bookingChange'];
+            $notificationSetting->account = $request['account'];
+            $notificationSetting->marketting = $request['marketting'];
+            $notificationSetting->save();
+
+            return response([
+                'data' => []
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response([
+                'error' => [
+                    'message' => $e->getMessage()
+                ]
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
