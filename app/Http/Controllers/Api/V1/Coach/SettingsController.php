@@ -47,6 +47,7 @@ class SettingsController extends Controller
             $allCountryList = [];
 
             $settings = $authUser->settings;
+            
             if(!$settings) {
                 $settings = new UserSetting();
                 $settings->user_id = $authUser->id;
@@ -56,6 +57,7 @@ class SettingsController extends Controller
             }
 
             $notificationCategoryList = NotificationCategory::get();
+            
 
             $countryList = $localeService->countryList($locale);
             foreach ($countryList as $key=>$item) {
@@ -64,7 +66,7 @@ class SettingsController extends Controller
                 $newCountry->displayName = $item;
                 $allCountryList[] = $newCountry;
             }
-
+            
             if($settings){
                 $userSettings['firstName'] = $authUser->first_name;
                 $userSettings['lastName'] = $authUser->last_name;
@@ -77,7 +79,7 @@ class SettingsController extends Controller
                 $userSettings['has_password'] = $authUser->has_password;
 
 
-                $activeNotificationCategories = !empty($settings->notification_category)
+                $activeNotificationCategories = !isset($settings->notification_category)
                     ? NotificationCategory::whereIn('id', json_decode($settings->notification_category,true))->get()
                     : [] ;
 
@@ -93,6 +95,8 @@ class SettingsController extends Controller
 
                 $userSettings['activeNotificationCategories'] = $activeNotificationCategories;
             }
+
+            
 
             return response()->json([
                 'countryList'=> $allCountryList,
