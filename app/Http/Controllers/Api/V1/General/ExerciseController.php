@@ -38,7 +38,7 @@ class ExerciseController extends Controller
 
             $response = [];
 
-            $exercises = Exercise::orderBy('id', 'DESC')->get();
+            $exercises = Exercise::where('user_id', Auth::user()->id)->orderBy('id', 'DESC')->get();
 
             $empty_assets = ExerciseAsset::where('exercise_id', null)->get();
 
@@ -64,12 +64,13 @@ class ExerciseController extends Controller
 
             $response = [];
 
-            $query = Exercise::orderBy('id', 'asc');
+            $query = Exercise::where('user_id', Auth::user()->id)->orderBy('id', 'asc');
 
             if($request->withVideo){
 
                 $exercise_assets_with_video_ids = Exercise::leftJoin('exercise_assets', 'exercises.id', 'exercise_assets.exercise_id')
                 ->where('exercise_assets.type', 'video')
+                ->where('exercises.user_id', Auth::user()->id)
                 ->orWhere('exercise_assets.type', 'custom-video')
                 ->select('exercises.id')->groupBy('exercises.id')->get()->pluck('id')->toArray();
 
@@ -283,7 +284,7 @@ class ExerciseController extends Controller
 
             $response = [];
 
-            $exercise = Exercise::where('id', $id)->first();
+            $exercise = Exercise::where('user_id', Auth::user()->id)->where('id', $id)->first();
 
             $response['exercise'] = new ExerciseResource($exercise);
 
@@ -322,7 +323,7 @@ class ExerciseController extends Controller
 
             $response = [];
 
-            $exercise = Exercise::where('id', $id)->first();
+            $exercise = Exercise::where('user_id', Auth::user()->id)->where('id', $id)->first();
 
 
             if($exercise->exercise_asset_ids != ""){
@@ -399,7 +400,7 @@ class ExerciseController extends Controller
             $sport_id    = implode(',', array_column($request->sport, 'id'));
             $lavel_id    = implode(',', array_column($request->lavel, 'id'));
 
-            $exercise                       = Exercise::where('id', $request->id)->firstOrFail();
+            $exercise                       = Exercise::where('user_id', Auth::user()->id)->where('id', $request->id)->firstOrFail();
             $exercise->user_id              = Auth::user()->id;
             $exercise->exercise_asset_ids   = $asset_ids;
             $exercise->name                 = $request->name;
@@ -454,14 +455,14 @@ class ExerciseController extends Controller
     {
 
         try {
-            $exercise = Exercise::find($id);
+            $exercise = Exercise::where('user_id', Auth::user()->id)->where('id',$id)->first();
             if (!$exercise) {
                 throw new \Exception('Exercise not found');
             }
 
             if($exercise->exercise_asset_ids != null){
 
-                $exerciseAssets = ExerciseAsset::whereIn('id', explode(',',$exercise->exercise_asset_ids))->orderBy('sort', 'asc')->get();
+                $exerciseAssets = ExerciseAsset::where('user_id', Auth::user()->id)->whereIn('id', explode(',',$exercise->exercise_asset_ids))->orderBy('sort', 'asc')->get();
 
                 foreach($exerciseAssets as $exerciseAsset){
 
@@ -488,7 +489,7 @@ class ExerciseController extends Controller
     public function destroyAssets($id)
     {
         $response = [];
-        $exerciseAsset = ExerciseAsset::where('id', $id)->first();
+        $exerciseAsset = ExerciseAsset::where('user_id', Auth::user()->id)->where('id', $id)->first();
 
         if ($exerciseAsset) {
 
@@ -511,7 +512,7 @@ class ExerciseController extends Controller
                         unset($asset_ids[$key]);
                     }
     
-                    $newExercise = Exercise::where('id',$exercise->id)->first();
+                    $newExercise = Exercise::where('user_id', Auth::user()->id)->where('id',$exercise->id)->first();
                     $newExercise->exercise_asset_ids = implode(',', $asset_ids);
                     $newExercise->save();
 
