@@ -227,6 +227,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::post('settings/changeEmail', 'SettingsController@changeEmail');
         Route::post('settings/changePassword', 'SettingsController@changePassword');
         Route::post('settings/update', 'SettingsController@update');
+        Route::get('settings/notifications', 'SettingsController@getNotification');
+        Route::post('settings/notifications/{id}', 'SettingsController@updateNotification');
 
         Route::post('payout/request', 'PayoutRequestController@doRequest');
 
