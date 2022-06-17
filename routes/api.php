@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\General\UserController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -10,6 +11,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     Route::group(['namespace' => 'General'], function () {
         // Booting
         Route::get('booting', 'BootingController@index')->name("booting");
+
+        Route::get('blog/author/{id}', 'UserController@getAuthorName');
 
         // Search
         Route::get('marketplace-searches', 'SearchController@index');
