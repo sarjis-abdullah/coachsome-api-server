@@ -8,6 +8,9 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     /*
     * General
     */
+    Route::group(['namespace' => 'General', 'middleware' => ['auth:api']], function () {
+        Route::get('booking-sessions', 'BookingController@getAllBookingSessions');
+    });
     Route::group(['namespace' => 'General'], function () {
         // Booting
         Route::get('booting', 'BootingController@index')->name("booting");

@@ -18,6 +18,7 @@ use App\Entities\PaymentCard;
 use App\Entities\PromoCode;
 use App\Entities\User;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Booking\BookingSessionsRequest;
 use App\Http\Resources\Package\PackageResource;
 use App\Http\Resources\Package\PackageSetting;
 use App\Http\Resources\Profile\ProfileCardResource;
@@ -571,5 +572,82 @@ class BookingController extends Controller
                 StatusCode::HTTP_UNPROCESSABLE_ENTITY
             );
         }
+    }
+
+    public function getAllBookingSessions(BookingSessionsRequest $request): \Illuminate\Http\JsonResponse
+    {
+        $authUser = Auth::user();
+
+        try {
+            if (!$authUser) {
+                throw new \Exception('User not found');
+            }
+            $status = $request->query('status');
+            $purchasedPackages = Booking::with(['order', 'bookingTimes.location'])
+                ->orderBy('booking_date', 'DESC')
+                ->paginate(100)
+                ->filter(function ($item) use ($status) {
+                    $packageTotalSession = 0;
+                    $sessionCompletedCount = $item->bookingTimes()->where('status', 'Accepted')->count();
+                    $order = $item->order;
+                    if ($order) {
+                        $packageSnapshot = json_decode($order->package_snapshot, true);
+                        $packageTotalSession = $packageSnapshot['details']['session'];
+                    }
+
+                    if ($status == 'active') {
+                        if ($sessionCompletedCount < $packageTotalSession) {
+                            return true;
+                        }
+                        return false;
+                    } elseif ($status == 'past') {
+                        if ($sessionCompletedCount >= $packageTotalSession) {
+                            return true;
+                        }
+                        return false;
+                    } elseif ($status == 'all') {
+                        return true;
+                    }
+                    return true;
+                })
+                ->values()
+                ->map(function ($item) use ($authUser) {
+
+                    $packageTitle = '';
+                    $packageId = '';
+                    $totalSession = 0;
+                    $leftSession = 0;
+
+                    $order = $item->order ? $item->order : null;
+                    $packageSnapshot = $order ? json_decode($order->package_snapshot) : null;
+                    $packageDetails = $packageSnapshot ? $packageSnapshot->details : null;
+                    $bookingTimeCount = $item->bookingTimes->where('status', 'Accepted')->count();
+
+                    if ($packageDetails) {
+                        $packageTitle = $packageDetails->title;
+                        $packageId = $packageDetails->id;
+                        $totalSession = $packageDetails->session;
+                        $leftSession = $totalSession - $bookingTimeCount;
+                    }
+
+
+                    return [
+                        'bookingId' => $item->id,
+                        'bookingTimes' => $item->bookingTimes ?? null,
+                        'packageOwnerUser' => $item->packageOwnerUser ?? null,
+                        'packageBuyerUser' => $item->packageBuyerUser ?? null,
+                        'packageTitle' => $packageTitle,
+                        'totalSession' => $totalSession,
+                        'leftSession' => max($leftSession, 0),
+                        'date' => $item->booking_date,
+                        'packageId' => $packageId,
+                    ];
+                });
+            return response()->json(['sessions' => $purchasedPackages], StatusCode::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
     }
 }
