@@ -57,12 +57,12 @@ class ProfileSwitchingController extends Controller
 
             $userInfo = $userService->getUserInformation($userData, $is_admin_switched);
 
-            $switchInfo = ProfileSwitch::where('user_id', $user->id)->first();
-            $original_role = Role::where('id' , $switchInfo->original_role)->first()->name;
+            // $switchInfo = ProfileSwitch::where('user_id', $user->id)->first();
+            // $original_role = Role::where('id' , $switchInfo->original_role)->first()->name;
 
-            $userInfo->is_profile_switched = !empty($profileSwitchData) && $profileSwitchData->is_switched ? true : false;
-            $userInfo->original_role = $original_role;
-            $userInfo->profile_switched_to = !empty($profileSwitchData) && $profileSwitchData->switch_to ? $profileSwitchData->switch_to : null;
+            // $userInfo->is_profile_switched = !empty($profileSwitchData) && $profileSwitchData->is_switched ? true : false;
+            // $userInfo->original_role = $original_role;
+            // $userInfo->profile_switched_to = !empty($profileSwitchData) && $profileSwitchData->switch_to ? $profileSwitchData->switch_to : null;
 
             $response['status'] = 'success';
             $response['switchData'] = $profileSwitchData;
@@ -82,6 +82,7 @@ class ProfileSwitchingController extends Controller
             $user = Auth::user();
             $existedSwitch = ProfileSwitch::where('user_id', $user->id)->exists();
             $response['status'] = 'success';
+            $response['user_id'] = $user->id;
             $response['is_profile_switched'] = $existedSwitch;
 
             return response()->json($response, Constants::HTTP_OK);
