@@ -5,6 +5,8 @@ namespace App\Services;
 
 
 use App\Entities\Impersonate;
+use App\Entities\ProfileSwitch;
+use App\Entities\Role;
 use App\Entities\SocialAccount;
 use App\Entities\User;
 use App\Services\Media\MediaService;
@@ -66,6 +68,15 @@ class UserService
         }
 
         if ($user) {
+
+            $original_role = null;
+
+            $switchInfo = ProfileSwitch::where('user_id', $user->id)->first();
+
+            if(!empty($switchInfo)){
+                $original_role = Role::where('id' , $switchInfo->original_role)->first()->name;
+            }
+
             $data = new \stdClass();
             $mediaService = new MediaService();
 
@@ -82,6 +93,9 @@ class UserService
             $data->is_switched = $isSwitched;
             $data->is_active = $user->isActive();
             $data->is_social_account = $socialAcc ? true : false;
+            $data->is_profile_switched = !empty($switchInfo) && $switchInfo->is_switched == 1 ? true : false;
+            $data->original_role = $original_role;
+            $data->profile_switched_to = !empty($switchInfo) && $switchInfo->switch_to ? $switchInfo->switch_to : null;
         }
 
         return $data;
