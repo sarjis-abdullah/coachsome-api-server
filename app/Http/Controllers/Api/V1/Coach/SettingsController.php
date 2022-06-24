@@ -30,6 +30,7 @@ class SettingsController extends Controller
      */
     public function index(Request $request)
     {
+        
         try {
             $localeService = new LocaleService();
 
@@ -57,7 +58,6 @@ class SettingsController extends Controller
             }
 
             $notificationCategoryList = NotificationCategory::get();
-            
 
             $countryList = $localeService->countryList($locale);
             foreach ($countryList as $key=>$item) {
@@ -78,11 +78,10 @@ class SettingsController extends Controller
                 $userSettings['timezone'] = $settings->timezone;
                 $userSettings['has_password'] = $authUser->has_password;
 
-
-                $activeNotificationCategories = !isset($settings->notification_category)
+                $activeNotificationCategories = !isset($settings->notification_category) && $settings->notification_category != null
                     ? NotificationCategory::whereIn('id', json_decode($settings->notification_category,true))->get()
                     : [] ;
-
+                    
                 $notificationCategoryList->each(function($item) use($activeNotificationCategories){
                     foreach ($activeNotificationCategories as $activeItem) {
                         if($item->id == $activeItem->id){
