@@ -168,7 +168,8 @@ class MessageController extends Controller
                 'comment' => "Created while sending message",
             ]));
             return response()->json([
-                'message' => 'Successfully receive a message'
+                'message' => 'Successfully receive a message',
+                'data' => $message,
             ], StatusCode::HTTP_OK);
 
         } catch (\Exception $e) {
