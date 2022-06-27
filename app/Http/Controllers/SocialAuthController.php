@@ -92,6 +92,15 @@ class SocialAuthController extends Controller
                     $providerUser,
                     $provider
                 );
+                if (session(self::KEY_USER_TYPE)) {
+                    if ($user) {
+                        $isExisting = true;
+                        $role = Role::where('name', $request->user_type)->first();
+                        if($user && $role){
+                            $user->attachRole($role);
+                        }
+                    }
+                }
             }
 
             $accessToken = $tokenService->createUserAccessToken($user);
@@ -166,7 +175,11 @@ class SocialAuthController extends Controller
 
             if ($user) {
                 $isExisting = true;
-                UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
+                // UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
+                $role = Role::where('name', $request->user_type)->first();
+                if($user && $role){
+                    $user->attachRole($role);
+                }
                 $tokenService = new TokenService();
                 $accessToken = $tokenService->createUserAccessToken($user);
                 return redirect(
@@ -318,7 +331,11 @@ class SocialAuthController extends Controller
 
             if ($user) {
                 $isExisting = true;
-                UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
+                // UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
+                $role = Role::where('name', $request->user_type)->first();
+                if($user && $role){
+                    $user->attachRole($role);
+                }
                 $tokenService = new TokenService();
                 $accessToken = $tokenService->createUserAccessToken($user);
                 return redirect(
