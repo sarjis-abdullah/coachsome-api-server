@@ -60,7 +60,7 @@ return [
         ],
         'minio' => [
             'driver' => 's3',
-            'endpoint' => env('MINIO_ENDPOINT', 'http://127.0.0.1:9005'),
+            'endpoint' => env('MINIO_ENDPOINT', 'https://tikweb4sp.tikweb.com:9000'),
             'use_path_style_endpoint' => true,
             'key' => env('MINIO_KEY'),
             'secret' => env('MINIO_SECRET'),

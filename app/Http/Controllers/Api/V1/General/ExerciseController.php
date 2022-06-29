@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1\General;
 use App\Data\Constants;
 use App\Data\ExerciseData;
 use App\Data\GalleryData;
+use App\Data\RoleData;
 use App\Data\StatusCode;
 use App\Entities\Exercise;
 use App\Entities\ExerciseAsset;
 use App\Entities\Gallery;
 use App\Entities\Image;
+use App\Entities\User;
 use App\Entities\Video;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Exercise\ExerciseCollection;
@@ -38,7 +40,26 @@ class ExerciseController extends Controller
 
             $response = [];
 
-            $exercises = Exercise::where('user_id', Auth::user()->id)->orderBy('id', 'DESC')->get();
+            $user = Auth::user();
+
+            if($user->hasRole([RoleData::ROLE_KEY_COACH])){
+
+                $adminUsers = User::whereHas(
+                    'roles', function($q){
+                        $q->where('name', 'superadmin')
+                        ->orWhere('name', 'admin')
+                        ->orWhere('name', 'staff');
+                    }
+                )->get();
+
+                $exercises = Exercise::where('user_id', $user->id)
+                ->orWhereIn('user_id', $adminUsers->pluck('id'))
+                ->orderBy('id', 'DESC')
+                ->get();
+                
+            }else{
+                $exercises = Exercise::where('user_id', $user->id)->orderBy('id', 'DESC')->get();
+            }
 
             $empty_assets = ExerciseAsset::where('exercise_id', null)->get();
 
