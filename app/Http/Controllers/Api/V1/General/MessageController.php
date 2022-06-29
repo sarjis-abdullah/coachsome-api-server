@@ -212,6 +212,7 @@ class MessageController extends Controller
             $name = $request->file('file')->store(
                 '', 'minio'
             );
+            // $name = Storage::disk('minio')->put('contents', ($request->file('file')));
 
             $attachment = $name;
 
