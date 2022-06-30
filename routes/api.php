@@ -2,7 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 
-
+Route::group(['middleware' => ['auth:api']], function () {
+    Route::apiResource('notification-user', 'NotificationUserController');
+//    Route::put('notification-user/{notification-user}', 'NotificationUserController@update')->name('/notification-user/{notification-user}');
+});
 Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     /*
     * General
@@ -339,7 +342,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::group(['middleware' => ['sessions']], function () {
             Route::post('impersonate/{id}', 'ImpersonateController@impersonate')->middleware('auth:api');
             Route::get('impersonate/revert', 'ImpersonateController@revert')->middleware('auth:api');
-            
+
             // Profile Switch
             Route::post('switch', 'ProfileSwitchingController@switch')->middleware('auth:api');
             Route::get('switchInfo', 'ProfileSwitchingController@switchInfo')->middleware('auth:api');
