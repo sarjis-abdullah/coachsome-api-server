@@ -202,6 +202,9 @@ return [
         // apple sign-in
         \SocialiteProviders\Manager\ServiceProvider::class,
 
+        // TikCMS
+        Tikweb\TikCmsApi\Providers\TikCmsApiServiceProvider::class
+
     ],
 
     /*
