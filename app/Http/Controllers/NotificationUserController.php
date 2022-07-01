@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\NotificationUser\IndexRequest;
 use App\Http\Requests\StoreNotificationUserRequest;
 use App\Http\Requests\UpdateNotificationUserRequest;
 use App\Http\Resources\NotificationUser\NotificationUserResource;
@@ -16,9 +17,12 @@ class NotificationUserController extends Controller
      *
      * @return NotificationUserResource|array []
      */
-    public function index()
+    public function index(IndexRequest $request)
     {
-        $userId = Auth::user()->id;
+//        if (isset($request['userIds'])){
+//            return NotificationUser::whereIn('id', $request['userIds'])->get();
+//        }
+        $userId = $request['userId'];
         $nu = NotificationUser::where('userId', '=', $userId)->first();
         if ($nu){
             return new NotificationUserResource($nu);
