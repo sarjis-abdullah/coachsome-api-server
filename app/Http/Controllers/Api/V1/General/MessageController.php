@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use MessageFormatter;
 
@@ -205,19 +206,20 @@ class MessageController extends Controller
                 'receiverUserId' => 'required',
                 'type' => 'nullable',
                 'categoryId' => 'nullable',
-                'file' => 'required|mimes:jpg,png,gif,svg|max:5000'
+                'file' => 'required|mimes:jpg,png,gif,svg,mp4,mov,ogg,wmv| max:20000'
 
             ]);
 
-            $name = $request->file('file')->store(
-                '', 'minio'
-            );
-            // $name = Storage::disk('minio')->put('contents', ($request->file('file')));
+            // $name = $request->file('file')->store(
+            //     '', 'minio'
+            // );
+            $name = Storage::disk('minio')->put('', ($request->file('file')));
 
-            $attachment = $name;
+            $attachment = $request->fileType && $request->fileType == 'video'?  env('MINIO_ENDPOINT')."/".env('MINIO_BUCKET')."/".$name : $name;
 
             $messageContent = new Attachment([
-                'url' => $attachment
+                'key' => $request->fileType && $request->fileType == 'video'? 'video' : 'attachment',
+                'url' =>  $attachment
             ]);
 
 

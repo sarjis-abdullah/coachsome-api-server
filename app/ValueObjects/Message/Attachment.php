@@ -7,7 +7,7 @@ namespace App\ValueObjects\Message;
 class Attachment
 {
     private $fields = [
-        'key'=> 'attachment',
+        'key'=> '',
         'url'=> '',
     ];
 
@@ -17,6 +17,9 @@ class Attachment
 
         if(isset($fields['url'])){
             $this->fields['url'] = $fields['url'];
+        }
+        if(isset($fields['key'])){
+            $this->fields['key'] = $fields['key'];
         }
     }
 
