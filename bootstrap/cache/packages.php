@@ -21,13 +21,6 @@
       'PDF' => 'Barryvdh\\DomPDF\\Facade',
     ),
   ),
-  'devghor/tik-cms-api' => 
-  array (
-    'providers' => 
-    array (
-      0 => 'Devghor\\TikCmsApi\\Providers\\TikCmsApiServiceProvider',
-    ),
-  ),
   'facade/ignition' => 
   array (
     'providers' => 
