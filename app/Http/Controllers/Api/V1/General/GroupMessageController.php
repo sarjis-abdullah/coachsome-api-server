@@ -15,6 +15,7 @@ use App\ValueObjects\Message\Attachment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class GroupMessageController extends Controller
 {
@@ -103,21 +104,28 @@ class GroupMessageController extends Controller
         try {
             $this->validate($request, [
                 'type' => 'required',
-                'file' => 'required|mimes:jpg,jpeg,png,gif,svg,mp3,mp4,mov,ogg,wmv,avi|max:20000',
+                'file' => 'required|mimes:jpg,jpeg,png,gif,svg,mp3,mp4,mov,ogg,wmv,avi,pdf,txt|max:20000',
                 'groupId' => 'required',
                 'createdAt' => 'required',
             ]);
 
-            $name = $request->file('file')->store(
-                '', 'minio'
-            );
+            // $name = $request->file('file')->store(
+            //     '', 'minio'
+            // );
 
-            $attachment = $request->fileType && $request->fileType == 'video'?  env('MINIO_ENDPOINT')."/".env('MINIO_BUCKET')."/".$name : $name;
+            $label = $request->file('file')->getClientOriginalName();
+            $extension = $request->file('file')->getClientOriginalExtension();
+            $name = Storage::disk('minio')->put('', ($request->file('file')));
+
+            $attachment = $request->fileType && $request->fileType != 'attachment'?  env('MINIO_ENDPOINT')."/".env('MINIO_BUCKET')."/".$name : $name;
 
             $messageContent = new Attachment([
-                'key' => $request->fileType && $request->fileType == 'video'? 'video' : 'attachment',
-                'url' =>  $attachment
+                'key' => $this->attachmentType($request->fileType),
+                'url' =>  $attachment,
+                'label' => $label,
+                'extension' => $extension
             ]);
+
 
             $group = Group::find($request['groupId']);
             if(!$group){
@@ -189,5 +197,15 @@ class GroupMessageController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function attachmentType($type){
+        if($type == "video"){
+            return "video";
+        }else if($type == "file"){
+            return "file";
+        }else{
+            return "attachment";
+        }
     }
 }
