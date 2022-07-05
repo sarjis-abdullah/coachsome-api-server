@@ -206,7 +206,7 @@ class MessageController extends Controller
                 'receiverUserId' => 'required',
                 'type' => 'nullable',
                 'categoryId' => 'nullable',
-                'file' => 'required|max:20000'
+                'file' => 'required|mimes:jpg,jpeg,png,gif,svg,mp3,mp4,mov,ogg,wmv,avi|max:20000'
 
             ]);
 
