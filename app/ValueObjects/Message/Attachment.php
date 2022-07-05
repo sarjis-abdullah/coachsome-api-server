@@ -9,6 +9,8 @@ class Attachment
     private $fields = [
         'key'=> '',
         'url'=> '',
+        'label'=> '',
+        'extension' => ''
     ];
 
 
@@ -20,6 +22,12 @@ class Attachment
         }
         if(isset($fields['key'])){
             $this->fields['key'] = $fields['key'];
+        }
+        if(isset($fields['label'])){
+            $this->fields['label'] = $fields['label'];
+        }
+        if(isset($fields['extension'])){
+            $this->fields['extension'] = $fields['extension'];
         }
     }
 
