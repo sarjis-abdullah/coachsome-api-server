@@ -103,7 +103,7 @@ class GroupMessageController extends Controller
         try {
             $this->validate($request, [
                 'type' => 'required',
-                'file' => 'required|max:20000',
+                'file' => 'required|mimes:jpg,jpeg,png,gif,svg,mp3,mp4,mov,ogg,wmv,avi|max:20000',
                 'groupId' => 'required',
                 'createdAt' => 'required',
             ]);
