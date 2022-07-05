@@ -103,7 +103,7 @@ class GroupMessageController extends Controller
         try {
             $this->validate($request, [
                 'type' => 'required',
-                'file' => 'required|mimes:jpg,png,gif,svg|max:2048',
+                'file' => 'required|max:20000',
                 'groupId' => 'required',
                 'createdAt' => 'required',
             ]);
@@ -112,10 +112,11 @@ class GroupMessageController extends Controller
                 '', 'minio'
             );
 
-            $attachment = $name;
+            $attachment = $request->fileType && $request->fileType == 'video'?  env('MINIO_ENDPOINT')."/".env('MINIO_BUCKET')."/".$name : $name;
 
             $messageContent = new Attachment([
-                'url' => $attachment
+                'key' => $request->fileType && $request->fileType == 'video'? 'video' : 'attachment',
+                'url' =>  $attachment
             ]);
 
             $group = Group::find($request['groupId']);
