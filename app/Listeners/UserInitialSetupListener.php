@@ -49,31 +49,33 @@ class UserInitialSetupListener
             }
         }
 
-        // Configure active campaign
-        $contactRes = $activeCampaignService->createOrUpdateContact([
-            "contact" => [
-                "firstName" => $user->first_name,
-                "lastName" => $user->last_name,
-                "email" => $user->email,
-                "phone" => "",
-            ]
-        ]);
-        $data = json_decode($contactRes, true);
-        if (RoleData::ROLE_KEY_COACH == $userType) {
-            $activeCampaignService->addTagToContact( [
-                'contactTag'=>[
-                    'contact' => $data['contact']['id'],
-                    'tag' => $activeCampaignService->getCoachTagId(),
+        if(env('CURR_ENV') == "production"){
+            // Configure active campaign
+            $contactRes = $activeCampaignService->createOrUpdateContact([
+                "contact" => [
+                    "firstName" => $user->first_name,
+                    "lastName" => $user->last_name,
+                    "email" => $user->email,
+                    "phone" => "",
                 ]
             ]);
-        }
-        if (RoleData::ROLE_KEY_ATHLETE == $userType) {
-            $activeCampaignService->addTagToContact( [
-                'contactTag'=>[
-                    'contact' => $data['contact']['id'],
-                    'tag' => $activeCampaignService->getAthleteTagId(),
-                ]
-            ]);
+            $data = json_decode($contactRes, true);
+            if (RoleData::ROLE_KEY_COACH == $userType) {
+                $activeCampaignService->addTagToContact( [
+                    'contactTag'=>[
+                        'contact' => $data['contact']['id'],
+                        'tag' => $activeCampaignService->getCoachTagId(),
+                    ]
+                ]);
+            }
+            if (RoleData::ROLE_KEY_ATHLETE == $userType) {
+                $activeCampaignService->addTagToContact( [
+                    'contactTag'=>[
+                        'contact' => $data['contact']['id'],
+                        'tag' => $activeCampaignService->getAthleteTagId(),
+                    ]
+                ]);
+            }
         }
 
 

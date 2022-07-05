@@ -197,9 +197,8 @@ class RegisterController extends Controller
                 }else {
                     throw new \Exception('Something went wrong, Can not attach role now, try again.');
                 }
-                if(env('CURR_ENV') == "production"){
-                    UserRegisteredEvent::dispatch($user, $request->user_type);
-                }
+                
+                UserRegisteredEvent::dispatch($user, $request->user_type);
                 
             } else {
                 throw new \Exception('Something went wrong, try again.');
