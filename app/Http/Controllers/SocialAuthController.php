@@ -99,6 +99,7 @@ class SocialAuthController extends Controller
                         if($user && $role){
                             $user->attachRole($role);
                         }
+                        UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                     }
                 }
             }
@@ -175,11 +176,11 @@ class SocialAuthController extends Controller
 
             if ($user) {
                 $isExisting = true;
-                // UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                 $role = Role::where('name', $request->user_type)->first();
                 if($user && $role){
                     $user->attachRole($role);
                 }
+                UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                 $tokenService = new TokenService();
                 $accessToken = $tokenService->createUserAccessToken($user);
                 return redirect(
@@ -331,11 +332,11 @@ class SocialAuthController extends Controller
 
             if ($user) {
                 $isExisting = true;
-                // UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                 $role = Role::where('name', $request->user_type)->first();
                 if($user && $role){
                     $user->attachRole($role);
                 }
+                UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                 $tokenService = new TokenService();
                 $accessToken = $tokenService->createUserAccessToken($user);
                 return redirect(
@@ -414,7 +415,6 @@ class SocialAuthController extends Controller
 
         if ($account) {
             $user = $account->user;
-            UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
         }
 
         if (!$account) {
@@ -434,7 +434,6 @@ class SocialAuthController extends Controller
                     $user->email = $providerEmail;
                     $user->user_name = $userService->generateUserName($user->first_name, $user->last_name);
                     $user->save();
-                    UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                 }
 
                 // Create social account
@@ -445,6 +444,8 @@ class SocialAuthController extends Controller
                 ]);
             }
         }
+
+        UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
 
         return $user;
     }
