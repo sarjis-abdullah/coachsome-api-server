@@ -188,7 +188,6 @@ class RegisterController extends Controller
             $user->save();
 
             if ($user) {
-                // UserRegisteredEvent::dispatch($user, $request->user_type);
                 $role = Role::where('name', $request->user_type)->first();
                 if($user && $role){
                     $user->attachRole($role);

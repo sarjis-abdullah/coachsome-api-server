@@ -433,6 +433,7 @@ class SocialAuthController extends Controller
                     $user->email = $providerEmail;
                     $user->user_name = $userService->generateUserName($user->first_name, $user->last_name);
                     $user->save();
+                    UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                 }
 
                 // Create social account
