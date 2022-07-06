@@ -414,6 +414,7 @@ class SocialAuthController extends Controller
 
         if ($account) {
             $user = $account->user;
+            UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
         }
 
         if (!$account) {
