@@ -91,27 +91,27 @@ class UserInitialSetupListener
 
 
         // Verification email
-        if ($provider == false) {
-            $translation = $translationService->getKeyByLanguageCode($locale);
-            $token = Uuid::uuid1()->toString();
-            $link = env('APP_CLIENT_DOMAIN_EMAIL_VERIFICATION_URL') . '?token=' . $token;
+        // if ($provider == false) {
+        //     $translation = $translationService->getKeyByLanguageCode($locale);
+        //     $token = Uuid::uuid1()->toString();
+        //     $link = env('APP_CLIENT_DOMAIN_EMAIL_VERIFICATION_URL') . '?token=' . $token;
 
-            VerifyUser::create(['user_id' => $user->id, 'token' => $token]);
+        //     VerifyUser::create(['user_id' => $user->id, 'token' => $token]);
 
-            $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
-            $beautymail->send('emails.verifyEmail',
-                [
-                    'fullName' => $user->fullName(),
-                    'link' => $link,
-                    'translation' => $translation
-                ],
-                function ($message) use ($user) {
-                    $message
-                        ->from(config('mail.from.address'))
-                        ->to($user->emailAddress(), $user->fullName())
-                        ->subject('Email Verification');
-                });
-        }
+        //     $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+        //     $beautymail->send('emails.verifyEmail',
+        //         [
+        //             'fullName' => $user->fullName(),
+        //             'link' => $link,
+        //             'translation' => $translation
+        //         ],
+        //         function ($message) use ($user) {
+        //             $message
+        //                 ->from(config('mail.from.address'))
+        //                 ->to($user->emailAddress(), $user->fullName())
+        //                 ->subject('Email Verification');
+        //         });
+        // }
 
     }
 }
