@@ -99,9 +99,9 @@ class SocialAuthController extends Controller
                         if($user && $role){
                             $user->attachRole($role);
                         }
+                        UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
                     }
                 }
-                UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
             }
 
             $accessToken = $tokenService->createUserAccessToken($user);
