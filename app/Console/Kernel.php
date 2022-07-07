@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\AttachRolesData;
 use App\Console\Commands\CreateActiveCampaignContact;
 use App\Console\Commands\CreateContactUserFromExistingUser;
 use App\Console\Commands\CreateWeek;
@@ -29,6 +30,7 @@ class Kernel extends ConsoleKernel
         RunWorker::class,
         CreateActiveCampaignContact::class,
         CreateContactUserFromExistingUser::class,
+        AttachRolesData::class
     ];
 
     /**
