@@ -471,6 +471,8 @@ class BookingController extends Controller
                     $newMessage->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_PACKAGE_BOOKING;
                     $newMessage->sender_user_id = $authUser->id;
                     $newMessage->receiver_user_id = $packageBuyerUser->id;
+                    $newMessage->sender_user_role = $authUser->roles[0]->name;
+                    $newMessage->receiver_user_role = $packageBuyerUser->roles[0]->name;
                     $newMessage->type = 'structure';
                     $newMessage->structure_content = $acceptedPackageBookingMessage->toJson();
                     $newMessage->date_time = Carbon::now();
@@ -534,6 +536,8 @@ class BookingController extends Controller
                 $newMessage->sender_user_id = $authUser->id;
                 $newMessage->message_category_id = MessageData::CATEGORY_ID_DECLINED_PACKAGE_BOOKING;
                 $newMessage->receiver_user_id = $packageBuyerUser->id;
+                $newMessage->sender_user_role = $authUser->roles[0]->name;
+                $newMessage->receiver_user_role = $packageBuyerUser->roles[0]->name;
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $declinedPackageBookingMessage->toJson();
                 $newMessage->date_time = Carbon::now();

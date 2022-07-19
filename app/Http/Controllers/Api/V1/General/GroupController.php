@@ -92,6 +92,7 @@ class GroupController extends Controller
             $contact->group_id = $group->id;
             $contact->contact_category_id = ContactData::CATEGORY_ID_GROUP;
             $contact->last_message = $request['message'];
+            $contact->user_role = $authUser->roles[0]->name;
             $contact->save();
 
             $groupMessage = new GroupMessage();

@@ -214,6 +214,8 @@ class BookingTimeController extends Controller
             $message->message_category_id = MessageData::CATEGORY_ID_BOOKING_TIME;
             $message->sender_user_id = $authUser->id;
             $message->receiver_user_id = $packageOwnerUser->id;
+            $message->sender_user_role = $authUser->roles[0]->name;
+            $message->receiver_user_role = $packageOwnerUser->roles[0]->name;
             $message->type = 'structure';
             $message->structure_content = $timeBookingMessage->toJson();
             $message->booking_time_id = $bookingTime->id;
@@ -324,6 +326,8 @@ class BookingTimeController extends Controller
                 $newMessage->message_category_id = MessageData::CATEGORY_ID_ACCEPTED_BOOKING_TIME;
                 $newMessage->sender_user_id = $authUser->id;
                 $newMessage->receiver_user_id = $requestedUser->id;
+                $newMessage->sender_user_role = $authUser->roles[0]->name;
+                $newMessage->receiver_user_role = $requestedUser->roles[0]->name;
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $acceptedBookingTime->toJson();
                 $newMessage->date_time = Carbon::now();
@@ -362,6 +366,8 @@ class BookingTimeController extends Controller
                 $newMessage->sender_user_id = $authUser->id;
                 $newMessage->message_category_id = MessageData::CATEGORY_ID_DECLINED_BOOKING_TIME;
                 $newMessage->receiver_user_id = $requestedUser->id;
+                $newMessage->sender_user_role = $authUser->roles[0]->name;
+                $newMessage->receiver_user_role = $requestedUser->roles[0]->name;
                 $newMessage->type = 'structure';
                 $newMessage->structure_content = $declinedBookingTime->toJson();
                 $newMessage->date_time = Carbon::now();

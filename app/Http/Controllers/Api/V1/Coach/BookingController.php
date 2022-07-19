@@ -38,8 +38,17 @@ class BookingController extends Controller
                 ->orderBy('is_favourite_to_package_owner', 'DESC')
                 ->orderBy('is_favourite_to_package_buyer', 'DESC')
                 ->where(function ($q) use ($authUser) {
-                    $q->orWhere('package_buyer_user_id', $authUser->id);
-                    $q->orWhere('package_owner_user_id', $authUser->id);
+                    // $q->orWhere('package_buyer_user_id', $authUser->id);
+                    // $q->orWhere('package_owner_user_id', $authUser->id);
+
+                    $q->orWhere(function($query) use ($authUser) {
+                        $query->where('package_owner_user_id',$authUser->id)
+                              ->where('sender_user_role',$authUser->roles[0]->name);
+                    });
+                    $q->orWhere(function($query) use ($authUser) {
+                        $query->where('package_buyer_user_id',$authUser->id)
+                              ->where('receiver_user_role',$authUser->roles[0]->name);
+                    });
 
                 })
                 ->orderBy('booking_date', 'DESC')
