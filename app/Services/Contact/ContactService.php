@@ -118,6 +118,7 @@ class ContactService
                 $contact->connection_user_id = $secondUser->id;
                 $contact->last_message_time = Carbon::now();
                 $contact->status = 'Initial';
+                $contact->user_role = $firstUser->roles[0]->name;
                 $contact->save();
             }
 
@@ -127,6 +128,7 @@ class ContactService
                 $contact->connection_user_id = $firstUser->id;
                 $contact->last_message_time = Carbon::now();
                 $contact->status = 'Initial';
+                $contact->user_role = $secondUser->roles[0]->name;
                 $contact->save();
             }
         }

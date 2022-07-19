@@ -16,10 +16,12 @@ class ContactService
     {
         if ($firstUser->id != $secondUser->id) {
             $firstUserExistedContact = Contact::where('user_id', $firstUser->id)
+                ->where('user_role', $firstUser->roles[0]->name)
                 ->where('connection_user_id', $secondUser->id)
                 ->first();
 
             $secondUserExistedContact = Contact::where('user_Id', $secondUser->id)
+                ->where('user_role', $secondUser->roles[0]->name)
                 ->where('connection_user_id', $firstUser->id)
                 ->first();
 
@@ -29,6 +31,7 @@ class ContactService
                 $contact->connection_user_id = $secondUser->id;
                 $contact->last_message_time = Carbon::now();
                 $contact->status = 'Initial';
+                $contact->user_role = $firstUser->roles[0]->name;
                 $contact->save();
             }
 
@@ -38,6 +41,7 @@ class ContactService
                 $contact->connection_user_id = $firstUser->id;
                 $contact->last_message_time = Carbon::now();
                 $contact->status = 'Initial';
+                $contact->user_role = $secondUser->roles[0]->name;
                 $contact->save();
             }
         }
@@ -52,10 +56,12 @@ class ContactService
     public function updateLastMessageAndTime(User $sender, User $receiver, Message $message = null, $timeStamp = '')
     {
         $senderExistedContact = Contact::where('user_id', $sender->id)
+            ->where('user_role', $sender->roles[0]->name)
             ->where('connection_user_id', $receiver->id)
             ->first();
 
         $receiverExistedContact = Contact::where('user_Id', $receiver->id)
+            ->where('user_role', $receiver->roles[0]->name)
             ->where('connection_user_id', $sender->id)
             ->first();
 
@@ -88,6 +94,7 @@ class ContactService
     public function resetContactNewMessageCount(User $contactOwnerUser,User $connectionUser)
     {
         $contact = Contact::where('user_id', $contactOwnerUser->id)
+            ->where('user_role', $contactOwnerUser->roles[0]->name)
             ->where('connection_user_id', $connectionUser->id)
             ->first();
         if ($contact) {

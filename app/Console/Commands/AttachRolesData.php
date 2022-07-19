@@ -13,7 +13,7 @@ class AttachRolesData extends Command
      *
      * @var string
      */
-    protected $signature = 'attach:role {table} {user_id_column}';
+    protected $signature = 'attach:role {user_id_column}';
 
     /**
      * The console command description.
@@ -39,40 +39,63 @@ class AttachRolesData extends Command
      */
     public function handle()
     {
-        $table_name = $this->argument('table');
+        // $table_name = $this->argument('table');
+
         $user_id = $this->argument('user_id_column');
         $empty_roles = [];
 
-        $this->info("Fetching data from ".$table_name." where ".$user_id." is not empty...");
 
-        $tableData = DB::table($table_name)->where($user_id,'!=', null )->get();
+        $columns = 'Tables_in_' . env('DB_DATABASE');//This is just to read the object by its key, DB_DATABASE is database name.
+        $tables = DB::select('SHOW TABLES');
 
-        $this->output->progressStart(count($tableData));
+        $insert_into=array(
+            'contacts' => 'contacts',
+            // 'exercises' => 'exercises',
+        );
 
-        foreach($tableData as $data){
+        foreach ( $tables as $table ) {
 
-            $user = User::where('id', $data->$user_id)->first();
-            if($user && $user->roles &&  $user->roles[0]){
+            if(array_key_exists($table->$columns,$insert_into)){
+              //
+                $this->info("Fetching data from ".$table->$columns." where ".$user_id." is not empty...");
 
-                $role = $user->roles[0]->name;
+                $tableData = DB::table($table->$columns)->where($user_id,'!=', null )->get();
 
-                DB::table($table_name)->where('id', $data->id)->update([
-                    'user_role' => $role
-                ]);
+                $this->output->progressStart(count($tableData));
 
-            }else{
-                array_push($empty_roles, $data->id);
+                foreach($tableData as $data){
+
+                    $user = User::where('id', $data->$user_id)->first();
+                    if($user && $user->roles &&  $user->roles[0]){
+
+                        $role = $user->roles[0]->name;
+
+                        DB::table($table->$columns)->where('id', $data->id)->update([
+                            'user_role' => $role
+                        ]);
+
+                    }else{
+                        array_push($empty_roles, $data->id);
+                    }
+
+                    $this->output->progressAdvance();
+                }
+
+                $this->output->progressFinish();
+
+                $this->info("Successfully added roles to all the column.");
+                foreach($empty_roles as $empty_role){
+                    $this->info("No role found for the column id -> ".$empty_role." Successfully added roles to all the column.");
+                }
+
+
             }
-
-            $this->output->progressAdvance();
         }
 
-        $this->output->progressFinish();
 
-        $this->info("Successfully added roles to all the column.");
-        foreach($empty_roles as $empty_role){
-            $this->info("No role found for the column id -> ".$empty_role." Successfully added roles to all the column.");
-        }
+
+
+        
 
     }
 }

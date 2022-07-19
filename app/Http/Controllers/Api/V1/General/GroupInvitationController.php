@@ -47,6 +47,7 @@ class GroupInvitationController extends Controller
                 $contact->group_id = $groupInvitation->group_id;
                 $contact->contact_category_id = ContactData::CATEGORY_ID_GROUP;
                 $contact->last_message = "";
+                $contact->user_role = $authUser->roles[0]->name;
                 $contact->save();
 
                 $groupInvitation->status = GroupInvitationData::STATUS_ACCEPTED;

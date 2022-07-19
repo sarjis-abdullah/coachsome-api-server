@@ -28,8 +28,17 @@ class BookingTimeController extends Controller
             }
 
             $bookingTimes = BookingTime::with(['location'])->where(function ($q) use ($authUser, $date) {
-                $q->orWhere('requester_user_id', $authUser->id);
-                $q->orWhere('requester_to_user_id', $authUser->id);
+                // $q->orWhere('requester_user_id', $authUser->id);
+                // $q->orWhere('requester_to_user_id', $authUser->id);
+
+                $q->orWhere(function($query) use ($authUser) {
+                    $query->where('requester_user_id',$authUser->id)
+                          ->where('sender_user_role',$authUser->roles[0]->name);
+                });
+                $q->orWhere(function($query) use ($authUser) {
+                    $query->where('requester_to_user_id',$authUser->id)
+                          ->where('receiver_user_role',$authUser->roles[0]->name);
+                });
             })
                 ->where('calender_date', '>=', $date)
                 ->get()->map(function ($item)  use($authUser){

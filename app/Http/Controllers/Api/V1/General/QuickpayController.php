@@ -125,6 +125,8 @@ class QuickpayController extends Controller
             $booking = new Booking();
             $booking->package_owner_user_id = $packageOwnerUser->id;
             $booking->package_buyer_user_id = $packageBuyerUser->id;
+            $booking->sender_user_role = $packageOwnerUser->roles[0]->name;
+            $booking->receiver_user_role = $packageBuyerUser->roles[0]->name;
             $booking->package_buyer_message = $packageBuyerMessage;
             $booking->booking_settings_snapshot = $bookingSetting->toJson();
             $booking->package_owner_service_fee_snapshot = $bookingSetting->package_owner_gnr_service_fee;
