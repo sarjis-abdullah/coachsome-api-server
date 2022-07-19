@@ -137,7 +137,10 @@ class BookingController extends Controller
             ];
             $promoCode = PromoCode::where('code', $request['promoCode'])->first();
             if ($promoCode) {
-                if (!$promoService->isExpired($promoCode, $packageBuyerUser)) {
+                if ($promoCode->promo_type_id == 3){
+                    $promoCodeInfo['message'] = "This code is not eligible!";
+//                   throw ValidationException::withMessages(['This value is incorrect']);
+                } elseif (!$promoService->isExpired($promoCode, $packageBuyerUser)) {
                     $promoCodeInfo['valid'] = true;
                     $promoCodeInfo['value'] = $promoCode->code;
                     $promoCodeInfo['amount'] = $chargeInfo['promoDiscount'];
