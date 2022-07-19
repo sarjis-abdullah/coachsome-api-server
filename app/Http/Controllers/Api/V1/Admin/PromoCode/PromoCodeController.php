@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1\Admin\PromoCode;
 
+use App\Data\CurrencyCode;
+use App\Data\OrderStatus;
 use App\Data\StatusCode;
 use App\Entities\Currency;
+use App\Entities\GiftOrder;
 use App\Entities\PromoCode;
 use App\Entities\PromoDuration;
 use App\Entities\PromoType;
@@ -13,7 +16,11 @@ use App\Http\Resources\Promo\PromoCodeCollection;
 use App\Http\Resources\Promo\PromoCodeResource;
 use App\Http\Resources\Promo\PromoDurationCollection;
 use App\Http\Resources\Promo\PromoTypeCollection;
+use App\Services\TokenService;
+use App\Utils\CurrencyUtil;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -72,6 +79,29 @@ class PromoCodeController extends Controller
             $promoCode->currency_id = $request['currency'];
             $promoCode->discount_amount = $request['discount'];
             $promoCode->percentage_off = $request['percentageOff'];
+
+            $promoCode->save();
+            if ($request['type'] == 3) {
+                $promoCode->promo_category_id = 2;
+                $order = new GiftOrder();
+                $tokenService = new TokenService();
+                $order->user_id = Auth::id();
+                $order->promo_code_id = $promoCode->id;
+                $order->currency = CurrencyCode::DANISH_KRONER;
+                $order->total_amount = CurrencyUtil::convert(
+                    $request['discount'],
+                    $request->header('Currency-Code'),
+                    CurrencyCode::DANISH_KRONER
+                );
+                $order->status = OrderStatus::INITIAL;
+                $order->transaction_date = Carbon::now();
+                $order->save();
+
+                // $order->id only work when it saved
+                $orderKey = $tokenService->getUniqueId('G');
+                $order->key = $orderKey;
+                $order->save();
+            }
             $promoCode->save();
 
             return response([
