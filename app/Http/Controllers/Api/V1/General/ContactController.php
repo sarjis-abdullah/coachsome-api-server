@@ -35,11 +35,12 @@ class ContactController extends Controller
             $contactService = new ContactService();
 
             if ($selectedContactId) {
-                $contact = Contact::where('user_id', $selectedContactId)->first();
+                $contact = Contact::where('user_id', $selectedContactId)->where('user_role', $authUser->roles[0]->name)->first();
                 $contactService->reset($contact);
             }
 
             $contacts = Contact::where('user_id', $authUser->id)
+                ->where('user_role', $authUser->roles[0]->name)
                 ->where(function ($q) use ($statusFilter) {
                     if ($statusFilter == ContactData::STATUS_ARCHIVED ||
                         $statusFilter == ContactData::STATUS_UNREAD ||

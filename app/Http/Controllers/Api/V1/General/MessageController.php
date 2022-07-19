@@ -46,6 +46,8 @@ class MessageController extends Controller
 
             $connectedUser = User::find($contact->connection_user_id);
 
+            // dd($authUser->roles[0]->name);
+
             $contactService = new ContactService();
             $messageFormatterService = new MessageFormatterService();
             $bookingService = new BookingService();
@@ -53,10 +55,14 @@ class MessageController extends Controller
             // Existing messages
             $messages = Message::where(function ($q) use ($connectedUser, $authUser) {
                 $q->where('sender_user_id', $connectedUser->id);
+                $q->where('sender_user_role',$connectedUser->roles[0]->name);
                 $q->where('receiver_user_id', $authUser->id);
+                $q->where('receiver_user_role',$authUser->roles[0]->name);
             })->orWhere(function ($q) use ($connectedUser, $authUser) {
                 $q->where('sender_user_id', $authUser->id);
+                $q->where('sender_user_role',$authUser->roles[0]->name);
                 $q->where('receiver_user_id', $connectedUser->id);
+                $q->where('receiver_user_role',$connectedUser->roles[0]->name);
             })->get()->map(function ($item) use ($messageFormatterService) {
                 return $messageFormatterService->doFormat($item);
             });
@@ -64,7 +70,9 @@ class MessageController extends Controller
             // Initial bookings
             $bookings = Booking::where(function ($q) use ($connectedUser, $authUser) {
                 $q->where('package_owner_user_id', $connectedUser->id);
+                $q->where('sender_user_role',$connectedUser->roles[0]->name);
                 $q->where('package_buyer_user_id', $authUser->id);
+                $q->where('package_buyer_user_id',$connectedUser->roles[0]->name);
             })->where('status', OrderStatus::INITIAL)->get();
 
             // New messages
@@ -134,10 +142,14 @@ class MessageController extends Controller
                 $contactService->create($senderUser, $receiverUser);
             }
 
+            $senderUser = User::find($senderUser->id);
+
             $message = new Message();
             $message->sender_user_id = $senderUser->id;
+            $message->sender_user_role = $senderUser->roles[0]->name;
             $message->message_category_id = $categoryId;
             $message->receiver_user_id = $receiverUser->id;
+            $message->receiver_user_role = $receiverUser->roles[0]->name;
             $message->text_content = $type == 'text' ? $messageContent : null;
             $message->type = $type;
             $message->structure_content = $type == 'structure' ? json_encode($messageContent) : null;
@@ -159,6 +171,7 @@ class MessageController extends Controller
 
 
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
+
             event(new CreateNewContactUserEvent([
                 'receiverUserId' => $receiverUserId,
                 'contactAbleUserId' => $senderUser->id,
@@ -258,6 +271,8 @@ class MessageController extends Controller
             $message->sender_user_id = $senderUser->id;
             $message->message_category_id = $categoryId;
             $message->receiver_user_id = $receiverUser->id;
+            $message->sender_user_role = $senderUser->roles[0]->name;
+            $message->receiver_user_role = $receiverUser->roles[0]->name;
             $message->type = $type;
             $message->structure_content = $type == 'structure' ? $messageContent->toJson() : null;
             $message->date_time = Carbon::now();

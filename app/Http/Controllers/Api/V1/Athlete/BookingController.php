@@ -36,6 +36,7 @@ class BookingController extends Controller
                 ->orderBy('is_favourite_to_package_owner', 'DESC')
                 ->orderBy('is_favourite_to_package_buyer', 'DESC')
                 ->where('package_buyer_user_id', $authUser->id)
+                ->where('receiver_user_role', $authUser->roles[0]->name)
                 ->where(function ($q) {
                     $q->orWhere('status', 'Pending');
                     $q->orWhere('status', 'Accepted');

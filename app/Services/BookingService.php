@@ -103,6 +103,8 @@ class BookingService
                 $newMessage->message_category_id = MessageData::CATEGORY_ID_BUY_PACKAGE;
                 $newMessage->sender_user_id = $packageBuyerUser->id;
                 $newMessage->receiver_user_id = $packageOwnerUser->id;
+                $newMessage->sender_user_role = $packageBuyerUser->roles[0]->name;
+                $newMessage->receiver_user_role = $packageOwnerUser->roles[0]->name;
                 $newMessage->structure_content = $buyPackageMessage->toJson();
                 $newMessage->date_time = Carbon::now();
                 $newMessage->date_time_iso = Carbon::now()->toISOString();
@@ -127,6 +129,8 @@ class BookingService
                 $newMessage->message_category_id = MessageData::CATEGORY_ID_BOOKING_PACKAGE;
                 $newMessage->sender_user_id = $packageBuyerUser->id;
                 $newMessage->receiver_user_id = $packageOwnerUser->id;
+                $newMessage->sender_user_role = $packageBuyerUser->roles[0]->name;
+                $newMessage->receiver_user_role = $packageOwnerUser->roles[0]->name;
                 $newMessage->structure_content = $packageBookingMessage->toJson();
                 $newMessage->date_time = Carbon::now();
                 $newMessage->date_time_iso = Carbon::now()->toISOString();
