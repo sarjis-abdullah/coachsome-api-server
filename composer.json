@@ -63,7 +63,8 @@
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
             "Coachsome\\BaseReview\\": "packages/Coachsome/BaseReview/src",
-            "Coachsome\\ChatServer\\": "packages/Coachsome/ChatServer/src"
+            "Coachsome\\ChatServer\\": "packages/Coachsome/ChatServer/src",
+            "Tikweb\\TikCmsApi\\": "packages/Tikweb/tik-cms-api/src"
         },
         "classmap": [
             "database/seeders",

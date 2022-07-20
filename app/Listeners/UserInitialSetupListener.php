@@ -49,31 +49,33 @@ class UserInitialSetupListener
             }
         }
 
-        // Configure active campaign
-        $contactRes = $activeCampaignService->createOrUpdateContact([
-            "contact" => [
-                "firstName" => $user->first_name,
-                "lastName" => $user->last_name,
-                "email" => $user->email,
-                "phone" => "",
-            ]
-        ]);
-        $data = json_decode($contactRes, true);
-        if (RoleData::ROLE_KEY_COACH == $userType) {
-            $activeCampaignService->addTagToContact( [
-                'contactTag'=>[
-                    'contact' => $data['contact']['id'],
-                    'tag' => $activeCampaignService->getCoachTagId(),
+        if(env('CURR_ENV') == "production"){
+            // Configure active campaign
+            $contactRes = $activeCampaignService->createOrUpdateContact([
+                "contact" => [
+                    "firstName" => $user->first_name,
+                    "lastName" => $user->last_name,
+                    "email" => $user->email,
+                    "phone" => "",
                 ]
             ]);
-        }
-        if (RoleData::ROLE_KEY_ATHLETE == $userType) {
-            $activeCampaignService->addTagToContact( [
-                'contactTag'=>[
-                    'contact' => $data['contact']['id'],
-                    'tag' => $activeCampaignService->getAthleteTagId(),
-                ]
-            ]);
+            $data = json_decode($contactRes, true);
+            if (RoleData::ROLE_KEY_COACH == $userType) {
+                $activeCampaignService->addTagToContact( [
+                    'contactTag'=>[
+                        'contact' => $data['contact']['id'],
+                        'tag' => $activeCampaignService->getCoachTagId(),
+                    ]
+                ]);
+            }
+            if (RoleData::ROLE_KEY_ATHLETE == $userType) {
+                $activeCampaignService->addTagToContact( [
+                    'contactTag'=>[
+                        'contact' => $data['contact']['id'],
+                        'tag' => $activeCampaignService->getAthleteTagId(),
+                    ]
+                ]);
+            }
         }
 
 
@@ -89,27 +91,27 @@ class UserInitialSetupListener
 
 
         // Verification email
-        if ($provider == false) {
-            $translation = $translationService->getKeyByLanguageCode($locale);
-            $token = Uuid::uuid1()->toString();
-            $link = env('APP_CLIENT_DOMAIN_EMAIL_VERIFICATION_URL') . '?token=' . $token;
+        // if ($provider == false) {
+        //     $translation = $translationService->getKeyByLanguageCode($locale);
+        //     $token = Uuid::uuid1()->toString();
+        //     $link = env('APP_CLIENT_DOMAIN_EMAIL_VERIFICATION_URL') . '?token=' . $token;
 
-            VerifyUser::create(['user_id' => $user->id, 'token' => $token]);
+        //     VerifyUser::create(['user_id' => $user->id, 'token' => $token]);
 
-            $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
-            $beautymail->send('emails.verifyEmail',
-                [
-                    'fullName' => $user->fullName(),
-                    'link' => $link,
-                    'translation' => $translation
-                ],
-                function ($message) use ($user) {
-                    $message
-                        ->from(config('mail.from.address'))
-                        ->to($user->emailAddress(), $user->fullName())
-                        ->subject('Email Verification');
-                });
-        }
+        //     $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+        //     $beautymail->send('emails.verifyEmail',
+        //         [
+        //             'fullName' => $user->fullName(),
+        //             'link' => $link,
+        //             'translation' => $translation
+        //         ],
+        //         function ($message) use ($user) {
+        //             $message
+        //                 ->from(config('mail.from.address'))
+        //                 ->to($user->emailAddress(), $user->fullName())
+        //                 ->subject('Email Verification');
+        //         });
+        // }
 
     }
 }

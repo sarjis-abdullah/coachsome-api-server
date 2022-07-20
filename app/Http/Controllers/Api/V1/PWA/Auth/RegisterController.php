@@ -169,6 +169,7 @@ class RegisterController extends Controller
                 'last_name' => 'required',
                 'email' => "unique:users,email",
                 'password' => 'required',
+                'user_type' => 'required',
             ]);
 
             if ($validator->fails()) {
@@ -187,8 +188,17 @@ class RegisterController extends Controller
             $user->save();
 
             if ($user) {
-                $data['status'] = 'success';
-                $data['message'] = 'Successfully registered.';
+                $role = Role::where('name', $request->user_type)->first();
+                if($user && $role){
+                    $user->attachRole($role);
+                    $data['status'] = 'success';
+                    $data['message'] = 'Congrats! You have joined Coachsome as, '.$role->display_name;
+                }else {
+                    throw new \Exception('Something went wrong, Can not attach role now, try again.');
+                }
+                
+                UserRegisteredEvent::dispatch($user, $request->user_type);
+                
             } else {
                 throw new \Exception('Something went wrong, try again.');
             }

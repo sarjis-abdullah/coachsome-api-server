@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use MessageFormatter;
 
@@ -45,6 +46,8 @@ class MessageController extends Controller
 
             $connectedUser = User::find($contact->connection_user_id);
 
+            // dd($authUser->roles[0]->name);
+
             $contactService = new ContactService();
             $messageFormatterService = new MessageFormatterService();
             $bookingService = new BookingService();
@@ -52,10 +55,14 @@ class MessageController extends Controller
             // Existing messages
             $messages = Message::where(function ($q) use ($connectedUser, $authUser) {
                 $q->where('sender_user_id', $connectedUser->id);
+                $q->where('sender_user_role',$connectedUser->roles[0]->name);
                 $q->where('receiver_user_id', $authUser->id);
+                $q->where('receiver_user_role',$authUser->roles[0]->name);
             })->orWhere(function ($q) use ($connectedUser, $authUser) {
                 $q->where('sender_user_id', $authUser->id);
+                $q->where('sender_user_role',$authUser->roles[0]->name);
                 $q->where('receiver_user_id', $connectedUser->id);
+                $q->where('receiver_user_role',$connectedUser->roles[0]->name);
             })->get()->map(function ($item) use ($messageFormatterService) {
                 return $messageFormatterService->doFormat($item);
             });
@@ -63,7 +70,9 @@ class MessageController extends Controller
             // Initial bookings
             $bookings = Booking::where(function ($q) use ($connectedUser, $authUser) {
                 $q->where('package_owner_user_id', $connectedUser->id);
+                $q->where('sender_user_role',$connectedUser->roles[0]->name);
                 $q->where('package_buyer_user_id', $authUser->id);
+                $q->where('package_buyer_user_id',$connectedUser->roles[0]->name);
             })->where('status', OrderStatus::INITIAL)->get();
 
             // New messages
@@ -133,10 +142,14 @@ class MessageController extends Controller
                 $contactService->create($senderUser, $receiverUser);
             }
 
+            $senderUser = User::find($senderUser->id);
+
             $message = new Message();
             $message->sender_user_id = $senderUser->id;
+            $message->sender_user_role = $senderUser->roles[0]->name;
             $message->message_category_id = $categoryId;
             $message->receiver_user_id = $receiverUser->id;
+            $message->receiver_user_role = $receiverUser->roles[0]->name;
             $message->text_content = $type == 'text' ? $messageContent : null;
             $message->type = $type;
             $message->structure_content = $type == 'structure' ? json_encode($messageContent) : null;
@@ -158,6 +171,7 @@ class MessageController extends Controller
 
 
             $contactService->updateLastMessageAndTime($senderUser, $receiverUser, $message);
+
             event(new CreateNewContactUserEvent([
                 'receiverUserId' => $receiverUserId,
                 'contactAbleUserId' => $senderUser->id,
@@ -205,18 +219,24 @@ class MessageController extends Controller
                 'receiverUserId' => 'required',
                 'type' => 'nullable',
                 'categoryId' => 'nullable',
-                'file' => 'required|mimes:jpg,png,gif,svg|max:5000'
+                'file' => 'required|mimes:jpg,jpeg,png,gif,svg,mp3,mp4,mov,ogg,wmv,avi,pdf,txt|max:20000'
 
             ]);
 
-            $name = $request->file('file')->store(
-                '', 'minio'
-            );
+            // $name = $request->file('file')->store(
+            //     '', 'minio'
+            // );
+            $label = $request->file('file')->getClientOriginalName();
+            $extension = $request->file('file')->getClientOriginalExtension();
+            $name = Storage::disk('minio')->put('', ($request->file('file')));
 
-            $attachment = $name;
+            $attachment = $request->fileType && $request->fileType != 'attachment'?  env('MINIO_ENDPOINT')."/".env('MINIO_BUCKET')."/".$name : $name;
 
             $messageContent = new Attachment([
-                'url' => $attachment
+                'key' => $this->attachmentType($request->fileType),
+                'url' =>  $attachment,
+                'label' => $label,
+                'extension' => $extension
             ]);
 
 
@@ -251,6 +271,8 @@ class MessageController extends Controller
             $message->sender_user_id = $senderUser->id;
             $message->message_category_id = $categoryId;
             $message->receiver_user_id = $receiverUser->id;
+            $message->sender_user_role = $senderUser->roles[0]->name;
+            $message->receiver_user_role = $receiverUser->roles[0]->name;
             $message->type = $type;
             $message->structure_content = $type == 'structure' ? $messageContent->toJson() : null;
             $message->date_time = Carbon::now();
@@ -291,5 +313,15 @@ class MessageController extends Controller
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
 
+    }
+
+    public function attachmentType($type){
+        if($type == "video"){
+            return "video";
+        }else if($type == "file"){
+            return "file";
+        }else{
+            return "attachment";
+        }
     }
 }
