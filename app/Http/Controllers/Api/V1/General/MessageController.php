@@ -223,14 +223,11 @@ class MessageController extends Controller
 
             ]);
 
-            // $name = $request->file('file')->store(
-            //     '', 'minio'
-            // );
             $label = $request->file('file')->getClientOriginalName();
             $extension = $request->file('file')->getClientOriginalExtension();
             $name = Storage::disk('minio')->put('', ($request->file('file')));
 
-            $attachment = $request->fileType && $request->fileType != 'attachment'?  env('MINIO_ENDPOINT')."/".env('MINIO_BUCKET')."/".$name : $name;
+            $attachment = $request->fileType && $request->fileType != 'image' ?  env('MINIO_ENDPOINT')."/".env('MINIO_BUCKET')."/".$name : $name;
 
             $messageContent = new Attachment([
                 'key' => $this->attachmentType($request->fileType),
