@@ -19,10 +19,10 @@ class CreateUserRoleToSpecificTable extends Migration
 
         $insert_into=array(
             // 'contacts' => 'contacts',
-            // 'profiles' => 'profiles',
-            'language_user' => 'language_user',
-            'sport_category_user' => 'sport_category_user',
-            'sport_tags' => 'sport_tags',
+            'profiles' => 'profiles',
+            // 'language_user' => 'language_user',
+            // 'sport_category_user' => 'sport_category_user',
+            // 'sport_tags' => 'sport_tags',
         );
 
         foreach ( $tables as $table ) {
@@ -48,10 +48,10 @@ class CreateUserRoleToSpecificTable extends Migration
 
         $insert_into=array(
             // 'contacts' => 'contacts',
-            // 'profiles' => 'profiles',
-            'language_user' => 'language_user',
-            'sport_category_user' => 'sport_category_user',
-            'sport_tags' => 'sport_tags',
+            'profiles' => 'profiles',
+            // 'language_user' => 'language_user',
+            // 'sport_category_user' => 'sport_category_user',
+            // 'sport_tags' => 'sport_tags',
         );
 
         foreach ( $tables as $table ) {
