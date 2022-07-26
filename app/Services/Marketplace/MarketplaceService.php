@@ -8,6 +8,7 @@ use App\Data\Constants;
 use App\Data\RoleData;
 use App\Entities\Badge;
 use App\Entities\Currency;
+use App\Entities\ProfileSwitch;
 use App\Entities\SportCategory;
 use App\Entities\User;
 use App\Entities\UserSetting;
@@ -138,44 +139,55 @@ class MarketplaceService
         $userQuery = User::query()
             ->distinct()
             ->with([
-                'profile',
+                'generalProfile',
                 'ownPackageSetting',
                 'locations',
                 'reviews',
                 'availabilities',
-                'sportCategories',
                 'roles',
-                'languages',
-                'sportTags',
-                'sportCategories'
+                'generalLanguages',
+                'generalSportTags',
+                'generalSportCategories',
+                'switchInfo'
             ]);
 
         // Active Rules
         $userQuery->where('activity_status_id', Constants::ACTIVITY_STATUS_ID_ACTIVE);
-        $userQuery->whereHas('profile', function ($q) {
+        $userQuery->whereHas('generalProfile', function ($q) {
             $q->where('image', '!=', null);
             $q->where('profile_name', '!=', null);
             $q->where('about_me', '!=', null);
             $q->where('mobile_no', '!=', null);
             $q->where('mobile_code', '!=', null);
         });
-        $userQuery->has('sportTags', '>=', 3);
-        $userQuery->has('languages');
-        $userQuery->has('sportCategories');
+        $userQuery->has('generalSportTags', '>=', 3);
+        $userQuery->has('generalLanguages');
+        $userQuery->has('generalSportCategories');
         $userQuery->has('locations');
         $userQuery->whereHas('packages', function ($q) {
             $q->where('status', '=', 1);
         });
 
-
+ 
         // Only coach
-        if (RoleData::ROLE_ID_COACH) {
-            $userQuery->whereRoleIs(RoleData::ROLE_KEY_COACH);
-        }
+        // commented On 26th July 2022
 
+        $userQuery->whereRoleIs(RoleData::ROLE_KEY_COACH);
+        
+        // instead added this On 26th July 2022
+
+        // if (RoleData::ROLE_ID_COACH && $userQuery->has('switchInfo')) {
+        //     $userQuery->whereHas('switchInfo', function ($q) {
+        //         $q->where('original_role',RoleData::ROLE_ID_COACH);
+        //     })->orWhereRoleIs(RoleData::ROLE_KEY_COACH);
+        // }else{
+        //     $userQuery->whereRoleIs(RoleData::ROLE_KEY_COACH);
+        // }
+        // added till here On 26th July 2022
+        
         // Sport category id
         if ($categoryIdList) {
-            $userQuery->whereHas('sportCategories', function ($q) use ($categoryIdList) {
+            $userQuery->whereHas('generalSportCategories', function ($q) use ($categoryIdList) {
                 $q->whereIn("sport_category_id", $categoryIdList);
             });
         }
@@ -191,7 +203,7 @@ class MarketplaceService
 
         // Tag name
         if ($tagName) {
-            $userQuery->whereHas('sportTags', function ($q) use ($tagName) {
+            $userQuery->whereHas('generalSportTags', function ($q) use ($tagName) {
                 $q->where('name', 'LIKE', '%' . $tagName . '%');
             });
         }
@@ -231,7 +243,7 @@ class MarketplaceService
             }
             $sportCategory = SportCategory::where('t_key', $tkey)->first();
             if ($sportCategory) {
-                $userQuery->whereHas('sportCategories', function ($q) use ($sportCategory) {
+                $userQuery->whereHas('generalSportCategories', function ($q) use ($sportCategory) {
                     return $q->where('sport_categories.id', $sportCategory->id);
                 });
             }
@@ -259,7 +271,7 @@ class MarketplaceService
             ->map(function ($item)
             use ($mediaService, $reviewService, $mCurrency, $requestedCurrency, $packageService, $currencyService) {
                 $coach = new \stdClass();
-                $coach->name = $item->profile->profile_name ?? '';
+                $coach->name = $item->generalProfile->profile_name ?? '';
 
                 // Image
                 $images = $mediaService->getImages($item);

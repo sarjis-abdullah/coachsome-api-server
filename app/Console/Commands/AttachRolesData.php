@@ -52,8 +52,11 @@ class AttachRolesData extends Command
         $tables = DB::select('SHOW TABLES');
 
         $insert_into=array(
-            'contacts' => 'contacts',
-            // 'exercises' => 'exercises',
+            // 'contacts' => 'contacts',
+            'profiles' => 'profiles',
+            'language_user' => 'language_user',
+            'sport_category_user' => 'sport_category_user',
+            'sport_tags' => 'sport_tags',
         );
 
         foreach ( $tables as $table ) {
@@ -80,7 +83,8 @@ class AttachRolesData extends Command
                         array_push($switched_data_info, $data->id);
                     }else{
                         $user = User::where('id', $data->$user_id)->first();
-                        if($user && $user->roles &&  $user->roles[0]){
+
+                        if($user && $user->roles &&  !empty($user->roles[0])){
 
                             $role = $user->roles[0]->name;
 

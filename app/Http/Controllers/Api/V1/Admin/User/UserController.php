@@ -146,6 +146,7 @@ class UserController extends Controller
             if (!$profile) {
                 $profile = new Profile();
                 $profile->user_id = $user->id;
+                $profile->user_role = $user->roles[0]->name;
                 $profile->save();
             }
 

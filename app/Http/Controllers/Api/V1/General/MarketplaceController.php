@@ -37,6 +37,8 @@ class MarketplaceController extends Controller
 
     private function initial($request)
     {
+
+        
         $data = [
             'categories' => [],
             'min' => 0,
