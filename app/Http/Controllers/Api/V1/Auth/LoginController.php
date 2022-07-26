@@ -131,6 +131,7 @@ class LoginController extends Controller
                 if (!$profile) {
                     $newProfile = new Profile();
                     $newProfile->user_id = $user->id;
+                    $profile->user_role = $user->roles[0]->name;
                     $newProfile->profile_name = $user->fullName();
                     $newProfile->save();
                 }

@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
@@ -64,11 +65,14 @@ class ProfileController extends Controller
 
             $transformerService = new TransformerService();
 
-            $user = Auth::user()->load(['profile', 'sportCategories']);
+            $user = Auth::user();
+
             $profile = $user->profile;
+            
             if (!$profile) {
                 $profile = new Profile();
                 $profile->user_id = $user->id;
+                $profile->user_role = $user->roles[0]->name;
                 $profile->profile_name = $user->first_name . " " . $user->last_name;
                 $profile->save();
             }
@@ -160,37 +164,60 @@ class ProfileController extends Controller
             $languageIdList = $request->language_tag_list_id ?? [];
 
             // Tag
-            $user->sportTags()->delete();
+            SportTag::where('user_id', $user->id)->where('user_role', $user->roles[0]->name)->delete();
             foreach ($tagNameList as $name) {
                 $tag = new SportTag();
                 $tag->user_id = $user->id;
                 $tag->name = $name;
+                $tag->user_role = $user->roles[0]->name;
                 $tag->save();
             }
 
             // Category
-            $user->sportCategories()->detach();
+            DB::table('sport_category_user')->where('user_id', $user->id)->where('user_role', $user->roles[0]->name)->delete();
             foreach ($categoryIdList as $id) {
-                $user->sportCategories()->attach($id);
+                DB::table('sport_category_user')->insert(
+                    [
+                        'user_id' => $user->id,
+                        'user_role' => $user->roles[0]->name,
+                        'sport_category_id' => $id
+                    ]
+                );
             }
 
             // Language
-            $user->languages()->detach();
+            DB::table('language_user')->where('user_id', $user->id)->where('user_role', $user->roles[0]->name)->delete();
             foreach ($languageIdList as $id) {
-                $user->languages()->attach($id);
+                DB::table('language_user')->insert(
+                    [
+                        'user_id' => $user->id,
+                        'user_role' => $user->roles[0]->name,
+                        'language_id' => $id
+                    ]
+                );
             }
 
-            $profile = $user->profile;
-            $profile->user_id = $user->id;
-            $profile->profile_name = $request->profile_name ?? '';
-            $profile->about_me = $request->about_me ?? '';
-            $profile->mobile_code = $request->mobile_code ?? '';
-            $profile->mobile_no = $request->mobile_no ?? '';
-            $profile->birth_day = !empty($request->birth_day) ? date('Y-m-d', strtotime($request->birth_day)) : null;
-            $profile->social_acc_fb_link = $request->social_acc_fb_link ?? '';
-            $profile->social_acc_twitter_link = $request->social_acc_twitter_link ?? '';
-            $profile->social_acc_instagram_link = $request->social_acc_instagram_link ?? '';
-            if ($profile->save()) {
+
+            $profile = Profile::updateOrInsert(
+                [
+                    'user_id' => $user->id,
+                    'user_role' => $user->roles[0]->name
+                ],
+                [
+
+                    'profile_name' => $request->profile_name ?? '',
+                    'about_me' => $request->about_me ?? '',
+                    'mobile_code' => $request->mobile_code ?? '',
+                    'mobile_no' => $request->mobile_no ?? '',
+                    'birth_day' => !empty($request->birth_day) ? date('Y-m-d', strtotime($request->birth_day)) : null,
+                    'social_acc_fb_link' => $request->social_acc_fb_link ?? '',
+                    'social_acc_twitter_link' => $request->social_acc_twitter_link ?? '',
+                    'social_acc_instagram_link' => $request->social_acc_instagram_link ?? ''
+
+                ]
+            );
+
+            if ($profile) {
                 $progressService = new ProgressService();
 
                 $response['status'] = 'success';
@@ -320,7 +347,7 @@ class ProfileController extends Controller
                 $userName = str_replace("-", ".", $userName);
             }
 
-            $user = User::where('user_name', $userName)->with(['sportTags'])->first();
+            $user = User::where('user_name', $userName)->first();
             if (!$user) {
                 throw new Exception('Sorry, user not found');
             }
@@ -338,6 +365,7 @@ class ProfileController extends Controller
                 $userInfo->firstName = $user->first_name;
                 $userInfo->lastName = $user->last_name;
                 $userInfo->email = $user->email;
+                $userInfo->role = $user->roles[0]->name;
                 $userInfo->badgeKey = Badge::find($user->badge_id)->key ?? "";
 
                 $socialAccount = SocialAccount::where('user_id', $user->id)->first();
