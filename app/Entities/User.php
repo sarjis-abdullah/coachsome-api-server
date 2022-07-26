@@ -11,6 +11,7 @@ use App\Notifications\PasswordReset;
 use App\Notifications\PWA\PasswordReset as NotificationsPWAPasswordReset;
 use Laratrust\Traits\LaratrustUserTrait;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Rickycezar\Impersonate\Models\Impersonate;
 
 /**
@@ -114,7 +115,7 @@ class User extends Authenticatable
 
     public function profile()
     {
-        return $this->hasOne(Profile::class, 'user_id');
+        return $this->hasOne(Profile::class, 'user_id')->where('user_role', $this->roles[0]->name);
     }
 
     public function distance()
@@ -195,15 +196,39 @@ class User extends Authenticatable
 
     public function sportCategories()
     {
-        return $this->belongsToMany(SportCategory::class, 'sport_category_user', 'user_id', 'sport_category_id');
+        return $this->belongsToMany(SportCategory::class, 'sport_category_user', 'user_id', 'sport_category_id')->where('user_role', $this->roles[0]->name);
     }
 
     public function sportTags()
     {
-        return $this->hasMany(SportTag::class, 'user_id');
+        return $this->hasMany(SportTag::class, 'user_id')->where('user_role', $this->roles[0]->name);
     }
 
     public function languages()
+    {
+        return $this->belongsToMany(Language::class, 'language_user', 'user_id', 'language_id')->where('user_role', $this->roles[0]->name);
+    }
+
+    public function switchInfo(){
+        return $this->hasOne(ProfileSwitch::class, 'user_id');
+    }
+
+    public function generalProfile()
+    {
+        return $this->hasOne(Profile::class, 'user_id');
+    }
+
+    public function generalSportCategories()
+    {
+        return $this->belongsToMany(SportCategory::class, 'sport_category_user', 'user_id', 'sport_category_id');
+    }
+
+    public function generalSportTags()
+    {
+        return $this->hasMany(SportTag::class, 'user_id');
+    }
+
+    public function generalLanguages()
     {
         return $this->belongsToMany(Language::class, 'language_user', 'user_id', 'language_id');
     }

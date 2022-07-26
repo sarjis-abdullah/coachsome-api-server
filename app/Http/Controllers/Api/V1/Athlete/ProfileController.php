@@ -57,6 +57,7 @@ class ProfileController extends Controller
         if(!$profile){
             $profile = new Profile();
             $profile->user_id = $user->id;
+            $profile->user_role = $user->roles[0]->name;
             $profile->profile_name = $user->first_name." ".$user->last_name;
             $profile->save();
         }
