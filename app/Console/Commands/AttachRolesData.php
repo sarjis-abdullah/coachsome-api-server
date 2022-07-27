@@ -52,7 +52,7 @@ class AttachRolesData extends Command
         $tables = DB::select('SHOW TABLES');
 
         $insert_into=array(
-            // 'contacts' => 'contacts',
+            'contacts' => 'contacts',
             'profiles' => 'profiles',
             'language_user' => 'language_user',
             'sport_category_user' => 'sport_category_user',

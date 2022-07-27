@@ -18,11 +18,11 @@ class CreateUserRoleToSpecificTable extends Migration
         $tables = DB::select('SHOW TABLES');
 
         $insert_into=array(
-            // 'contacts' => 'contacts',
+            'contacts' => 'contacts',
             'profiles' => 'profiles',
-            // 'language_user' => 'language_user',
-            // 'sport_category_user' => 'sport_category_user',
-            // 'sport_tags' => 'sport_tags',
+            'language_user' => 'language_user',
+            'sport_category_user' => 'sport_category_user',
+            'sport_tags' => 'sport_tags',
         );
 
         foreach ( $tables as $table ) {
@@ -47,11 +47,11 @@ class CreateUserRoleToSpecificTable extends Migration
         $tables = DB::select('SHOW TABLES');
 
         $insert_into=array(
-            // 'contacts' => 'contacts',
+            'contacts' => 'contacts',
             'profiles' => 'profiles',
-            // 'language_user' => 'language_user',
-            // 'sport_category_user' => 'sport_category_user',
-            // 'sport_tags' => 'sport_tags',
+            'language_user' => 'language_user',
+            'sport_category_user' => 'sport_category_user',
+            'sport_tags' => 'sport_tags',
         );
 
         foreach ( $tables as $table ) {
