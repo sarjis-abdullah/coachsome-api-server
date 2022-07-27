@@ -286,7 +286,7 @@ class ExerciseController extends Controller
             $exercise->category_id          = $category_id;
             $exercise->sport_id             = $sport_id;
             $exercise->lavel_id             = $lavel_id;
-            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? false :  $request->shareWithCoach;
+            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? true :  $request->shareWithCoach;
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 
@@ -446,7 +446,7 @@ class ExerciseController extends Controller
             $exercise->category_id          = $category_id;
             $exercise->sport_id             = $sport_id;
             $exercise->lavel_id             = $lavel_id;
-            $exercise->share_with_coach     = $request->shareWithCoach;
+            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? true : $request->shareWithCoach;
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 

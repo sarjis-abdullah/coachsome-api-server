@@ -14,7 +14,7 @@ class AddShareWithCoachToExercisesTable extends Migration
     public function up()
     {
         Schema::table('exercises', function (Blueprint $table) {
-            $table->boolean('share_with_coach')->default(0)->after('status');
+            $table->boolean('share_with_coach')->default(1)->after('status');
         });
     }
 
