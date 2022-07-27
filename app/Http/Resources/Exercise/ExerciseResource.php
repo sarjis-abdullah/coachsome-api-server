@@ -71,6 +71,7 @@ class ExerciseResource extends JsonResource
         $tags =  $this->tags == "" ? [] : explode(',', $this->tags);
 
         $id = $this->id;
+        $share_with_coach = $this->share_with_coach;
         
 
         $type = $this->type == 1 ? ExerciseData::EXERCISE_TYPE_SYSTEM : ExerciseData::EXERCISE_TYPE_CUSTOM;
@@ -84,7 +85,8 @@ class ExerciseResource extends JsonResource
             'sport' => $sport,
             'lavel' => $lavel,
             'tags' => $tags,
-            'type' => $type
+            'type' => $type,
+            'shareWithCoach' => $share_with_coach,
         ];
     }
 }

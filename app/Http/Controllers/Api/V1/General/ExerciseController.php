@@ -53,7 +53,7 @@ class ExerciseController extends Controller
             $query = Exercise::WhereIn('user_id', $adminUsers->pluck('id'));
 
             if($user->hasRole([RoleData::ROLE_KEY_COACH])){
-                $query->orWhere('user_id', $user->id);
+                $query->where('share_with_coach',1)->orWhere('user_id', $user->id);
             }
 
             $exercises = $query->orderBy('id', 'asc')->get();
@@ -95,7 +95,7 @@ class ExerciseController extends Controller
             $query = Exercise::WhereIn('user_id', $adminUsers->pluck('id'));
 
             if($user->hasRole([RoleData::ROLE_KEY_COACH])){
-                $query->orWhere('user_id', $user->id);
+                $query->where('share_with_coach',1)->orWhere('user_id', $user->id);
             }
 
             $query->orderBy('id', 'asc');
@@ -286,6 +286,7 @@ class ExerciseController extends Controller
             $exercise->category_id          = $category_id;
             $exercise->sport_id             = $sport_id;
             $exercise->lavel_id             = $lavel_id;
+            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? false :  $request->shareWithCoach;
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 
@@ -445,6 +446,7 @@ class ExerciseController extends Controller
             $exercise->category_id          = $category_id;
             $exercise->sport_id             = $sport_id;
             $exercise->lavel_id             = $lavel_id;
+            $exercise->share_with_coach     = $request->shareWithCoach;
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 
