@@ -100,9 +100,6 @@ class ExerciseController extends Controller
 
             $query->orderBy('id', 'asc');
 
-
-
-
             if($request->withVideo){
 
                 $exercise_assets_with_video_ids = Exercise::leftJoin('exercise_assets', 'exercises.id', 'exercise_assets.exercise_id')
@@ -286,7 +283,7 @@ class ExerciseController extends Controller
             $exercise->category_id          = $category_id;
             $exercise->sport_id             = $sport_id;
             $exercise->lavel_id             = $lavel_id;
-            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? true :  $request->shareWithCoach;
+            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? false :  $request->shareWithCoach;
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 
@@ -446,7 +443,7 @@ class ExerciseController extends Controller
             $exercise->category_id          = $category_id;
             $exercise->sport_id             = $sport_id;
             $exercise->lavel_id             = $lavel_id;
-            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? true : $request->shareWithCoach;
+            $exercise->share_with_coach     = Auth::user()->hasRole([RoleData::ROLE_KEY_COACH]) ? false : $request->shareWithCoach;
             $exercise->tags                 = implode(',', $request->tags);
             $exercise->type                 = $request->type;
 
