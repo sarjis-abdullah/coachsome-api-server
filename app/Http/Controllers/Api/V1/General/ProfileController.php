@@ -54,7 +54,7 @@ class ProfileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, $isonboarding=false)
     {
         try {
             $response = [];
@@ -67,19 +67,24 @@ class ProfileController extends Controller
 
             $user = Auth::user();
 
-            $profile = $user->profile;
+            if($isonboarding){
+                $profile = Profile::where('user_id', $user->id)->where('is_onboarding', 1)->first();
+            }else{
+                $profile = $user->profile;
+            }
             
             if (!$profile) {
                 $profile = new Profile();
                 $profile->user_id = $user->id;
-                $profile->user_role = $user->roles[0]->name;
-                $profile->profile_name = $user->first_name . " " . $user->last_name;
+                $profile->user_role = $isonboarding ? '' : $user->roles[0]->name;
+                $profile->profile_name = $isonboarding ? '' : $user->first_name . " " . $user->last_name;
+                $profile->is_onboarding = $isonboarding ? 1 : 0;
                 $profile->save();
             }
 
             $response['countryList'] = [];
 
-            $response['image'] = $mediaService->getImages($user);
+            $response['image'] = $mediaService->getImages($user,$isonboarding);
             $response['profile_name'] = $profile->profile_name ?? '';
             $response['about_me'] = $profile->about_me ?? '';
             $response['mobile_no'] = $profile->mobile_no ?? '';
@@ -95,18 +100,21 @@ class ProfileController extends Controller
 
             // Language
             $languages = Language::get();
+            $userLanguages =  $isonboarding ? $user->onBoardingLanguages : $user->languages ;
             $transformedLanguages = $transformerService->getTransformedData(new Collection($languages, new LanguagesTransformer($languageCode)));
-            $transformedSelectedLanguages = $transformerService->getTransformedData(new Collection($user->languages, new LanguagesTransformer($languageCode)));
+            $transformedSelectedLanguages = $transformerService->getTransformedData(new Collection($userLanguages, new LanguagesTransformer($languageCode)));
             $response['languages'] = collect($transformedLanguages)->sortBy('name')->values();
             $response['selectedLanguages'] = collect($transformedSelectedLanguages)->values();
 
-            // Tag
-            $response['selectedSportTags'] = new SportTagCollection($user->sportTags);
+            // sportTags
+            $userTags =  $isonboarding ? $user->onBoardingSportTags : $user->sportTags ;
+            $response['selectedSportTags'] = new SportTagCollection($userTags);
 
             // Category
             $categories = SportCategory::get();
+            $userCategories =  $isonboarding ? $user->onBoardingSportCategories : $user->sportCategories ;
             $transformedCategories = $transformerService->getTransformedData(new Collection($categories, new CategoriesTransformer($languageCode)));
-            $transformedSelectedCategories = $transformerService->getTransformedData(new Collection($user->sportCategories, new CategoriesTransformer($languageCode)));
+            $transformedSelectedCategories = $transformerService->getTransformedData(new Collection($userCategories, new CategoriesTransformer($languageCode)));
             $response['selectedCategories'] = collect($transformedSelectedCategories)->values();
             $response['sport_category'] = collect($transformedCategories)->sortBy('name')->values();
 
@@ -164,35 +172,59 @@ class ProfileController extends Controller
             $languageIdList = $request->language_tag_list_id ?? [];
 
             // Tag
-            SportTag::where('user_id', $user->id)->where('user_role', $user->roles[0]->name)->delete();
+            $tagsData = SportTag::where('user_id', $user->id);
+            if($request->has('is_onboarding')){
+                $tagsData->where('is_onboarding', 1);
+            }else{
+                $tagsData->where('user_role', $user->roles[0]->name);
+            }
+            $tagsData->delete();
+
             foreach ($tagNameList as $name) {
                 $tag = new SportTag();
                 $tag->user_id = $user->id;
                 $tag->name = $name;
-                $tag->user_role = $user->roles[0]->name;
+                $tag->user_role = $request->has('is_onboarding') ? '' : $user->roles[0]->name;
+                $tag->is_onboarding = $request->has('is_onboarding') ? 1 : 0;
                 $tag->save();
             }
 
             // Category
-            DB::table('sport_category_user')->where('user_id', $user->id)->where('user_role', $user->roles[0]->name)->delete();
+            $categoriesData = DB::table('sport_category_user')->where('user_id', $user->id);
+            if($request->has('is_onboarding')){
+                $categoriesData->where('is_onboarding', 1);
+            }else{
+                $categoriesData->where('user_role', $user->roles[0]->name);
+            }
+            $categoriesData->delete();
+
             foreach ($categoryIdList as $id) {
                 DB::table('sport_category_user')->insert(
                     [
                         'user_id' => $user->id,
-                        'user_role' => $user->roles[0]->name,
-                        'sport_category_id' => $id
+                        'user_role' => $request->has('is_onboarding') ? '' : $user->roles[0]->name,
+                        'sport_category_id' => $id,
+                        'is_onboarding'  => $request->has('is_onboarding') ? 1 : 0
                     ]
                 );
             }
 
             // Language
-            DB::table('language_user')->where('user_id', $user->id)->where('user_role', $user->roles[0]->name)->delete();
+            $languagesData = DB::table('language_user')->where('user_id', $user->id);
+            if($request->has('is_onboarding')){
+                $languagesData->where('is_onboarding', 1);
+            }else{
+                $languagesData->where('user_role', $user->roles[0]->name);
+            }
+            $languagesData->delete();
+
             foreach ($languageIdList as $id) {
                 DB::table('language_user')->insert(
                     [
                         'user_id' => $user->id,
-                        'user_role' => $user->roles[0]->name,
-                        'language_id' => $id
+                        'user_role' => $request->has('is_onboarding') ? '' : $user->roles[0]->name,
+                        'language_id' => $id,
+                        'is_onboarding'  => $request->has('is_onboarding') ? 1 : 0
                     ]
                 );
             }
@@ -201,7 +233,8 @@ class ProfileController extends Controller
             $profile = Profile::updateOrInsert(
                 [
                     'user_id' => $user->id,
-                    'user_role' => $user->roles[0]->name
+                    'user_role' => $request->has('is_onboarding') ? '' : $user->roles[0]->name,
+                    'is_onboarding' => $request->has('is_onboarding') ? $request->is_onboarding : 0,
                 ],
                 [
 

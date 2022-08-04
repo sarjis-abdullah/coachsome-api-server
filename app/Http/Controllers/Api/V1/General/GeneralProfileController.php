@@ -40,6 +40,10 @@ class GeneralProfileController extends Controller
     {
         try {
             $images = [];
+
+            $onboarding = $request->has('isOnboarding') ? $request['isOnboarding'] : false;
+
+
             $user = Auth::user();
             $mediaService = new MediaService();
             if (!$user) {
@@ -49,10 +53,10 @@ class GeneralProfileController extends Controller
             $images['square'] = $request['square'];
             $images['portrait'] = $request['portrait'];
             $images['landscape'] = $request['landscape'];
-            $mediaService->storeImage($user, $images);
+            $mediaService->storeImage($user, $images, $onboarding);
 
             return response()->json([
-                'image' => $mediaService->getImages($user),
+                'image' => $mediaService->getImages($user, $onboarding),
             ], StatusCode::HTTP_OK);
         } catch (Exception $e) {
             return response()->json([

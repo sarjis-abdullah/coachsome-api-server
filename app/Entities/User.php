@@ -194,6 +194,21 @@ class User extends Authenticatable
         return $this->hasMany(Contact::class, 'user_id');
     }
 
+    public function onBoardingSportCategories()
+    {
+        return $this->belongsToMany(SportCategory::class, 'sport_category_user', 'user_id', 'sport_category_id')->where('is_onboarding', 1);
+    }
+
+    public function onBoardingSportTags()
+    {
+        return $this->hasMany(SportTag::class, 'user_id')->where('is_onboarding', 1);
+    }
+
+    public function onBoardingLanguages()
+    {
+        return $this->belongsToMany(Language::class, 'language_user', 'user_id', 'language_id')->where('is_onboarding', 1);
+    }
+
     public function sportCategories()
     {
         return $this->belongsToMany(SportCategory::class, 'sport_category_user', 'user_id', 'sport_category_id')->where('user_role', $this->roles[0]->name);

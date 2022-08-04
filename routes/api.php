@@ -120,6 +120,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
             // profiles
             Route::get('profiles', 'ProfileController@index');
+            Route::get('profiles/{is_onboarding}', 'ProfileController@index');
             Route::post('profiles', 'ProfileController@store');
             Route::post('profiles/images', 'ProfileController@uploadImage');
 

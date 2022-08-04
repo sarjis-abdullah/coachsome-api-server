@@ -3,7 +3,7 @@
 
 namespace App\Services\Media;
 
-
+use App\Entities\Profile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,73 +15,81 @@ class MediaService
      * All image should have base64 encoding
      *
      */
-    public function storeImage($user, $images)
+    public function storeImage($user, $images, $isonboarding)
     {
-        $profile = $user->profile;
-        if ($profile) {
-            $this->destroyImages($profile->image);
+        if($isonboarding){
+            $profile = Profile::where('user_id', $user->id)->where('is_onboarding',1)->first();
+        }else{
+            $profile = $user->profile;
         }
 
-        $imageTitle = 'id_' . $user->id . '_' . time();
-
-        // Store original image
-        if (array_key_exists('original', $images) && $images['original']) {
-            $image_64 = $images['original'];
-            $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
-            $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
-            $image = str_replace($replace, '', $image_64);
-            $image = str_replace(' ', '+', $image);
-            $imageName = $imageTitle . '.' . $extension;
-            Storage::disk('publicImage')->put("original/" . $imageName, base64_decode($image));
+        if($profile){
+            
+            if ($profile->image!= '') {
+                $this->destroyImages($profile->image);
+            }
+    
+            $imageTitle = 'id_' . $user->id . '_' . time();
+    
+            // Store original image
+            if (array_key_exists('original', $images) && $images['original']) {
+                $image_64 = $images['original'];
+                $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
+                $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
+                $image = str_replace($replace, '', $image_64);
+                $image = str_replace(' ', '+', $image);
+                $imageName = $imageTitle . '.' . $extension;
+                Storage::disk('publicImage')->put("original/" . $imageName, base64_decode($image));
+            }
+    
+            // Store square image
+            if (array_key_exists('square', $images) && $images['square']) {
+                $image_64 = $images['square'];
+                $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
+                $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
+                $image = str_replace($replace, '', $image_64);
+                $image = str_replace(' ', '+', $image);
+                $imageName = $imageTitle . '.' . $extension;
+                Storage::disk('publicImage')->put("square/" . $imageName, base64_decode($image));
+            }
+    
+            // Store medium image
+            if (array_key_exists('portrait', $images) && $images['portrait']) {
+                $image_64 = $images['portrait'];
+                $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
+                $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
+                $image = str_replace($replace, '', $image_64);
+                $image = str_replace(' ', '+', $image);
+                $imageName = $imageTitle . '.' . $extension;
+                Storage::disk('publicImage')->put("portrait/" . $imageName, base64_decode($image));
+            }
+    
+            // Store landscape image
+            if (array_key_exists('landscape', $images) && $images['landscape']) {
+                $image_64 = $images['landscape'];
+                $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
+                $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
+                $image = str_replace($replace, '', $image_64);
+                $image = str_replace(' ', '+', $image);
+                $imageName = $imageTitle . '.' . $extension;
+                Storage::disk('publicImage')->put("landscape/" . $imageName, base64_decode($image));
+            }
+    
+            // Store tiny image
+            if (array_key_exists('tiny', $images) && $images['tiny']) {
+                $image_64 = $images['tiny'];
+                $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
+                $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
+                $image = str_replace($replace, '', $image_64);
+                $image = str_replace(' ', '+', $image);
+                $imageName = $imageTitle . '.' . $extension;
+                Storage::disk('publicImage')->put("tiny/" . $imageName, base64_decode($image));
+            }
+    
+            // Save image name
+            $profile->image = $imageName;
+            $profile->save();
         }
-
-        // Store square image
-        if (array_key_exists('square', $images) && $images['square']) {
-            $image_64 = $images['square'];
-            $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
-            $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
-            $image = str_replace($replace, '', $image_64);
-            $image = str_replace(' ', '+', $image);
-            $imageName = $imageTitle . '.' . $extension;
-            Storage::disk('publicImage')->put("square/" . $imageName, base64_decode($image));
-        }
-
-        // Store medium image
-        if (array_key_exists('portrait', $images) && $images['portrait']) {
-            $image_64 = $images['portrait'];
-            $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
-            $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
-            $image = str_replace($replace, '', $image_64);
-            $image = str_replace(' ', '+', $image);
-            $imageName = $imageTitle . '.' . $extension;
-            Storage::disk('publicImage')->put("portrait/" . $imageName, base64_decode($image));
-        }
-
-        // Store landscape image
-        if (array_key_exists('landscape', $images) && $images['landscape']) {
-            $image_64 = $images['landscape'];
-            $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
-            $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
-            $image = str_replace($replace, '', $image_64);
-            $image = str_replace(' ', '+', $image);
-            $imageName = $imageTitle . '.' . $extension;
-            Storage::disk('publicImage')->put("landscape/" . $imageName, base64_decode($image));
-        }
-
-        // Store tiny image
-        if (array_key_exists('tiny', $images) && $images['tiny']) {
-            $image_64 = $images['tiny'];
-            $extension = explode('/', explode(':', substr($image_64, 0, strpos($image_64, ';')))[1])[1];
-            $replace = substr($image_64, 0, strpos($image_64, ',') + 1);
-            $image = str_replace($replace, '', $image_64);
-            $image = str_replace(' ', '+', $image);
-            $imageName = $imageTitle . '.' . $extension;
-            Storage::disk('publicImage')->put("tiny/" . $imageName, base64_decode($image));
-        }
-
-        // Save image name
-        $profile->image = $imageName;
-        $profile->save();
     }
 
     public function storeFacebookImage($name, $content)
@@ -170,7 +178,7 @@ class MediaService
         }
     }
 
-    public function getImages($user)
+    public function getImages($user, $isonboarding=false)
     {
         $images = [
             'old' => '',
@@ -179,7 +187,11 @@ class MediaService
             'portrait' => '',
             'landscape' => '',
         ];
-        $profile = $user->profile;
+        if($isonboarding){
+            $profile = Profile::where('user_id', $user->id)->where('is_onboarding',1)->first();
+        }else{
+            $profile = $user->profile;
+        }
         if ($profile) {
             if ($profile->image) {
                 if (Storage::disk('publicImage')->has('original/' . $profile->image)) {

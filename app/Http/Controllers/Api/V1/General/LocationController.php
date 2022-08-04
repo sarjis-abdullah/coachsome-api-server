@@ -38,9 +38,13 @@ class LocationController extends Controller
                 new \Exception('User not found');
             }
 
-            $locations = Location::where(
-                'user_id', $user->id
-            )->get([
+            $locations = Location::where('user_id', $user->id);
+            
+            if($request->has('is_onboarding')){
+                $locations->where('is_onboarding', 1);
+            }
+
+            $locations->get([
                 'id',
                 'lat',
                 'long',
@@ -88,6 +92,7 @@ class LocationController extends Controller
         $location->city = $request->city;
         $location->cca2 = $request->cca2;
         $location->google_map_api_response = $request->googleMapApiResponse ? json_encode($request->googleMapApiResponse) : "";
+        $location->is_onboarding = $request->has('is_onboarding') ? 1 : 0;
 
         if ($location->save()) {
             $progressService = new ProgressService();
