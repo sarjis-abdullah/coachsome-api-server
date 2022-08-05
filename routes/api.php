@@ -36,6 +36,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Profile
         Route::get('publicProfile/{userName}', 'ProfileController@getByUserName');
 
+        Route::post('profile/onboard-coach', 'ProfileController@onboardCoach');
+
         // App Bar
         Route::get('appBar/front', 'AppBarController@getInitialData');
 

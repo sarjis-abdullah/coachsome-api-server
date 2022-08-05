@@ -9,6 +9,7 @@ use App\Entities\Distance;
 use App\Entities\Gallery;
 use App\Entities\Language;
 use App\Entities\Location;
+use App\Entities\Package;
 use App\Entities\Page;
 use App\Entities\Profile;
 use App\Entities\SocialAccount;
@@ -496,6 +497,52 @@ class ProfileController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
+            ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+    public function onboardCoach(Request $request){
+        try {
+
+            $user = User::find($request->user_id);
+
+
+            $packages = Package::where('user_id', $user->id)->get();
+
+            foreach($packages as $package){
+                Package::where('id', $package->id)->update([ 'status' => 1]);
+            }
+
+            $locations = Location::where('user_id', $user->id)->where('is_onboarding', 1)->get();
+
+            foreach($locations as $location){
+                Location::where('id', $location->id)->update([ 'is_onboarding' => 0]);
+            }
+
+            $sport_categories =  DB::table('sport_category_user')->where('user_id', $user->id)->where('is_onboarding', 1)->get();
+            
+            foreach($sport_categories as $sport_category){
+                DB::table('sport_category_user')->where('id', $sport_category->id)->update([ 'is_onboarding' => 0, 'user_role' => 'coach' ]);
+            }
+
+            $sport_tags = SportTag::where('user_id', $user->id)->where('is_onboarding', 1)->get();
+            
+            foreach($sport_tags as $sport_tag){
+                SportTag::where('id', $sport_tag->id)->update([ 'is_onboarding' => 0, 'user_role' => 'coach' ]);
+            }
+
+            $languages =  DB::table('language_user')->where('user_id', $user->id)->where('is_onboarding', 1)->get();
+            
+            foreach($languages as $language){
+                DB::table('language_user')->where('id', $language->id)->update([ 'is_onboarding' => 0, 'user_role' => 'coach' ]);
+            }
+
+            Profile::where('user_id', $user->id)->where('is_onboarding', 1)->update([ 'is_onboarding' => 0, 'user_role' => 'coach'  ]);
+            return response()->json([
+                'message'=>'Successfully switched into coach.'
+            ], StatusCode::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message'=>$e->getMessage()
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }

@@ -18,8 +18,13 @@ use PragmaRX\Countries\Package\Countries;
 use App\Entities\NotificationSetting;
 use Exception;
 use App\Data\SettingValue;
+use App\Entities\Location;
+use App\Entities\Profile;
 use App\Entities\SocialAccount;
+use App\Entities\SportCategory;
+use App\Entities\SportTag;
 use App\Http\Resources\Setting\NotificationSettingResource;
+use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
 {
@@ -295,7 +300,6 @@ class SettingsController extends Controller
             ], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
-
 
 
 }
