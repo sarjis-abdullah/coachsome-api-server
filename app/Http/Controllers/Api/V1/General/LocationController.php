@@ -38,13 +38,13 @@ class LocationController extends Controller
                 new \Exception('User not found');
             }
 
-            $locations = Location::where('user_id', $user->id);
+            $query  = Location::where('user_id', $user->id);
             
             if($request->has('is_onboarding')){
-                $locations->where('is_onboarding', 1);
+                $query->where('is_onboarding', 1);
             }
 
-            $locations->get([
+            $locations = $query->get([
                 'id',
                 'lat',
                 'long',
