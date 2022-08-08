@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1\Admin\Order;
 
+use App\Data\StatusCode;
 use App\Entities\Booking;
+use App\Entities\BookingTime;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Booking\BookingCollection;
+use App\Http\Resources\Booking\SessionCollection;
 use Illuminate\Http\Request;
 
 class OrderListController extends Controller
@@ -17,6 +20,29 @@ class OrderListController extends Controller
     public function index(Request $request)
     {
        return new BookingCollection(Booking::orderBy('created_at','DESC')->paginate(9999999));
+    }
+
+    public function getSessionsData(Request $request){
+        $booking_id = $request->booking_id;
+        
+        $sessions = BookingTime::with(['requesterUser','requesterToUser'])->where('booking_id', $booking_id)->where('status', 'Accepted')->get();
+
+        $response['sessions'] = new SessionCollection($sessions);
+
+        return response($response, StatusCode::HTTP_OK);
+
+        // return [
+        //     'data' => $sessions,
+        // ];
+    }
+    public function removeSessionsData(Request $request){
+        $session_id = $request->session_id;
+        
+        BookingTime::where('id', $session_id)->update(['status' => 'Removed By Admin' ]);
+
+        $response['message'] = 'Session has been removed successfully';
+
+        return response($response, StatusCode::HTTP_OK);
     }
 
     /**

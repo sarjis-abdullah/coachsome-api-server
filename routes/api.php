@@ -298,6 +298,8 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
 
         // Order list
         Route::get('orderList', 'Order\OrderListController@index');
+        Route::post('getSessions', 'Order\OrderListController@getSessionsData');
+        Route::post('removeSession', 'Order\OrderListController@removeSessionsData');
 
         // Tracking Codes
         Route::get('tracking-codes/{code}', 'PromoCode\TrackingCodeController@index');
