@@ -21,13 +21,13 @@ class OrderService
 
     public function grandTotal($order)
     {
-        return $this->totalPrice($order) + $this->serviceFee($order) - $this->promoDiscount($order);
+        return ($this->totalPrice($order) + $this->serviceFee($order)) - $order->promo_discount;
     }
 
-    public function promoDiscount($order)
-    {
-        return $order->promo_discount == null ? 0.00 : $order->promo_discount;
-    }
+    // public function promoDiscount($order)
+    // {
+    //     return $order->promo_discount == null ? 0.00 : $order->promo_discount;
+    // }
 
     public function promoCode($order)
     {
