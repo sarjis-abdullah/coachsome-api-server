@@ -32,12 +32,6 @@ class UserInitialSetupListener
         $userType = $event->userType;
         $provider = $event->provider ?? false;
 
-        // Profile setup
-        $profile = $user->profile ?? new Profile();
-        $profile->user_id = $user->id;
-        $profile->profile_name = $user->first_name . ' ' . $user->last_name;
-        $profile->save();
-
         // Attach role
         if ($user->roles()->count() < 1) {
             if (RoleData::ROLE_KEY_COACH == $userType) {
@@ -48,6 +42,15 @@ class UserInitialSetupListener
                 $user->attachRole($userType);
             }
         }
+
+        // Profile setup
+        $profile = $user->profile ?? new Profile();
+        $profile->user_id = $user->id;
+        $profile->profile_name = $user->first_name . ' ' . $user->last_name;
+        $profile->user_role = $user->roles[0]->name;
+        $profile->save();
+
+        
 
         if(env('CURR_ENV') == "production"){
             // Configure active campaign
