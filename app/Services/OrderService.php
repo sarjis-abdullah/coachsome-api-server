@@ -5,7 +5,7 @@ namespace App\Services;
 
 
 use App\Data\OrderStatus;
-use App\Entites\PromoUser;
+use App\Entities\PromoUser;
 
 class OrderService
 {
@@ -26,7 +26,7 @@ class OrderService
 
     public function promoDiscount($order)
     {
-        return $order->promo_discount;
+        return $order->promo_discount == null ? 0.00 : $order->promo_discount;
     }
 
     public function promoCode($order)
