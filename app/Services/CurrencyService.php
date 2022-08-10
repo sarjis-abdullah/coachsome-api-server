@@ -38,7 +38,7 @@ class CurrencyService
     {
         if ($code == 'SEK') {
             $formatter = new \NumberFormatter('sv_SE', \NumberFormatter::CURRENCY);
-            $formatter->setSymbol(NumberFormatter::GROUPING_SEPARATOR_SYMBOL, '.');
+            $formatter->setSymbol(\NumberFormatter::GROUPING_SEPARATOR_SYMBOL, '.');
             $formatter->setPattern('#,##0.## kr');
         } elseif ($code == 'EUR') {
             $formatter = new \NumberFormatter('en_GB', \NumberFormatter::CURRENCY);
