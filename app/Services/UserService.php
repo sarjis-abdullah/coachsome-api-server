@@ -95,6 +95,7 @@ class UserService
             $data->is_social_account = $socialAcc ? true : false;
             $data->is_profile_switched = !empty($switchInfo) && $switchInfo->is_switched == 1 ? true : false;
             $data->original_role = $original_role;
+            $data->is_onboarding =  $user->is_onboarding;
             $data->profile_switched_to = !empty($switchInfo) && $switchInfo->switch_to ? $switchInfo->switch_to : null;
         }
 

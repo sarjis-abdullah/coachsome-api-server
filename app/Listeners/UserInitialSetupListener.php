@@ -48,6 +48,7 @@ class UserInitialSetupListener
         $profile->user_id = $user->id;
         $profile->profile_name = $user->first_name . ' ' . $user->last_name;
         $profile->user_role = $user->roles[0]->name;
+        $profile->is_onboarding = RoleData::ROLE_KEY_COACH == $userType ? 1 : 0;
         $profile->save();
 
         

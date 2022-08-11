@@ -74,7 +74,7 @@ class ProfileController extends Controller
 
         // User Info
         $response['user'] = $user->info();
-        $response['dd'] = $user->info();
+        // $response['dd'] = $user->info();
 
         // Language
         $languages= Language::get();

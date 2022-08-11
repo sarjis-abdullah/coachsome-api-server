@@ -23,6 +23,7 @@ class AddOnboardingStatusToSpecificTable extends Migration
             'language_user' => 'language_user',
             'sport_category_user' => 'sport_category_user',
             'sport_tags' => 'sport_tags',
+            'users' => 'users',
         );
 
         foreach ( $tables as $table ) {
@@ -52,6 +53,7 @@ class AddOnboardingStatusToSpecificTable extends Migration
             'language_user' => 'language_user',
             'sport_category_user' => 'sport_category_user',
             'sport_tags' => 'sport_tags',
+            'users' => 'users',
         );
 
         foreach ( $tables as $table ) {

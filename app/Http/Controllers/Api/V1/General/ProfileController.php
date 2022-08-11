@@ -55,7 +55,7 @@ class ProfileController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, $isonboarding=false)
+    public function index(Request $request, $is_onboarding=false)
     {
         try {
             $response = [];
@@ -67,6 +67,8 @@ class ProfileController extends Controller
             $transformerService = new TransformerService();
 
             $user = Auth::user();
+            
+            $isonboarding =  $is_onboarding || $user->is_onboarding == 1  ? true : false;
 
             if($isonboarding){
                 $profile = Profile::where('user_id', $user->id)->where('is_onboarding', 1)->first();
@@ -137,6 +139,8 @@ class ProfileController extends Controller
         $response = [];
         $user = Auth::user();
 
+        $isOnboarding =  $request->has('is_onboarding') || $user->is_onboarding == 1  ? true : false;
+
         // Validation
         if (!empty($request->social_acc_fb_link)) {
             if (!preg_match('/(https:\/\/)?(www\.)?facebook\.com(.*?)/', $request->social_acc_fb_link)) {
@@ -174,11 +178,13 @@ class ProfileController extends Controller
 
             // Tag
             $tagsData = SportTag::where('user_id', $user->id);
-            if($request->has('is_onboarding')){
+            
+            if($isOnboarding){
                 $tagsData->where('is_onboarding', 1);
             }else{
                 $tagsData->where('user_role', $user->roles[0]->name);
             }
+
             $tagsData->delete();
 
             foreach ($tagNameList as $name) {
@@ -186,13 +192,13 @@ class ProfileController extends Controller
                 $tag->user_id = $user->id;
                 $tag->name = $name;
                 $tag->user_role = $request->has('is_onboarding') ? '' : $user->roles[0]->name;
-                $tag->is_onboarding = $request->has('is_onboarding') ? 1 : 0;
+                $tag->is_onboarding = $isOnboarding ? 1 : 0;
                 $tag->save();
             }
-
+           
             // Category
             $categoriesData = DB::table('sport_category_user')->where('user_id', $user->id);
-            if($request->has('is_onboarding')){
+            if($isOnboarding){
                 $categoriesData->where('is_onboarding', 1);
             }else{
                 $categoriesData->where('user_role', $user->roles[0]->name);
@@ -205,14 +211,15 @@ class ProfileController extends Controller
                         'user_id' => $user->id,
                         'user_role' => $request->has('is_onboarding') ? '' : $user->roles[0]->name,
                         'sport_category_id' => $id,
-                        'is_onboarding'  => $request->has('is_onboarding') ? 1 : 0
+                        'is_onboarding'  => $isOnboarding ? 1 : 0
                     ]
                 );
             }
-
+            
             // Language
+            
             $languagesData = DB::table('language_user')->where('user_id', $user->id);
-            if($request->has('is_onboarding')){
+            if($isOnboarding){
                 $languagesData->where('is_onboarding', 1);
             }else{
                 $languagesData->where('user_role', $user->roles[0]->name);
@@ -225,7 +232,7 @@ class ProfileController extends Controller
                         'user_id' => $user->id,
                         'user_role' => $request->has('is_onboarding') ? '' : $user->roles[0]->name,
                         'language_id' => $id,
-                        'is_onboarding'  => $request->has('is_onboarding') ? 1 : 0
+                        'is_onboarding'  => $isOnboarding  ? 1 : 0
                     ]
                 );
             }
@@ -235,7 +242,7 @@ class ProfileController extends Controller
                 [
                     'user_id' => $user->id,
                     'user_role' => $request->has('is_onboarding') ? '' : $user->roles[0]->name,
-                    'is_onboarding' => $request->has('is_onboarding') ? $request->is_onboarding : 0,
+                    'is_onboarding' => $isOnboarding ? 1 : 0,
                 ],
                 [
 
@@ -505,6 +512,7 @@ class ProfileController extends Controller
 
             $user = User::find($request->user_id);
 
+            User::where('id', $user->id)->update([ 'is_onboarding' => 0]);
 
             $packages = Package::where('user_id', $user->id)->get();
 

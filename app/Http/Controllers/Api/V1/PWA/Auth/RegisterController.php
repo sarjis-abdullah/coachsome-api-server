@@ -185,6 +185,7 @@ class RegisterController extends Controller
             $user->email = $request->email;
             $user->user_name = $userService->generateUserName($user->first_name, $user->last_name);
             $user->password = $userService->generateUserHashPassword($request->password);
+            $user->is_onboarding = $request->user_type == "coach" ? 1 : 0;
             $user->save();
 
             if ($user) {

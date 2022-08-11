@@ -18,6 +18,7 @@ class ProfileSwitchingController extends Controller
 
         $response = [];
         $is_admin_switched = $request->is_admin_switched;
+        $from_onboarding = $request->has('from_onboarding') ? $request->from_onboarding : false;
 
         try {
             $user = Auth::user();
@@ -35,14 +36,13 @@ class ProfileSwitchingController extends Controller
                 $profileSwitchData = [];
             }
 
-            if($user->hasRole($request->role)){
+            if($user->hasRole($request->role) && !$from_onboarding){
                 $statusCode = Constants::HTTP_UNPROCESSABLE_ENTITY;
                 $profileSwitchData = [];
                 throw new \Exception('You are already in this role');
-            }else{
-
+            }
+            else{
                 $user->syncRoles([$request->role]);
-
                 $profileSwitchData = ProfileSwitch::where('user_id', $user->id)->first();
                 $profileSwitchData->is_switched = 1;
                 $profileSwitchData->switched_role = $requestedRole->id;
@@ -56,13 +56,6 @@ class ProfileSwitchingController extends Controller
             $userData = User::where('id', $user->id)->first();
 
             $userInfo = $userService->getUserInformation($userData, $is_admin_switched);
-
-            // $switchInfo = ProfileSwitch::where('user_id', $user->id)->first();
-            // $original_role = Role::where('id' , $switchInfo->original_role)->first()->name;
-
-            // $userInfo->is_profile_switched = !empty($profileSwitchData) && $profileSwitchData->is_switched ? true : false;
-            // $userInfo->original_role = $original_role;
-            // $userInfo->profile_switched_to = !empty($profileSwitchData) && $profileSwitchData->switch_to ? $profileSwitchData->switch_to : null;
 
             $response['status'] = 'success';
             $response['switchData'] = $profileSwitchData;
