@@ -220,6 +220,7 @@ class PackageController
             $coach->countReview = $faceBookReview ? $faceBookReview->rating_count : 0;
 
             // User name
+            $coach->id = $item->id ?? '';
             $coach->userName = $item->user_name ?? '';
 
             // Categories

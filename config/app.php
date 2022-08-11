@@ -203,7 +203,7 @@ return [
         \SocialiteProviders\Manager\ServiceProvider::class,
 
         // TikCMS
-        Tikweb\TikCmsApi\Providers\TikCmsApiServiceProvider::class
+//        Tikweb\TikCmsApi\Providers\TikCmsApiServiceProvider::class
 
     ],
 
