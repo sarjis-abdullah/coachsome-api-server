@@ -6,16 +6,16 @@ use App\Data\Constants;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class StoreFavouriteCoachRequest extends FormRequest
+class DeleteFavouriteCoachRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
      */
-    public function authorize(): bool
+    public function authorize() : bool
     {
-        return Auth::user()->hasRole([Constants::ROLE_KEY_ATHLETE]);
+        return Auth::user()->hasRole([Constants::ROLE_ID_ATHLETE]);
     }
 
     /**
@@ -23,11 +23,10 @@ class StoreFavouriteCoachRequest extends FormRequest
      *
      * @return array
      */
-    public function rules(): array
+    public function rules()
     {
         return [
             'coachId' => 'required|exists:users,id',
-            'isFavourite' => 'required|boolean',
         ];
     }
 }
