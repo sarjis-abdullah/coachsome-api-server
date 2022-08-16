@@ -2,11 +2,16 @@
 
 namespace App\Http\Resources\FavouriteCoach;
 
+use App\Entities\Badge;
 use App\Entities\Currency;
+use App\Http\Resources\Badge\BadgeResource;
 use App\Http\Resources\BaseResource;
 use App\Services\PackageService;
+use App\Services\Review\ReviewService;
 use App\Services\StorageService;
+use Coachsome\BaseReview\Repositories\BaseReviewRepository;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
 class FavouriteCoachResource extends BaseResource
@@ -19,6 +24,7 @@ class FavouriteCoachResource extends BaseResource
     public function toArray($request): array
     {
 
+
         return [
             'userId' => $this->userId,
             'coachId' => $this->coachId,
@@ -30,6 +36,7 @@ class FavouriteCoachResource extends BaseResource
                 $requestedCurrencyCode = \request()->header('Currency-Code') ?? "DKK";
                 $requestedCurrency = $mCurrency->getByCode($requestedCurrencyCode);
                 $item = $this->coach;
+                $item->categories = $this->coach->generalSportCategories;
 
                 $profile = $item->profile;
                 $item->image = null;
@@ -37,16 +44,22 @@ class FavouriteCoachResource extends BaseResource
                     $item->image = $storageService->hasImage($profile->image) ? $profile->image : '';
                 }
 
-                $faceBookReview = $item->reviews->where('provider', 'facebook')->first();
+                // Review
+                $faceBookReview = $item->reviews->where('provider','=', 'facebook')->first();
                 $rating = $faceBookReview
                     ? $faceBookReview->overall_star_rating
                     : 0;
                 $countReview = $faceBookReview ? $faceBookReview->rating_count : 0;
+                // Badge
+                $badge = new BadgeResource(Badge::find($item->badge_id));
                 return [
                     'countReview' => $countReview,
+                    'categories' => $item->categories,
+                    'reviews' => $this->coach->reviews,
+                    'badge' => $badge,
                     'rating' => $rating,
                     'userName' => $item->user_name,
-                    'name' => $item->full_name ?? $item->first_name . " " .$item->lastst_name,
+                    'name' => $item->full_name ?? $item->first_name . " " .$item->last_name,
                     'id' => $item->id,
                     'image' => $item->image,
                     'price' =>  $item->ownPackageSetting

@@ -21,7 +21,7 @@ class FavouriteCoachController extends Controller
     {
         $items = FavouriteCoach::with('coach')
             ->where('userId', "=",Auth::user()->id)
-            ->where('isFavourite', "=", true)
+//            ->where('isFavourite', "=", true)
             ->get();
         return new FavouriteCoachResourceCollection($items);
     }

@@ -19,6 +19,6 @@ class FavouriteCoach extends Model
 
     function coach(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(User::class, 'userId');
+        return $this->belongsTo(User::class, 'coachId');
     }
 }
