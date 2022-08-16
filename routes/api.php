@@ -4,8 +4,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::group(['middleware' => ['auth:api']], function () {
     Route::apiResource('notification-user', 'NotificationUserController');
+    Route::apiResource('favourite-coach', 'FavouriteCoachController');
 //    Route::put('notification-user/{notification-user}', 'NotificationUserController@update')->name('/notification-user/{notification-user}');
 });
+
 Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
     /*
     * General

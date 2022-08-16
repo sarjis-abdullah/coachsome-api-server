@@ -148,7 +148,8 @@ class MarketplaceService
                 'generalLanguages',
                 'generalSportTags',
                 'generalSportCategories',
-                'switchInfo'
+                'switchInfo',
+                'favouriteCoaches',
             ]);
 
         // Active Rules
@@ -168,12 +169,12 @@ class MarketplaceService
             $q->where('status', '=', 1);
         });
 
- 
+
         // Only coach
         // commented On 26th July 2022
 
         $userQuery->whereRoleIs(RoleData::ROLE_KEY_COACH);
-        
+
         // instead added this On 26th July 2022
 
         // if (RoleData::ROLE_ID_COACH && $userQuery->has('switchInfo')) {
@@ -184,7 +185,7 @@ class MarketplaceService
         //     $userQuery->whereRoleIs(RoleData::ROLE_KEY_COACH);
         // }
         // added till here On 26th July 2022
-        
+
         // Sport category id
         if ($categoryIdList) {
             $userQuery->whereHas('generalSportCategories', function ($q) use ($categoryIdList) {
@@ -321,6 +322,12 @@ class MarketplaceService
                 $coach->badge = new BadgeResource(Badge::find($item->badge_id));
 
                 // User name
+                $coach->id = $item->id ?? '';
+                $coach->isFavourite = false;
+                if (\auth('api')->user()){
+                    $coach->isFavourite = $item->isFavourite(\auth('api')->user()->id, $item->id) ?? false;
+                }
+
                 $coach->userName = $item->user_name ?? '';
 
                 // Categories

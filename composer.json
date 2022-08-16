@@ -38,7 +38,8 @@
         "santigarcor/laratrust": "6.3.*",
         "snowfire/beautymail": "dev-master",
         "socialiteproviders/apple": "<5.2.0",
-        "webpatser/laravel-uuid": "^3.0"
+        "webpatser/laravel-uuid": "^3.0",
+      "ext-json": "*"
     },
     "require-dev": {
         "facade/ignition": "^2.3.6",

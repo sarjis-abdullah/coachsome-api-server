@@ -4,6 +4,7 @@ namespace App\Entities;
 
 use App\Data\Constants;
 use App\Entities\Role as RoleEntity;
+use App\FavouriteCoach;
 use Laravel\Passport\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -299,5 +300,17 @@ class User extends Authenticatable
         return ! empty($this->attributes['password']);
     }
 
+    public function favouriteCoaches()
+    {
+        return $this->hasMany(FavouriteCoach::class, 'userId');
+    }
 
+    public function isFavourite($userId, $coachId)
+    {
+        $item = FavouriteCoach::where('userId','=', $userId)
+            ->where('coachId','=', $coachId)
+            ->first();
+
+        return (bool)$item;
+    }
 }
