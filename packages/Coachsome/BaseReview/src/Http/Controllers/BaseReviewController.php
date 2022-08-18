@@ -113,9 +113,7 @@ class BaseReviewController extends Controller
             return response()->json($data, StatusCode::HTTP_OK);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage() . " Line: " . $e->getLine()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
-
         }
-
     }
 
     /**
@@ -289,6 +287,6 @@ class BaseReviewController extends Controller
             return response()->json(['message' => $e->getMessage()], StatusCode::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
-    
+
 
 }
