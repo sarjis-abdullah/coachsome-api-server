@@ -7,6 +7,7 @@ use App\Entities\Currency;
 use App\Entities\Review;
 use App\Http\Resources\Badge\BadgeResource;
 use App\Http\Resources\BaseResource;
+use App\Services\CurrencyService;
 use App\Services\Media\MediaService;
 use App\Services\PackageService;
 use App\Services\StorageService;
@@ -22,37 +23,58 @@ class FavouriteCoachResource extends BaseResource
      */
     public function toArray($request): array
     {
+        $mediaService = new MediaService();
+        $images = $mediaService->getImages($this->coach);
+        if ($images['square']) {
+            $image = $images['square'];
+        } else if ($images['original']) {
+            $image = $images['original'];
+        }else if ($images['landscape']) {
+            $image = $images['landscape'];
+        }else if ($images['portrait']) {
+            $image = $images['portrait'];
+        }else {
+            $image = $images['old'];
+        }
         return [
             'userId' => $this->userId,
             'coachId' => $this->coachId,
             'isFavourite' => $this->isFavourite,
-            'coach' => $this->when($this->needToInclude($request, 'f.c'), function () {
+            'coach' => $this->when($this->needToInclude($request, 'f.c'), function () use ($image) {
                 $packageService = new PackageService();
                 $mCurrency = new Currency();
                 $storageService = new StorageService();
+                $currencyService = new CurrencyService();
                 $requestedCurrencyCode = \request()->header('Currency-Code') ?? "DKK";
                 $requestedCurrency = $mCurrency->getByCode($requestedCurrencyCode);
                 $item = $this->coach;
                 $item->categories = $this->coach->generalSportCategories;
-
-                $profile = $item->profile;
-                $item->image = null;
-                if ($profile) {
-                    $item->image = $storageService->hasImage($profile->image) ? $profile->image : '';
-                }
 
                 // Review
                 $rating = $this->overallStarRating($item);
                 $countReview = $this->totalReviewer($item);
                 // Badge
                 $badge = new BadgeResource(Badge::find($item->badge_id));
-                $mediaService = new MediaService();
-                $images = $mediaService->getImages($item);
-                if ($images['square']) {
-                    $image = $images['square'];
-                } else {
-                    $image = $images['old'];
+
+                // Find minimum price package
+                $price = null;
+                foreach ($item->packages->where('status', 1) as $package) {
+                    $originalPrice = $packageService->calculateOriginalPrice($item, $package);
+                    if ($price) {
+                        if ($price > $originalPrice) {
+                            $price = $originalPrice;
+                        }
+                    } else {
+                        $price = $originalPrice;
+                    }
                 }
+
+                // Price
+                $price = $currencyService->convert(
+                    $price,
+                    $currencyService->getDefaultBasedCurrency()->code,
+                    $requestedCurrency->code
+                );
                 return [
                     'countReview' => $countReview,
                     'categories' => $item->categories,
@@ -61,10 +83,8 @@ class FavouriteCoachResource extends BaseResource
                     'userName' => $item->user_name,
                     'name' => $item->full_name ?? $item->first_name . " " .$item->last_name,
                     'id' => $item->id,
-                    'image' => $item->image ?? $image,
-                    'price' =>  $item->ownPackageSetting
-                        ? $packageService->calculateAmountByUserBasedCurrency($item->ownPackageSetting->hourly_rate, $mCurrency->getUserBasedCurrency($item), $requestedCurrency)
-                        : 0.00,
+                    'image' => $image,
+                    'price' =>  $price
                 ];
             }),
         ];
