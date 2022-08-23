@@ -54,6 +54,7 @@
     50 => 'Coachsome\\BaseReview\\Providers\\BaseReviewServiceProvider',
     51 => 'Coachsome\\ChatServer\\Providers\\ChatServerServiceProvider',
     52 => 'SocialiteProviders\\Manager\\ServiceProvider',
+    53 => 'Tikweb\\TikCmsApi\\Providers\\TikCmsApiServiceProvider',
   ),
   'eager' => 
   array (
@@ -94,6 +95,7 @@
     34 => 'App\\Providers\\RouteServiceProvider',
     35 => 'Coachsome\\BaseReview\\Providers\\BaseReviewServiceProvider',
     36 => 'Coachsome\\ChatServer\\Providers\\ChatServerServiceProvider',
+    37 => 'Tikweb\\TikCmsApi\\Providers\\TikCmsApiServiceProvider',
   ),
   'deferred' => 
   array (

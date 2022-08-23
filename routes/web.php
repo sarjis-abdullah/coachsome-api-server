@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('auth/login/{provider}', 'SocialAuthController@redirectToProvider');
 Route::get('auth/login/{provider}/callback', 'SocialAuthController@handleProviderCallback');
 Route::post('auth/login/apple/callback', 'SocialAuthController@handleAppleCallback');
+Route::get('auth/login/onetap/{code}', 'SocialAuthController@oneTap');
 
 
 // Gift card payment

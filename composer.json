@@ -9,12 +9,14 @@
     "license": "MIT",
     "require": {
         "php": "^7.3|^8.0",
+        "ext-json": "*",
         "ashallendesign/laravel-exchange-rates": "^3.2.1",
         "barryvdh/laravel-dompdf": "^0.9.0",
         "benmajor/exchange-rates-api": "^2.0",
         "devghor/tik-cms-api": "dev-master",
         "fideloper/proxy": "^4.2",
         "fruitcake/laravel-cors": "^2.0",
+        "google/apiclient": "^2.12.1",
         "guzzlehttp/guzzle": "^7.3",
         "intervention/image": "^2.7",
         "laravel/framework": "^8.0",
@@ -38,8 +40,7 @@
         "santigarcor/laratrust": "6.3.*",
         "snowfire/beautymail": "dev-master",
         "socialiteproviders/apple": "<5.2.0",
-        "webpatser/laravel-uuid": "^3.0",
-      "ext-json": "*"
+        "webpatser/laravel-uuid": "^3.0"
     },
     "require-dev": {
         "facade/ignition": "^2.3.6",

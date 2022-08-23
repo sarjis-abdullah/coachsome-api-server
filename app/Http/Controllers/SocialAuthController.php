@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 use App\Data\Constants;
+use App\Data\StatusCode;
 use App\Entities\Profile;
 use App\Entities\Role;
 use App\Entities\SocialAccount;
@@ -16,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Laravel\Socialite\Facades\Socialite;
 use Session;
+use Google_Client;
 
 class SocialAuthController extends Controller
 {
@@ -448,5 +450,80 @@ class SocialAuthController extends Controller
         UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
 
         return $user;
+    }
+
+    public function oneTap($code){
+     
+
+        // Get $id_token via HTTPS POST.
+        $user = null;
+        $isExisting = false;
+
+        $client = new Google_Client(['client_id' => '218759194053-9nel1dqaljbt44sjrm56v848mstvh4dc.apps.googleusercontent.com']);  // Specify the CLIENT_ID of the app that accesses the backend
+        $payload = $client->verifyIdToken($code);
+        if ($payload) {
+
+            $user = User::where('email', $payload['email'])->first();
+            if($user){
+                $isExisting = true;
+            }else {
+                $account = SocialAccount::where('provider_name', 'google')
+                ->where('provider_id', $payload['sub'])
+                ->first();
+
+                if ($account) {
+                    $user = $account->user;
+                }
+
+                if (!$account) {
+
+                    $providerEmail = $payload['email'];
+
+                    if ($providerEmail) {
+                        $user = User::where('email', $providerEmail)->first();
+                        if (!$user) {
+                            $userService = new UserService();;
+                            $user = new User();
+
+                            $user->first_name = $payload['given_name'];
+                            $user->last_name = $payload['family_name'];
+                            $user->email = $providerEmail;
+                            $user->user_name = $userService->generateUserName($user->first_name, $user->last_name);
+                            $user->save();
+                            
+                            $role = Role::where('name', 'athlete')->first();
+
+                            if($user && $role){
+                                $user->attachRole($role);
+                            }
+                        }
+
+                        // Create social account
+                        SocialAccount::create([
+                            'user_id' => $user->id,
+                            'provider_id' => $payload['sub'],
+                            'provider_name' => 'google',
+                        ]);
+                    }
+                }
+
+                UserRegisteredEvent::dispatch($user, session(self::KEY_USER_TYPE), true);
+            }
+            $tokenService = new TokenService();
+            $accessToken = $tokenService->createUserAccessToken($user);
+
+            return response([
+                'access_token' => $accessToken,
+                'is_existing' => $isExisting
+            ], StatusCode::HTTP_OK);
+
+
+
+
+        } else {
+            throw new \Exception('Not Authenticated!');
+        }
+    
+    
     }
 }
