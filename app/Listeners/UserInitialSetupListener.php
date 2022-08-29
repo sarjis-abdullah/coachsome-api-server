@@ -53,7 +53,7 @@ class UserInitialSetupListener
 
         
 
-        if(env('CURR_ENV') == "production" || env('CURR_ENV') == "test"){
+        if(env('CURR_ENV') == "production"){
             // Configure active campaign
             $contactRes = $activeCampaignService->createOrUpdateContact([
                 "contact" => [
