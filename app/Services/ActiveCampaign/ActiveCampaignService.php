@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class ActiveCampaignService
 {
-    const API_TOKEN = "6e9198c9264cd829b152badf665017ce5e613e1e3800102015ed65d9a6ed59f0bef82c03";
+    const API_TOKEN = "0aef8b26f5217504c0cad76bff3d2bf04b6876487ca71a9d19eed1b63601d0eed7137892";
     const BASE_URL = "https://coachsome.api-us1.com/api/3";
 
     function post($endpoint, $payload)
