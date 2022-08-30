@@ -20,5 +20,6 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'https://api.coachsome.com/auth/login/*',
+        'https://api.test.coachsome.com/auth/login/*',
     ];
 }
