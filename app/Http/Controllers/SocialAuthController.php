@@ -133,7 +133,7 @@ class SocialAuthController extends Controller
                 }
 
                 if ($provider == 'apple') {
-                    $userVerification->facebook_connected_at = Carbon::now();
+                    $userVerification->apple_connected_at = Carbon::now();
                 }
 
                 if ($provider == 'google') {
@@ -213,37 +213,6 @@ class SocialAuthController extends Controller
         $provider = 'apple';
         $token = $request->token;
 
-        // if error happened from provider
-        // if (!$request->input('code')) {
-        //     $status = 'error';
-        //     if ($provider == 'facebook') {
-        //         $messageKey = 'facebook_error_cancel_message';
-        //     }else if($provider == 'apple'){
-        //         $messageKey = 'apple_error_cancel_message';
-        //     }else {
-        //         $messageKey = 'google_error_cancel_message';
-        //     }
-
-        //     if(session(self::KEY_PWA) == self::VALUE_PWA_AUTH){
-        //         return redirect(
-        //             config('company.url.pwa')
-        //             . '/login?status='
-        //             . $status
-        //             . '&'
-        //             . 'message_key='
-        //             . $messageKey);
-        //     } else {
-        //         return redirect(
-        //             config('company.url.client')
-        //             . '/login?status='
-        //             . $status
-        //             . '&'
-        //             . 'message_key='
-        //             . $messageKey);
-        //     }
-
-        // }
-
         // PWA auth
         if (session(self::KEY_PWA) == self::VALUE_PWA_AUTH) {
             $isExisting = false;
@@ -289,7 +258,7 @@ class SocialAuthController extends Controller
                 }
 
                 if ($provider == 'apple') {
-                    $userVerification->facebook_connected_at = Carbon::now();
+                    $userVerification->apple_connected_at = Carbon::now();
                 }
 
                 if ($provider == 'google') {
