@@ -257,7 +257,6 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::apiResource('contact-user', 'ContactUserController');
         Route::get('contact-user-resend-invitation', 'ContactUserController@resendInvitation');
 
-        Route::get('dashboard', 'Dashboard\DashboardController@index');
     });
     Route::group(['prefix' => '', 'namespace' => 'Coach'], function () {
         //activate-contact-user-account
@@ -309,7 +308,7 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         Route::get('tracking-codes/{code}', 'PromoCode\TrackingCodeController@index');
 
         // Dashboard
-        Route::get('dashboard', 'Dashboard\DashboardController@index');
+//        Route::get('dashboard', 'Dashboard\DashboardController@index');
 
         // Translations
         Route::get('translations', 'Translation\TranslationController@index');
@@ -319,6 +318,11 @@ Route::group(['namespace' => '\App\Http\Controllers\Api\V1'], function () {
         // Seo Translations
         Route::get('translations/seo', 'Translation\SeoTranslationController@index');
         Route::post('translations/seo', 'Translation\SeoTranslationController@save');
+    });
+
+    Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['auth:api']], function () {
+        // Dashboard
+        Route::get('dashboard', 'Dashboard\DashboardController@index');
     });
 
 
