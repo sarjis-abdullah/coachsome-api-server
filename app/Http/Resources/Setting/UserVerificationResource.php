@@ -22,6 +22,7 @@ class UserVerificationResource extends JsonResource
             'facebookConnectedAt'=> $this->facebook_connected_at,
             'googleConnectedAt'=> $this->google_connected_at,
             'twitterConnectedAt'=> $this->twitter_connected_at,
+            'appleConnectedAt'=> $this->apple_connected_at,
             'createdAt'=> $this->created_at,
             'updatedAt'=> $this->updated_at,
         ];
